@@ -1,0 +1,9 @@
+Bungee plugin:
+- All command handling
+
+- receives plugin message from bukkit to update warp
+  -> get warp information from database (all or just specified?)
+
+- send plugin message to bukkit to create/move warp
+
+- send plugin message to bukkit to teleport a player

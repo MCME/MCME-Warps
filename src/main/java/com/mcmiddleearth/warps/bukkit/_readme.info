@@ -1,0 +1,15 @@
+Bukkit Plugin:
+- receives plugin message from Bungee to teleport a player (may need to wait for arrival)
+  -> teleports player to location
+  -> sends warp welcome title, subtitle and message
+
+- receives plugin message from Bungee to create a new warp
+  -> uses player location to create warp
+  -> send back plugin message to update warp info
+
+- receives plugin message from Bungee to move a warp
+  -> uses player location to create warp
+  -> send back plugin message to update warp info
+
+- receives plugin message from Bungee to update warp
+  -> get warp information from database (all or just specified warp?)
