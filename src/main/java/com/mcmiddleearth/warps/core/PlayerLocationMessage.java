@@ -4,19 +4,11 @@ import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 
-// TODO: Rename?
-public class TeleportMessage {
+public class PlayerLocationMessage {
 
-    public enum Subchannel {
-        TELEPORT
-    }
+    public record Result(CreateSubchannels subchannel, WarpLocation warpLocation, String warpName) {}
 
-    // TODO: Rename to Output, Result?
-    public record TeleportResult(Subchannel subchannel, WarpLocation data) {
-    }
-
-    // Q: Remove subchannel argument?
-    public static byte[] serialise(Subchannel subchannel, WarpLocation data) {
+    public static byte[] serialise(CreateSubchannels subchannel, WarpLocation data, String warpName) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
 
         out.writeUTF(subchannel.name());
@@ -26,15 +18,16 @@ public class TeleportMessage {
         out.writeDouble(data.z());
         out.writeFloat(data.yaw());
         out.writeFloat(data.pitch());
+        out.writeUTF(warpName);
 
         return out.toByteArray();
     }
 
-    public static TeleportResult read(byte[] bytes) {
+    public static Result read(byte[] bytes) {
         ByteArrayDataInput in = ByteStreams.newDataInput(bytes);
 
         String strSubchannel = in.readUTF();
-        Subchannel subchannel = Subchannel.valueOf(strSubchannel);
+        CreateSubchannels subchannel = CreateSubchannels.valueOf(strSubchannel);
 
         String world = in.readUTF();
         double x = in.readDouble();
@@ -43,7 +36,8 @@ public class TeleportMessage {
         float yaw  = in.readFloat();
         float pitch = in.readFloat();
         WarpLocation data = new WarpLocation(world, x, y, z, yaw, pitch);
+        String warpName = in.readUTF();
 
-        return new TeleportResult(subchannel, data);
+        return new Result(subchannel, data, warpName);
     }
 }

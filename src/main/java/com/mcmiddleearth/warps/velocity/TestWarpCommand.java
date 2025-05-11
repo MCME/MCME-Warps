@@ -2,6 +2,7 @@ package com.mcmiddleearth.warps.velocity;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.mcmiddleearth.warps.core.TeleportMessage;
+import com.mcmiddleearth.warps.core.WarpLocation;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
@@ -49,13 +50,13 @@ public final class TestWarpCommand {
                             double z = -16.461;
                             float yaw = -91f;
                             float pitch = 26f;
-                            TeleportMessage.TeleportData data = new TeleportMessage.TeleportData("world", x, y, z, yaw, pitch);
+                            WarpLocation data = new WarpLocation("world", x, y, z, yaw, pitch);
 //                            ByteArrayDataOutput out = TeleportMessage.serialise(data);
 
                             // Messaging the backend server, using the sender's connection
                             Optional<ServerConnection> connection = sender.getCurrentServer();
                             connection.ifPresent(serverConnection -> {
-                                serverConnection.sendPluginMessage(WarpVelocity.MAIN_ID, TeleportMessage.serialise(data));
+                                serverConnection.sendPluginMessage(WarpVelocity.MAIN_ID, TeleportMessage.serialise(TeleportMessage.Subchannel.TELEPORT, data));
                             });
 
                             if (success) {

@@ -1,6 +1,7 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
 import com.mcmiddleearth.warps.core.TeleportMessage;
+import com.mcmiddleearth.warps.core.WarpLocation;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -88,10 +89,10 @@ public final class WarpCommand {
     }
 
     private static void sendTeleportMessage(ChannelMessageSink serverConnection, Warp warp) {
-        TeleportMessage.TeleportData data = warp.getLocation();
+        WarpLocation data = warp.getLocation();
 
         // Messaging the backend server, using the sender's connection
-        serverConnection.sendPluginMessage(WarpVelocity.MAIN_ID, TeleportMessage.serialise(data));
+        serverConnection.sendPluginMessage(WarpVelocity.MAIN_ID, TeleportMessage.serialise(TeleportMessage.Subchannel.TELEPORT, data));
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
