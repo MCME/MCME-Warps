@@ -9,12 +9,12 @@ import java.io.IOException;
 public class TeleportMessage {
     public static final String SUBCHANNEL = "TeleportLocation";
 
+    // Q: Extract???
     /** The data structure used for teleportation messages */
     public record TeleportData(String world, double x, double y, double z, float yaw, float pitch) {
     }
 
-    // TODO: Rename to build or serialise???
-    public static ByteArrayDataOutput write(TeleportData data) {
+    public static byte[] serialise(TeleportData data) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
 
         out.writeUTF(SUBCHANNEL);
@@ -25,7 +25,7 @@ public class TeleportMessage {
         out.writeFloat(data.yaw());
         out.writeFloat(data.pitch());
 
-        return out;
+        return out.toByteArray();
     }
     public static TeleportData read(byte[] bytes) throws IOException {
         ByteArrayDataInput in = ByteStreams.newDataInput(bytes);

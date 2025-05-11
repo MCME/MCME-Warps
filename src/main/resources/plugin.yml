@@ -1,4 +1,4 @@
-name: warps
+name: MCME-Warps
 version: '1.0-SNAPSHOT'
-main: com.mcmiddleearth.warps.paper.Warps
+main: com.mcmiddleearth.warps.paper.WarpPaper
 api-version: '1.21'

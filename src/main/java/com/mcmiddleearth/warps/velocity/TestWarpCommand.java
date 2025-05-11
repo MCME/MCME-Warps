@@ -50,12 +50,12 @@ public final class TestWarpCommand {
                             float yaw = -91f;
                             float pitch = 26f;
                             TeleportMessage.TeleportData data = new TeleportMessage.TeleportData("world", x, y, z, yaw, pitch);
-                            ByteArrayDataOutput out = TeleportMessage.write(data);
+//                            ByteArrayDataOutput out = TeleportMessage.serialise(data);
 
                             // Messaging the backend server, using the sender's connection
                             Optional<ServerConnection> connection = sender.getCurrentServer();
                             connection.ifPresent(serverConnection -> {
-                                serverConnection.sendPluginMessage(WarpVelocity.MAIN_ID, out.toByteArray());
+                                serverConnection.sendPluginMessage(WarpVelocity.MAIN_ID, TeleportMessage.serialise(data));
                             });
 
                             if (success) {

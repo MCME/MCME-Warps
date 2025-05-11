@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public final class Warps extends JavaPlugin implements PluginMessageListener {
+public final class WarpPaper extends JavaPlugin implements PluginMessageListener {
 
     @Override
     public void onEnable() {
@@ -47,6 +47,7 @@ public final class Warps extends JavaPlugin implements PluginMessageListener {
             if (success) {
                 // Q: Title/subtitle?
                 // TODO: Notify player if teleport location was underground
+
                 player.sendMessage("teleport complete");
             }
         });
