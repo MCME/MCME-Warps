@@ -29,6 +29,10 @@ public class Create {
     }
 
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+
+        // Q: Forward this to the backend plugin?
+        // - Removes the RequestLocationMesssage, but requires setting up a brigadier command on the backend
+
         CommandSource source = context.getSource();
         if (!(source instanceof Player player)) {
             // Q: Easy way to add this to the entire /warp tree? Using permissions?

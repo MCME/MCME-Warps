@@ -1,7 +1,6 @@
 package com.mcmiddleearth.warps.velocity.warps;
 
-import com.mcmiddleearth.warps.core.TeleportMessage;
-import com.mcmiddleearth.warps.core.WarpLocation;
+import com.mcmiddleearth.warps.core.SimpleLocation;
 
 public class Warp {
     // TeleportData
@@ -16,9 +15,9 @@ public class Warp {
 
     private final String name;
     private final String server;
-    private final WarpLocation location;
+    private final SimpleLocation location;
 
-    public Warp(String name, String server, WarpLocation location) {
+    public Warp(String name, String server, SimpleLocation location) {
         this.name = name;
         this.server = server;
         this.location = location;
@@ -27,5 +26,5 @@ public class Warp {
     public String getName() { return name; }
     public String getServer() { return server; }
     // TODO: Rename to ...?
-    public WarpLocation getLocation() { return location; }
+    public SimpleLocation getLocation() { return location; }
 }

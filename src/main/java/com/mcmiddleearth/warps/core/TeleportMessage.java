@@ -12,11 +12,11 @@ public class TeleportMessage {
     }
 
     // TODO: Rename to Output, Result?
-    public record TeleportResult(Subchannel subchannel, WarpLocation data) {
+    public record TeleportResult(Subchannel subchannel, SimpleLocation data) {
     }
 
     // Q: Remove subchannel argument?
-    public static byte[] serialise(Subchannel subchannel, WarpLocation data) {
+    public static byte[] serialise(Subchannel subchannel, SimpleLocation data) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
 
         out.writeUTF(subchannel.name());
@@ -42,7 +42,7 @@ public class TeleportMessage {
         double z = in.readDouble();
         float yaw  = in.readFloat();
         float pitch = in.readFloat();
-        WarpLocation data = new WarpLocation(world, x, y, z, yaw, pitch);
+        SimpleLocation data = new SimpleLocation(world, x, y, z, yaw, pitch);
 
         return new TeleportResult(subchannel, data);
     }

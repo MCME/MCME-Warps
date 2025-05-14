@@ -6,9 +6,9 @@ import com.google.common.io.ByteStreams;
 
 public class PlayerLocationMessage {
 
-    public record Result(CreateSubchannels subchannel, WarpLocation warpLocation, String warpName) {}
+    public record Result(CreateSubchannels subchannel, SimpleLocation warpLocation, String warpName) {}
 
-    public static byte[] serialise(CreateSubchannels subchannel, WarpLocation data, String warpName) {
+    public static byte[] serialise(CreateSubchannels subchannel, SimpleLocation data, String warpName) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
 
         out.writeUTF(subchannel.name());
@@ -35,7 +35,7 @@ public class PlayerLocationMessage {
         double z = in.readDouble();
         float yaw  = in.readFloat();
         float pitch = in.readFloat();
-        WarpLocation data = new WarpLocation(world, x, y, z, yaw, pitch);
+        SimpleLocation data = new SimpleLocation(world, x, y, z, yaw, pitch);
         String warpName = in.readUTF();
 
         return new Result(subchannel, data, warpName);

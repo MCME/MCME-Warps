@@ -3,7 +3,7 @@ package com.mcmiddleearth.warps.velocity;
 import com.google.inject.Inject;
 import com.mcmiddleearth.warps.core.Channels;
 import com.mcmiddleearth.warps.core.PlayerLocationMessage;
-import com.mcmiddleearth.warps.core.WarpLocation;
+import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.commands.Create;
 import com.mcmiddleearth.warps.velocity.commands.WarpCommand;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
@@ -70,9 +70,9 @@ public class WarpVelocity {
         commandManager.register(commandMeta, new BrigadierCommand(commandNode));
 
         // Fake warps for testing commands
-        Warp a = new Warp("factionsWarp2", "factions", new WarpLocation("world", -50.0, 100.0, -12.4, -91f, 26f));
-        Warp b = new Warp("factionsWarp", "factions", new WarpLocation("world", -46.0, 96.0, -16.4, -91f, 26f));
-        Warp c = new Warp("lobbyWarp",    "lobby",    new WarpLocation("world", -46.0, 120.0, -16.4, -91f, 26f));
+        Warp a = new Warp("factionsWarp2", "factions", new SimpleLocation("world", -50.0, 100.0, -12.4, -91f, 26f));
+        Warp b = new Warp("factionsWarp", "factions", new SimpleLocation("world", -46.0, 96.0, -16.4, -91f, 26f));
+        Warp c = new Warp("lobbyWarp",    "lobby",    new SimpleLocation("world", -46.0, 120.0, -16.4, -91f, 26f));
         WarpManager.saveWarp(a);
         WarpManager.saveWarp(b);
         WarpManager.saveWarp(c);

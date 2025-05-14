@@ -28,7 +28,7 @@ public final class WarpPaper extends JavaPlugin implements PluginMessageListener
 
         switch (channel) {
             case Channels.MAIN: {
-                WarpLocation data = TeleportMessage.read(bytes).data();
+                SimpleLocation data = TeleportMessage.read(bytes).data();
 
                 // Q: Is handling nulls needed, or can they be trusted to always come through?
                 World world = Bukkit.getWorld(data.world());
@@ -49,7 +49,7 @@ public final class WarpPaper extends JavaPlugin implements PluginMessageListener
 
             case Channels.REQUEST_LOCATION:  {
                 RequestLocationMessage.Result data = RequestLocationMessage.read(bytes);
-                WarpLocation location = new WarpLocation(player.getWorld().getName(), player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
+                SimpleLocation location = new SimpleLocation(player.getWorld().getName(), player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
 
                 player.sendPluginMessage(
                     this,
