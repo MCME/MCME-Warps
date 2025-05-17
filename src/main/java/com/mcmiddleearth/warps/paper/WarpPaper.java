@@ -1,6 +1,9 @@
 package com.mcmiddleearth.warps.paper;
 
 import com.mcmiddleearth.warps.core.*;
+import com.mcmiddleearth.warps.core.PlayerLocationMessage;
+import com.mcmiddleearth.warps.core.RequestLocationMessage;
+import com.mcmiddleearth.warps.core.TeleportMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -13,9 +16,9 @@ public final class WarpPaper extends JavaPlugin implements PluginMessageListener
 
     @Override
     public void onEnable() {
-        getServer().getMessenger().registerIncomingPluginChannel(this, Channels.MAIN, this);
-        getServer().getMessenger().registerIncomingPluginChannel(this, Channels.REQUEST_LOCATION, this);
-        getServer().getMessenger().registerOutgoingPluginChannel(this, Channels.REQUEST_LOCATION);
+        getServer().getMessenger().registerIncomingPluginChannel(this, Channels.WARP, this);
+        getServer().getMessenger().registerIncomingPluginChannel(this, Channels.CREATE_WARP, this);
+        getServer().getMessenger().registerOutgoingPluginChannel(this, Channels.CREATE_WARP);
     }
 
     @Override
@@ -27,7 +30,7 @@ public final class WarpPaper extends JavaPlugin implements PluginMessageListener
     public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte @NotNull [] bytes) {
 
         switch (channel) {
-            case Channels.MAIN: {
+            case Channels.WARP: {
                 SimpleLocation data = TeleportMessage.read(bytes).data();
 
                 // Q: Is handling nulls needed, or can they be trusted to always come through?
@@ -36,6 +39,7 @@ public final class WarpPaper extends JavaPlugin implements PluginMessageListener
 
                 // TODO: check terrain at target position and adapt if underground
 
+                // FIXME: Currently causes player moved too quickly, use a scheduler to teleport on next tick
                 player.teleportAsync(location).thenAccept(success -> {
                     if (success) {
                         // Q: Title/subtitle?
@@ -47,13 +51,13 @@ public final class WarpPaper extends JavaPlugin implements PluginMessageListener
                 break;
             }
 
-            case Channels.REQUEST_LOCATION:  {
+            case Channels.CREATE_WARP:  {
                 RequestLocationMessage.Result data = RequestLocationMessage.read(bytes);
                 SimpleLocation location = new SimpleLocation(player.getWorld().getName(), player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
 
                 player.sendPluginMessage(
                     this,
-                    Channels.REQUEST_LOCATION,
+                    Channels.CREATE_WARP,
                     PlayerLocationMessage.serialise(data.subchannel(), location, data.warpName())
                 );
                 break;

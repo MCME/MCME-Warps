@@ -1,21 +1,23 @@
 package com.mcmiddleearth.warps.velocity.warps;
 
 import com.mcmiddleearth.warps.core.SimpleLocation;
+import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 
+@ConfigSerializable
 public class Warp {
-    // TeleportData
-    // Name
-    // Server???
+    // Used by configurate to load & dump Warps to yaml
+    public Warp() {}
 
     // creator
     // invitations
     // permissions
     // title, subtitle, message?
     // region
+    // popularity count
 
-    private final String name;
-    private final String server;
-    private final SimpleLocation location;
+    private String name;
+    private String server;
+    private SimpleLocation location;
 
     public Warp(String name, String server, SimpleLocation location) {
         this.name = name;
@@ -27,4 +29,8 @@ public class Warp {
     public String getServer() { return server; }
     // TODO: Rename to ...?
     public SimpleLocation getLocation() { return location; }
+
+    public void setServer(String name) {this.server = name;}
+    public void setLocation(SimpleLocation location) {this.location = location;}
+    public void setName(String name) {this.name = name;}
 }

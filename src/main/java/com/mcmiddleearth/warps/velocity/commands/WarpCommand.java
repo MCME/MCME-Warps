@@ -92,7 +92,10 @@ public final class WarpCommand {
         SimpleLocation data = warp.getLocation();
 
         // Messaging the backend server, using the sender's connection
-        serverConnection.sendPluginMessage(WarpVelocity.MAIN_ID, TeleportMessage.serialise(TeleportMessage.Subchannel.TELEPORT, data));
+        serverConnection.sendPluginMessage(
+            WarpVelocity.MAIN_ID,
+            TeleportMessage.serialise(TeleportMessage.Subchannel.TELEPORT, data)
+        );
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {

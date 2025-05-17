@@ -3,7 +3,6 @@ package com.mcmiddleearth.warps.velocity;
 import com.google.inject.Inject;
 import com.mcmiddleearth.warps.core.Channels;
 import com.mcmiddleearth.warps.core.PlayerLocationMessage;
-import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.commands.Create;
 import com.mcmiddleearth.warps.velocity.commands.WarpCommand;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
@@ -21,6 +20,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
+import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
@@ -34,30 +34,41 @@ import java.nio.file.Path;
 )
 public class WarpVelocity {
 
-    public static final MinecraftChannelIdentifier MAIN_ID = MinecraftChannelIdentifier.from(Channels.MAIN);
-    public static final MinecraftChannelIdentifier REQUEST_LOCATION_ID = MinecraftChannelIdentifier.from(Channels.REQUEST_LOCATION);
+    private static WarpVelocity instance;
+
+    public static final MinecraftChannelIdentifier MAIN_ID = MinecraftChannelIdentifier.from(Channels.WARP);
+    public static final MinecraftChannelIdentifier CREATE_CHANNEL_ID = MinecraftChannelIdentifier.from(Channels.CREATE_WARP);
 
     private final ProxyServer proxy;
-//    private final Logger logger;
-//    private final Path dataDirectory;
+    private final Logger logger;
+    private final Path dataFolder;
 
     @Inject
     public WarpVelocity(ProxyServer proxy, Logger logger, @DataDirectory Path dataDirectory) {
+        instance = this;
+
         this.proxy = proxy;
-//        this.logger = logger;
-//        this.dataDirectory = dataDirectory;
+        this.logger = logger;
+        this.dataFolder = dataDirectory;
     }
+
+    public static WarpVelocity getInstance() { return instance; }
+
+    // Q: Why getInstance().getDataFolder and not just getDataFolder() directly???
+    public Path getDataFolder() { return dataFolder; }
+    public Logger getLogger() { return logger; }
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
         proxy.getChannelRegistrar().register(MAIN_ID);
-        proxy.getChannelRegistrar().register(REQUEST_LOCATION_ID);
+        proxy.getChannelRegistrar().register(CREATE_CHANNEL_ID);
+
+        WarpManager.loadAllWarps();
 
         CommandManager commandManager = proxy.getCommandManager();
         CommandMeta commandMeta = commandManager.metaBuilder("warp")
             .plugin(this)
             .build();
-
         LiteralCommandNode<CommandSource> commandNode = BrigadierCommand.literalArgumentBuilder("warp")
             .then(WarpCommand.register(proxy))
 //            .then(Random.register())
@@ -66,22 +77,14 @@ public class WarpVelocity {
 //            .then(Rename.register())
 //            .then(Delete.register())
             .build();
-
         commandManager.register(commandMeta, new BrigadierCommand(commandNode));
-
-        // Fake warps for testing commands
-        Warp a = new Warp("factionsWarp2", "factions", new SimpleLocation("world", -50.0, 100.0, -12.4, -91f, 26f));
-        Warp b = new Warp("factionsWarp", "factions", new SimpleLocation("world", -46.0, 96.0, -16.4, -91f, 26f));
-        Warp c = new Warp("lobbyWarp",    "lobby",    new SimpleLocation("world", -46.0, 120.0, -16.4, -91f, 26f));
-        WarpManager.saveWarp(a);
-        WarpManager.saveWarp(b);
-        WarpManager.saveWarp(c);
     }
 
+    // TODO: Extract
     @Subscribe
     public void onPluginMessageFromBackend(PluginMessageEvent event) {
         // Check if the identifier matches first, no matter the source.
-        if (!REQUEST_LOCATION_ID.equals(event.getIdentifier())) {
+        if (!CREATE_CHANNEL_ID.equals(event.getIdentifier())) {
             return;
         }
 
@@ -102,5 +105,7 @@ public class WarpVelocity {
         // result.subchannel()
 
         WarpManager.saveWarp(newWarp);
+
+        backend.getPlayer().sendMessage(Component.text("Warp created!"));
     }
 }

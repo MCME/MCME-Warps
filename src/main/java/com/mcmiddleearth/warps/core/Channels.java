@@ -1,7 +1,6 @@
 package com.mcmiddleearth.warps.core;
 
 public class Channels {
-    // Q: Rename?
-    public static final String MAIN = "mcme:warps";
-    public static final String REQUEST_LOCATION = "mcme:request-location";
+    public static final String WARP = "mcme:warp";
+    public static final String CREATE_WARP = "mcme:create-warp";
 }

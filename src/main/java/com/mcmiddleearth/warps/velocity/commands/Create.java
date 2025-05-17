@@ -54,7 +54,7 @@ public class Create {
         // Send plugin message requesting player's Location
         player.getCurrentServer().ifPresentOrElse(serverConnection -> {
             boolean status = serverConnection.sendPluginMessage(
-                WarpVelocity.REQUEST_LOCATION_ID,
+                WarpVelocity.CREATE_CHANNEL_ID,
                 RequestLocationMessage.serialise(CreateSubchannels.CREATE_PUBLIC, warpName)
             );
 
