@@ -1,8 +1,9 @@
-package com.mcmiddleearth.warps.core;
+package com.mcmiddleearth.warps.core.messageprotocols;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import com.mcmiddleearth.warps.core.SimpleLocation;
 
 // TODO: Rename?
 public class TeleportMessage {

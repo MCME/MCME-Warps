@@ -1,7 +1,4 @@
 
-
-* Extract listeners
-
 1. Various commands
 2. Sorting & priority of suggestions
 3. YAML read and write

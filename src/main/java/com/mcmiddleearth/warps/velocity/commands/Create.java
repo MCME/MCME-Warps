@@ -1,8 +1,8 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
 import com.mcmiddleearth.warps.core.CreateSubchannels;
-import com.mcmiddleearth.warps.core.RequestLocationMessage;
-import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
+import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
@@ -28,10 +28,9 @@ public class Create {
             );
     }
 
+    // Q: Forward create commands to the backend instead?
+    // - Removes the need for RequestLocationMessages
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
-
-        // Q: Forward this to the backend plugin?
-        // - Removes the RequestLocationMesssage, but requires setting up a brigadier command on the backend
 
         CommandSource source = context.getSource();
         if (!(source instanceof Player player)) {
@@ -49,12 +48,10 @@ public class Create {
 
         // TODO: Ensure warpName is valid (doesn't start with '-')
 
-        // TODO: if personal warp add a 'p:' prefix? -> Or handle in external listener?
-
         // Send plugin message requesting player's Location
         player.getCurrentServer().ifPresentOrElse(serverConnection -> {
             boolean status = serverConnection.sendPluginMessage(
-                WarpVelocity.CREATE_CHANNEL_ID,
+                ChannelIdentifiers.CREATE_CHANNEL_ID,
                 RequestLocationMessage.serialise(CreateSubchannels.CREATE_PUBLIC, warpName)
             );
 

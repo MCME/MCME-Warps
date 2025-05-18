@@ -2,6 +2,7 @@ package com.mcmiddleearth.warps.velocity.warps;
 
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
@@ -27,11 +28,26 @@ public class WarpManager {
     }
 
     public static @Nullable Warp getWarp(String warpName) {
-        if (warps.containsKey(warpName)) {
-            return warps.get(warpName);
+        String normalisedWarpName = warpName.toLowerCase();
+
+        if (warps.containsKey(normalisedWarpName)) {
+            return warps.get(normalisedWarpName);
         }
 
         return null;
+    }
+
+//    public boolean warpExists(String name) {
+//        return warps.containsKey(name.toLowerCase());
+//    }
+
+//    public static Collection<Warp> getAllWarps() {
+//        return warps.values();
+//    }
+
+    public static Set<String> getAllWarpNames() {
+//        return new ArrayList<String>(warps.keySet());
+        return warps.keySet();
     }
 
     public static void saveWarp(Warp warp) {
@@ -58,36 +74,6 @@ public class WarpManager {
         }
     }
 
-//    public boolean warpExists(String name) {
-//        return warps.containsKey(name.toLowerCase());
-//    }
-
-//    public static Collection<Warp> getAllWarps() {
-//        return warps.values();
-//    }
-
-    public static Set<String> getAllWarpNames() {
-//        return new ArrayList<String>(warps.keySet());
-        return warps.keySet();
-    }
-
-
-    public static Warp loadWarp(Path filePath) {
-        try {
-//            if (!Files.exists(filePath)) return null;
-
-            YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
-                .path(filePath)
-                .build();
-
-            ConfigurationNode root = loader.load();
-            return root.get(Warp.class);
-        } catch (IOException e) {
-            // Q: Any point in this? Already catching in loadAllWarps
-            throw new RuntimeException("Failed to load warp from: " + filePath, e);
-        }
-    }
-
     public static void loadAllWarps() {
         if (!Files.exists(WARPS_DIRECTORY)) {
             WarpVelocity.getInstance().getLogger().warn("The warps directory does not exist ({}), skipping warp loading", WARPS_DIRECTORY);
@@ -102,9 +88,7 @@ public class WarpManager {
             for (Path file : yamlFiles) {
                 try {
                     Warp warp = loadWarp(file);
-//                    if (warp != null) {
-                        warps.put(warp.getName(), warp);
-//                    }
+                    warps.put(warp.getName(), warp);
                 } catch (Exception e) {
                     WarpVelocity.getInstance().getLogger().error("Failed to load warp at {} - {}", file, e.getMessage());
                 }
@@ -112,5 +96,14 @@ public class WarpManager {
         } catch (IOException e) {
             throw new RuntimeException("Failed to scan warp directory: " + WARPS_DIRECTORY, e);
         }
+    }
+
+    public static Warp loadWarp(Path filePath) throws ConfigurateException {
+        YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
+            .path(filePath)
+            .build();
+
+        ConfigurationNode root = loader.load();
+        return root.get(Warp.class);
     }
 }

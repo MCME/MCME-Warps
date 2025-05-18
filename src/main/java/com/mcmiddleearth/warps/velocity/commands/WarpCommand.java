@@ -1,8 +1,8 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
-import com.mcmiddleearth.warps.core.TeleportMessage;
+import com.mcmiddleearth.warps.core.messageprotocols.TeleportMessage;
 import com.mcmiddleearth.warps.core.SimpleLocation;
-import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
@@ -93,7 +93,7 @@ public final class WarpCommand {
 
         // Messaging the backend server, using the sender's connection
         serverConnection.sendPluginMessage(
-            WarpVelocity.MAIN_ID,
+            ChannelIdentifiers.MAIN_ID,
             TeleportMessage.serialise(TeleportMessage.Subchannel.TELEPORT, data)
         );
     }

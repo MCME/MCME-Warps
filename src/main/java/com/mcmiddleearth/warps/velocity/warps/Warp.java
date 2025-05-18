@@ -2,22 +2,24 @@ package com.mcmiddleearth.warps.velocity.warps;
 
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
+import org.spongepowered.configurate.objectmapping.meta.Required;
 
 @ConfigSerializable
 public class Warp {
-    // Used by configurate to load & dump Warps to yaml
+    // Used by configurate to load & dump instances of this class (Warps) to yaml
     public Warp() {}
 
     // creator
     // invitations
     // permissions
     // title, subtitle, message?
-    // region
+    // region? -> Only for main & moria?
     // popularity count
 
-    private String name;
-    private String server;
-    private SimpleLocation location;
+    // @Required, causes an error to be thrown if configurate tries to load a warp.yml file without that field
+    @Required private String name;
+    @Required private String server;
+    @Required private SimpleLocation location;
 
     public Warp(String name, String server, SimpleLocation location) {
         this.name = name;
@@ -27,10 +29,5 @@ public class Warp {
 
     public String getName() { return name; }
     public String getServer() { return server; }
-    // TODO: Rename to ...?
     public SimpleLocation getLocation() { return location; }
-
-    public void setServer(String name) {this.server = name;}
-    public void setLocation(SimpleLocation location) {this.location = location;}
-    public void setName(String name) {this.name = name;}
 }
