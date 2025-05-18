@@ -48,6 +48,7 @@ public class WarpVelocity {
     // Q: Why getInstance().getDataFolder and not just getDataFolder() directly???
     public Path getDataFolder() { return dataFolder; }
     public Logger getLogger() { return logger; }
+    public ProxyServer getProxy() { return proxy; }
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
@@ -63,7 +64,7 @@ public class WarpVelocity {
             .plugin(this)
             .build();
         LiteralCommandNode<CommandSource> commandNode = BrigadierCommand.literalArgumentBuilder("warp")
-            .then(WarpCommand.register(proxy))
+            .then(WarpCommand.register())
 //            .then(Random.register())
             .then(Create.register())
 //            .then(PrivateCreate.register())

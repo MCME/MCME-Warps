@@ -8,16 +8,15 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;
 import com.velocitypowered.api.proxy.ServerConnection;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 
 public class MessageListener {
     @Subscribe
     public void onPluginMessageFromBackend(PluginMessageEvent event) {
-        // Check if the identifier matches first, no matter the source.
         if (!ChannelIdentifiers.CREATE_CHANNEL_ID.equals(event.getIdentifier())) {
             return;
         }
 
-        // only attempt parsing the data if the source is a backend server
         if (!(event.getSource() instanceof ServerConnection backend)) {
             return;
         }
@@ -33,8 +32,11 @@ public class MessageListener {
         // TODO: Store in different location depending on subchannel == PRIVATE
         // result.subchannel()
 
-        WarpManager.saveWarp(newWarp);
-
-        backend.getPlayer().sendMessage(Component.text("Warp created!"));
+        boolean addResult = WarpManager.addWarp(newWarp);
+        if (addResult) {
+            backend.getPlayer().sendMessage(Component.text("Warp created!", NamedTextColor.GREEN));
+        } else {
+            backend.getPlayer().sendMessage(Component.text("Failed to create warp", NamedTextColor.RED));
+        }
     }
 }

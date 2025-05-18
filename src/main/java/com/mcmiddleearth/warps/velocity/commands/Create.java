@@ -28,7 +28,7 @@ public class Create {
             );
     }
 
-    // Q: Forward create commands to the backend instead?
+    // Q: Forward /warp create to the backend instead?
     // - Removes the need for RequestLocationMessages
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
 
@@ -40,9 +40,7 @@ public class Create {
         }
 
         final String warpName = context.getArgument("warpName", String.class);
-        // TODO: Make a boolean helper in WarpManager
-        Warp warp = WarpManager.getWarp(warpName);
-        if (warp != null) {
+        if (WarpManager.warpExists(warpName)) {
             throw WARP_EXISTS.create();
         }
 

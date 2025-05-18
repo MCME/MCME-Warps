@@ -3,6 +3,7 @@ package com.mcmiddleearth.warps.velocity.commands;
 import com.mcmiddleearth.warps.core.messageprotocols.TeleportMessage;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
+import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
@@ -31,14 +32,13 @@ public final class WarpCommand {
     private static final SimpleCommandExceptionType WARP_NOT_FOUND =
         new SimpleCommandExceptionType(() -> "No warp found with that name");
 
-    // Q: Access proxy via static instead of prop drilling?
-    public static RequiredArgumentBuilder<CommandSource, String> register(ProxyServer proxy) {
+    public static RequiredArgumentBuilder<CommandSource, String> register() {
             return BrigadierCommand.requiredArgumentBuilder("warpName", StringArgumentType.word())
                 .suggests(WarpCommand::suggest)
-                .executes(ctx -> WarpCommand.execute(ctx, proxy));
+                .executes(WarpCommand::execute);
     }
 
-    private static int execute(CommandContext<CommandSource> context, ProxyServer proxy) throws CommandSyntaxException {
+    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
         CommandSource source = context.getSource();
         if (!(source instanceof Player player)) {
             // Q: Easy way to add this to the entire /warp tree? Using permissions?
@@ -68,6 +68,7 @@ public final class WarpCommand {
             return Command.SINGLE_SUCCESS;
         }
 
+        ProxyServer proxy = WarpVelocity.getInstance().getProxy();
         Optional<RegisteredServer> optTargetServer = proxy.getServer(targetServerName);
         optTargetServer.ifPresent(targetServer -> {
             player.createConnectionRequest(targetServer).connectWithIndication()

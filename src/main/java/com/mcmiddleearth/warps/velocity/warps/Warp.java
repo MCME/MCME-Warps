@@ -9,6 +9,7 @@ public class Warp {
     // Used by configurate to load & dump instances of this class (Warps) to yaml
     public Warp() {}
 
+    // private/public
     // creator
     // invitations
     // permissions

@@ -11,24 +11,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 public class WarpManager {
     private static final HashMap<String, Warp> warps = new HashMap<>();
 
-    // FIXME: Feels risky, but getInstance seems to already be populated?
     private static final Path WARPS_DIRECTORY =  WarpVelocity.getInstance().getDataFolder().resolve("warps");
 
-    // Q: Don't use static? Instantiate with dataFolder instead and re-use that 1 instance?
-    public WarpManager() {
-//        this.file = new File(dataFolder, "warps.yml");
-//        this.config = YamlConfiguration.loadConfiguration(file);
-//        loadWarps();
+    public static boolean warpExists(String warpName) {
+        return warps.containsKey(normalise(warpName));
     }
 
     public static @Nullable Warp getWarp(String warpName) {
-        String normalisedWarpName = warpName.toLowerCase();
+        String normalisedWarpName = normalise(warpName);
 
         if (warps.containsKey(normalisedWarpName)) {
             return warps.get(normalisedWarpName);
@@ -37,30 +33,37 @@ public class WarpManager {
         return null;
     }
 
-//    public boolean warpExists(String name) {
-//        return warps.containsKey(name.toLowerCase());
-//    }
+    public static List<String> getAllWarpNames() {
+        return warps.values().stream().map(Warp::getName).toList();
+    }
 
-//    public static Collection<Warp> getAllWarps() {
-//        return warps.values();
-//    }
+    public static boolean addWarp(Warp newWarp) {
+        try {
+            putWarp(newWarp);
+            saveWarp(newWarp);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
-    public static Set<String> getAllWarpNames() {
-//        return new ArrayList<String>(warps.keySet());
-        return warps.keySet();
+    private static void putWarp(Warp warp) throws Exception {
+        String warpName = normalise(warp.getName());
+
+        if (warps.containsKey(warpName)) {
+            throw new Exception("Warp already exists");
+        }
+        warps.put(warpName, warp);
     }
 
     public static void saveWarp(Warp warp) {
-        // Q: Good idea to store warp names lowercase?
-//        warps.put(warp.getName().toLowerCase(), warp);
-        // FIXME: Prevent dupes
-        warps.put(warp.getName(), warp);
+        // TODO: If warp isPrivate then store under the creator's name - instead of server/world
 
         Path path = WARPS_DIRECTORY
-            // Server & World directories exist to make warps easier to manage manually
+            // server & world directories exist to make warps easier to manage manually
             .resolve(warp.getServer())
             .resolve(warp.getLocation().world())
-            .resolve(warp.getName() + ".yml");
+            .resolve(normalise(warp.getName()) + ".yml");
         YamlConfigurationLoader loader = YamlConfigurationLoader.builder().path(path).build();
 
         try {
@@ -88,7 +91,7 @@ public class WarpManager {
             for (Path file : yamlFiles) {
                 try {
                     Warp warp = loadWarp(file);
-                    warps.put(warp.getName(), warp);
+                    putWarp(warp);
                 } catch (Exception e) {
                     WarpVelocity.getInstance().getLogger().error("Failed to load warp at {} - {}", file, e.getMessage());
                 }
@@ -105,5 +108,9 @@ public class WarpManager {
 
         ConfigurationNode root = loader.load();
         return root.get(Warp.class);
+    }
+
+    private static String normalise(String name) {
+        return name.trim().toLowerCase(Locale.ROOT);
     }
 }
