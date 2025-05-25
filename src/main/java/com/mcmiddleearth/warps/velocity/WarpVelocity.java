@@ -2,6 +2,7 @@ package com.mcmiddleearth.warps.velocity;
 
 import com.google.inject.Inject;
 import com.mcmiddleearth.warps.velocity.commands.Create;
+import com.mcmiddleearth.warps.velocity.commands.Delete;
 import com.mcmiddleearth.warps.velocity.commands.WarpCommand;
 import com.mcmiddleearth.warps.velocity.listener.MessageListener;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -69,8 +70,18 @@ public class WarpVelocity {
             .then(Create.register())
 //            .then(PrivateCreate.register())
 //            .then(Rename.register())
-//            .then(Delete.register())
+            .then(Delete.register())
             .build();
         commandManager.register(commandMeta, new BrigadierCommand(commandNode));
     }
+
+//    @Subscribe
+//    public void onProxyReload(ProxyReloadEvent event) {
+//        this.reloadVoiceProxyServer();
+//    }
+//
+//    @Subscribe
+//    public void onProxyShutdown(ProxyShutdownEvent event) {
+//        if (this.voiceProxyServer != null) this.voiceProxyServer.interrupt();
+//    }
 }

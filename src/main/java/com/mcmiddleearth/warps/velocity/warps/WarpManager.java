@@ -1,6 +1,7 @@
 package com.mcmiddleearth.warps.velocity.warps;
 
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.velocitypowered.api.proxy.Player;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
@@ -15,9 +16,9 @@ import java.util.Locale;
 import java.util.stream.Stream;
 
 public class WarpManager {
-    private static final HashMap<String, Warp> warps = new HashMap<>();
-
     private static final Path WARPS_DIRECTORY =  WarpVelocity.getInstance().getDataFolder().resolve("warps");
+
+    private static final HashMap<String, Warp> warps = new HashMap<>();
 
     public static boolean warpExists(String warpName) {
         return warps.containsKey(normalise(warpName));
@@ -26,7 +27,7 @@ public class WarpManager {
     public static @Nullable Warp getWarp(String warpName) {
         String normalisedWarpName = normalise(warpName);
 
-        if (warps.containsKey(normalisedWarpName)) {
+        if (warpExists(warpName)) {
             return warps.get(normalisedWarpName);
         }
 
@@ -36,15 +37,11 @@ public class WarpManager {
     public static List<String> getAllWarpNames() {
         return warps.values().stream().map(Warp::getName).toList();
     }
-
-    public static boolean addWarp(Warp newWarp) {
-        try {
-            putWarp(newWarp);
-            saveWarp(newWarp);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+    public static List<String> getAllModifiableWarpNames(Player player) {
+        return warps.values().stream().filter(warp -> warp.isModifiable(player)).map(Warp::getName).toList();
+    }
+    public static List<String> getAllUsableWarpNames(Player player) {
+        return warps.values().stream().filter(warp -> warp.isUsable(player)).map(Warp::getName).toList();
     }
 
     private static void putWarp(Warp warp) throws Exception {
@@ -56,14 +53,34 @@ public class WarpManager {
         warps.put(warpName, warp);
     }
 
-    public static void saveWarp(Warp warp) {
-        // TODO: If warp isPrivate then store under the creator's name - instead of server/world
+    public static boolean addWarp(Warp newWarp) {
+        try {
+            putWarp(newWarp);
+            saveWarp(newWarp);
+            return true;
+        } catch (Exception e) {
+            WarpVelocity.getInstance().getLogger().error("Failed to add warp {} - {}", newWarp.getName(), e.getMessage());
+            return false;
+        }
+    }
 
-        Path path = WARPS_DIRECTORY
-            // server & world directories exist to make warps easier to manage manually
-            .resolve(warp.getServer())
-            .resolve(warp.getLocation().world())
-            .resolve(normalise(warp.getName()) + ".yml");
+    public static void deleteWarp(Warp warp) {
+        String warpName = normalise(warp.getName());
+        warps.remove(warpName);
+
+        Path warpPath = getWarpPath(warp);
+        try {
+            Files.deleteIfExists(warpPath);
+        } catch (IOException e) {
+            WarpVelocity.getInstance().getLogger()
+                .error("An error occurred whilst deleting the warp file at {} - {}",
+                    warpPath, e.getMessage()
+                );
+        }
+    };
+
+    public static void saveWarp(Warp warp) {
+        Path path = getWarpPath(warp);
         YamlConfigurationLoader loader = YamlConfigurationLoader.builder().path(path).build();
 
         try {
@@ -73,7 +90,10 @@ public class WarpManager {
             root.set(Warp.class, warp);
             loader.save(root);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            WarpVelocity.getInstance().getLogger()
+                .error( "An error occurred whilst saving warp {} - {}",
+                    warp.getName(), e.getMessage()
+                );
         }
     }
 
@@ -110,7 +130,20 @@ public class WarpManager {
         return root.get(Warp.class);
     }
 
+    // Utils
     private static String normalise(String name) {
         return name.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static Path getWarpPath(Warp warp) {
+        String warpName = normalise(warp.getName());
+
+        // TODO: If warp is Private then replace sever/world with creatorUUID
+        Path path = WARPS_DIRECTORY
+            .resolve(warp.getServer())
+            .resolve(warp.getLocation().world())
+            .resolve(warpName + ".yml");
+
+        return path;
     }
 }

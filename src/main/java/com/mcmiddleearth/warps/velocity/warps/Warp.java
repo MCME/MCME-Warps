@@ -1,12 +1,13 @@
 package com.mcmiddleearth.warps.velocity.warps;
 
 import com.mcmiddleearth.warps.core.SimpleLocation;
+import com.velocitypowered.api.proxy.Player;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Required;
 
 @ConfigSerializable
 public class Warp {
-    // Used by configurate to load & dump instances of this class (Warps) to yaml
+    // Used by configurate to load & dump instances of this class (Warp) to yaml
     public Warp() {}
 
     // private/public
@@ -17,10 +18,11 @@ public class Warp {
     // region? -> Only for main & moria?
     // popularity count
 
-    // @Required, causes an error to be thrown if configurate tries to load a warp.yml file without that field
+    // If a @Required field is missing when loading a warp.yml file, configurate errors and doesn't load that warp
     @Required private String name;
     @Required private String server;
     @Required private SimpleLocation location;
+    @Required private boolean isPublic;
 
     public Warp(String name, String server, SimpleLocation location) {
         this.name = name;
@@ -31,4 +33,26 @@ public class Warp {
     public String getName() { return name; }
     public String getServer() { return server; }
     public SimpleLocation getLocation() { return location; }
+
+    public boolean isUsable(Player player) {
+        if (isPublic) {
+            // if no perms return true
+            // if player meets perms return true
+            return false;
+        }
+
+        // Private warp
+        // if moderator return true??? (user has mod perms)
+        // if creator return true
+        return false;
+    }
+
+    public boolean isModifiable(Player player) {
+        if (isPublic) {
+            // if public then only staff
+        }
+
+        // if private then only creator
+        return false;
+    }
 }
