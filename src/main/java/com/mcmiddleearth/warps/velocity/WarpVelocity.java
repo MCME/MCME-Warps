@@ -1,9 +1,7 @@
 package com.mcmiddleearth.warps.velocity;
 
 import com.google.inject.Inject;
-import com.mcmiddleearth.warps.velocity.commands.Create;
-import com.mcmiddleearth.warps.velocity.commands.Delete;
-import com.mcmiddleearth.warps.velocity.commands.WarpCommand;
+import com.mcmiddleearth.warps.velocity.commands.*;
 import com.mcmiddleearth.warps.velocity.listener.MessageListener;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.tree.LiteralCommandNode;
@@ -66,9 +64,9 @@ public class WarpVelocity {
             .build();
         LiteralCommandNode<CommandSource> commandNode = BrigadierCommand.literalArgumentBuilder("warp")
             // subcommands
+            .then(RandomCommand.register())
             .then(Create.register())
             .then(Delete.register())
-//            .then(Random.register())
 //            .then(PrivateCreate.register())
 //            .then(Rename.register())
             // The warp command is a greedy string argument, so it must be added last!

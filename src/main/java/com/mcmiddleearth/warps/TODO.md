@@ -8,7 +8,6 @@
 
 # TODO
 ## Commands
-  * random
   * private create
     * public/private & invitations
       * class.Warp & suggestions
