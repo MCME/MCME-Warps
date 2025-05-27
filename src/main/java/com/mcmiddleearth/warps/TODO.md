@@ -6,7 +6,7 @@
   * Make any warp private/public?
 * Welcome/Title/Subtitle needed?
 
-# TODO:
+# TODO
 ## Commands
   * random
   * private create
@@ -57,7 +57,8 @@
 # asdf
 * Only store warp counts onPluginDisable?
 * Migrate DB warps to .yml warps
-* Multi-project/module repository?
+* Multi-project/module repository -> might work now that I'm creating a fat JAR
+* Better formatting
 * Dynmap integration
   * Custom warp symbol for WIP locations/warps
     * https://www.mcmiddleearth.com/community/threads/change-dynmap-icons-for-warps.7068/

@@ -22,7 +22,18 @@ public class Warp {
     @Required private String name;
     @Required private String server;
     @Required private SimpleLocation location;
-    @Required private boolean isPublic;
+    private boolean isPublic;
+//    @Required private boolean isPublic;
+
+//    enum Type {
+//        /**
+//         * A private Warp.
+//         */
+//        PRIVATE, /**
+//         * A public Warp.
+//         */
+//        PUBLIC
+//    }
 
     public Warp(String name, String server, SimpleLocation location) {
         this.name = name;
@@ -35,24 +46,35 @@ public class Warp {
     public SimpleLocation getLocation() { return location; }
 
     public boolean isUsable(Player player) {
-        if (isPublic) {
-            // if no perms return true
-            // if player meets perms return true
-            return false;
-        }
+//        if (isPublic) {
+//            // if no perms return true
+//            // if player meets perms return true
+//            return false;
+//        }
 
         // Private warp
         // if moderator return true??? (user has mod perms)
         // if creator return true
-        return false;
+//        return false;
+
+        return true;
     }
 
     public boolean isModifiable(Player player) {
-        if (isPublic) {
-            // if public then only staff
-        }
+//        if (isPublic) {
+//            // if public then only staff
+//        }
 
         // if private then only creator
-        return false;
+//        return false;
+
+        return true;
     }
+
+//    public boolean isModifiableBy(Player player) {
+//        return player.getUniqueId().equals(owner) || player.hasPermission("warp.admin");
+//    }
+//    public boolean isUsableBy(Player player) {
+//        return isPublic || isModifiableBy(player);
+//    }
 }

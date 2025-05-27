@@ -23,7 +23,7 @@ public class Create {
 
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("create")
-            .then(BrigadierCommand.requiredArgumentBuilder("warpName", StringArgumentType.word())
+            .then(BrigadierCommand.requiredArgumentBuilder("name", StringArgumentType.greedyString())
                     .executes(Create::execute)
             );
     }
@@ -39,12 +39,13 @@ public class Create {
             return Command.SINGLE_SUCCESS;
         }
 
-        final String warpName = context.getArgument("warpName", String.class);
+        final String warpName = context.getArgument("name", String.class);
         if (WarpManager.warpExists(warpName)) {
             throw WARP_EXISTS.create();
         }
 
-        // TODO: Ensure warpName is valid (doesn't start with '-')
+        // TODO: Ensure warpName is valid (doesn't start with '-' etc.)
+        // FIXME: Now using greedy, need to prevent bad file names e.g. invalid characters /?!
 
         // Send plugin message requesting player's Location
         player.getCurrentServer().ifPresentOrElse(serverConnection -> {

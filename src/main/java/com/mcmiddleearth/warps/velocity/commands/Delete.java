@@ -1,10 +1,11 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
@@ -15,6 +16,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class Delete {
@@ -25,10 +27,12 @@ public class Delete {
     private static final SimpleCommandExceptionType NOT_ALLOWED =
         new SimpleCommandExceptionType(() -> "You are not allowed to perform this action");
 
-    public static RequiredArgumentBuilder<CommandSource, String> register() {
-        return BrigadierCommand.requiredArgumentBuilder("warpName", StringArgumentType.word())
-            .suggests(Delete::suggest)
-            .executes(Delete::execute);
+    public static LiteralArgumentBuilder<CommandSource> register() {
+        return BrigadierCommand.literalArgumentBuilder("delete")
+            .then(BrigadierCommand.requiredArgumentBuilder("warpName", StringArgumentType.greedyString())
+                .suggests(Delete::suggest)
+                .executes(Delete::execute)
+            );
     }
 
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
@@ -54,25 +58,16 @@ public class Delete {
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
-        // .filter(completion -> matchesAnySegment(completion, builder.getRemainingLowerCase()))
-
         if (!(context.getSource() instanceof Player player)) {
             return Suggestions.empty();
         }
 
-        WarpManager.getAllModifiableWarpNames(player)
-            .stream()
-            // TODO: Sort by:
-            // exact match (case sensitive), exact match (ignore case)
-            // contains (case sensitive & insensitive)
-            // typos and small changes (like ' and spaces)
-            // Priorisation: set priority, same server, same world, (possible addition: visits, popularity)
-            // Have a default alphabetical sort (until popularity sort is added?)
-            // Fuzzy matching? -> https://github.com/xdrop/fuzzywuzzy
-            // Q: Always store warpNames in lowercase?
-            .filter(c -> c.toLowerCase().startsWith(builder.getRemainingLowerCase()))
-            .forEach(builder::suggest);
+        String input = builder.getRemainingLowerCase();
+        List<String> warpNames = WarpManager.getAllModifiableWarpNames(player);
+        List<String> suggestions = WarpSuggester.getSuggestions(warpNames, input);
 
+        // Q: Add a tooltip? Display server/word?, creator?, region?
+        suggestions.forEach(builder::suggest);
         return builder.buildFuture();
     }
 }

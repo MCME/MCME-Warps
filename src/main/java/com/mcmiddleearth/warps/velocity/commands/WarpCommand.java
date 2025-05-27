@@ -4,6 +4,7 @@ import com.mcmiddleearth.warps.core.messageprotocols.TeleportMessage;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
@@ -24,16 +25,20 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public final class WarpCommand {
-
+    // TODO: Extract
     private static final SimpleCommandExceptionType WARP_NOT_FOUND =
         new SimpleCommandExceptionType(() -> "No warp found with that name");
 
+    private static final SimpleCommandExceptionType NOT_ALLOWED =
+        new SimpleCommandExceptionType(() -> "You are not allowed to perform this action");
+
     public static RequiredArgumentBuilder<CommandSource, String> register() {
-            return BrigadierCommand.requiredArgumentBuilder("warpName", StringArgumentType.word())
+            return BrigadierCommand.requiredArgumentBuilder("destination", StringArgumentType.greedyString())
                 .suggests(WarpCommand::suggest)
                 .executes(WarpCommand::execute);
     }
@@ -47,10 +52,14 @@ public final class WarpCommand {
         }
 
         // TODO: Make this a re-usable helper
-        final String warpName = context.getArgument("warpName", String.class);
+        final String warpName = context.getArgument("destination", String.class);
         Warp warp = WarpManager.getWarp(warpName);
         if (warp == null) {
             throw WARP_NOT_FOUND.create();
+        }
+
+        if (!warp.isUsable(player)) {
+            throw NOT_ALLOWED.create();
         }
 
         Optional<ServerConnection> optCurrServer = player.getCurrentServer();
@@ -100,22 +109,49 @@ public final class WarpCommand {
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
-        // .filter(completion -> matchesAnySegment(completion, builder.getRemainingLowerCase()))
+        if (!(context.getSource() instanceof Player player)) {
+            return Suggestions.empty();
+        }
 
-        WarpManager.getAllWarpNames()
-            .stream()
-            // TODO: Sort by:
-            // exact match (case sensitive), exact match (ignore case)
-            // contains (case sensitive & insensitive)
-            // typos and small changes (like ' and spaces)
-            // Priorisation: set priority, same server, same world, (possible addition: visits, popularity)
-            // Have a default alphabetical sort (until popularity sort is added?)
-            // Fuzzy matching? -> https://github.com/xdrop/fuzzywuzzy
-            // Q: Always store warpNames in lowercase?
-            .filter(c -> c.toLowerCase().startsWith(builder.getRemainingLowerCase()))
-            .forEach(builder::suggest);
+        String input = builder.getRemainingLowerCase();
+        boolean isSearchEmpty = input.isEmpty();
+        if (isSearchEmpty) {
+            // Only suggest some recommended warps - so that commands like pcreate & random are not hidden
+            // TODO: Use getWarp for these?
+            builder.suggest("Minas Tirith");
+            builder.suggest("Cair Andros");
+            builder.suggest("Dol Amroth");
+            return builder.buildFuture();
+        }
 
+        List<String> warpNames = WarpManager.getAllUsableWarpNames(player);
+        List<String> suggestions = WarpSuggester.getSuggestions(warpNames, input);
+
+        // Q: Add a tooltip? Display server/word?, creator?, region?
+        suggestions.forEach(builder::suggest);
         return builder.buildFuture();
+
+        // FIXME: Tab completion in the middle of a word
+//        int start = builder.getStart(); // Required for Suggestion offsets
+//        String fullInput = builder.getInput();
+//
+//        String input = builder.getInput().substring(builder.getStart());
+//        StringRange range = StringRange.between(builder.getStart(), builder.getInput().length());
+//        System.out.println("input - " + input + ", range - " + range);
+//
+//        for (Map.Entry<String, Double> entry : matches) {
+//            String suggestion = entry.getKey();
+//            builder.suggestions().add(new Suggestion(
+//                builder.getRange(),
+//                suggestion,
+//                null // You can also add tooltip text here
+//            ));
+//        }
+//
+//        return CompletableFuture.completedFuture(new Suggestions(
+//            StringRange.between(builder.getStart(), builder.getInput().length()),
+//            suggestions
+//        ));
     }
 }
 

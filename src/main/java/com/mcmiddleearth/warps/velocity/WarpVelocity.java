@@ -65,12 +65,14 @@ public class WarpVelocity {
             .plugin(this)
             .build();
         LiteralCommandNode<CommandSource> commandNode = BrigadierCommand.literalArgumentBuilder("warp")
-            .then(WarpCommand.register())
-//            .then(Random.register())
+            // subcommands
             .then(Create.register())
+            .then(Delete.register())
+//            .then(Random.register())
 //            .then(PrivateCreate.register())
 //            .then(Rename.register())
-            .then(Delete.register())
+            // The warp command is a greedy string argument, so it must be added last!
+            .then(WarpCommand.register())
             .build();
         commandManager.register(commandMeta, new BrigadierCommand(commandNode));
     }
