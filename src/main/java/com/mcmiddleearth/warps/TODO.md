@@ -14,7 +14,7 @@
     * user limit -> msg user how many remaining
     * automatically prefix with zzz-name-...
     * storage location
-  * delete, rename
+  * delete, rename, move
     * creator (+ staff/mods?)
     * *Should perms override creator?* Eg. ex staff member deleting Minas Tirith
   * welcome, title, subtitle
@@ -23,21 +23,23 @@
   * public, private, invite, uninvite
   * permission
   * favourite
-* Reloading warps - /warp update?
+
+* Reloading warps after yaml update - /warp update/reloadAll?
 * Automatically set warp region based on nearest warp?
   * Inherit the region from the average of the 5 nearest?
 * Hide delete/rename/update commands until a player has made a private warp
-  * player.updateCommands() after pcreate
+  * player.updateCommands() after pcreate (if they have 0 modifiable warps)
 
 ## General
 * Improved errors, e.g. if server/world don't exist in /warp <name>
 * Permissions for individual warps
 * Warp prefixes [pr, pl, fr, th, fav?]
-* Warp autocomplete - choose top suggestion if warpName invalid
-  * Just call the suggestions method with a fake context? or extract the internals?
+* Warp autocomplete - if there's only 1 suggestion then no need to tab complete
+  * If <destination> doesn't exist then see how many suggestions there are
+    * If only 1 then use it!
 * Warp name aliases?
   * Have an alias array, only show 1 alias/primary at a time in the suggestions
-* Warp name length limit?
+* Warp name length limit? config.yml?
 
 # /warp suggestions
 * <WarpName> until user types something? Like "/teleport"?

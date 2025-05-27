@@ -66,9 +66,8 @@ public class WarpVelocity {
             // subcommands
             .then(RandomCommand.register())
             .then(Create.register())
+            .then(PrivateCreate.register())
             .then(Delete.register())
-//            .then(PrivateCreate.register())
-//            .then(Rename.register())
             // The warp command is a greedy string argument, so it must be added last!
             .then(WarpCommand.register())
             .build();

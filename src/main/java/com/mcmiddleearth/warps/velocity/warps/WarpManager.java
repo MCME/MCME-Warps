@@ -138,12 +138,15 @@ public class WarpManager {
     private static Path getWarpPath(Warp warp) {
         String warpName = normalise(warp.getName());
 
-        // TODO: If warp is Private then replace sever/world with creatorUUID
-        Path path = WARPS_DIRECTORY
-            .resolve(warp.getServer())
-            .resolve(warp.getLocation().world())
-            .resolve(warpName + ".yml");
+        if (warp.isOfType(Warp.Type.PUBLIC)) {
+            return WARPS_DIRECTORY
+                .resolve(warp.getServer())
+                .resolve(warp.getLocation().world())
+                .resolve(warpName + ".yml");
+        }
 
-        return path;
+        return WARPS_DIRECTORY
+            .resolve(warp.getCreator().toString())
+            .resolve(warpName + ".yml");
     }
 }

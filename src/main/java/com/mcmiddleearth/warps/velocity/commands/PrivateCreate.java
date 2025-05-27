@@ -3,7 +3,6 @@ package com.mcmiddleearth.warps.velocity.commands;
 import com.mcmiddleearth.warps.core.CreateSubchannels;
 import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
-import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -16,25 +15,22 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
-public class Create {
+public class PrivateCreate {
 
     private static final SimpleCommandExceptionType WARP_EXISTS =
         new SimpleCommandExceptionType(() -> "A warp already exists with that name");
 
     public static LiteralArgumentBuilder<CommandSource> register() {
-        return BrigadierCommand.literalArgumentBuilder("create")
+        return BrigadierCommand.literalArgumentBuilder("pcreate")
             .then(BrigadierCommand.requiredArgumentBuilder("name", StringArgumentType.greedyString())
-                    .executes(Create::execute)
+                .executes(PrivateCreate::execute)
             );
     }
 
-    // Q: Forward /warp create to the backend instead?
-    // - Removes the need for RequestLocationMessages
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
-
         CommandSource source = context.getSource();
+
         if (!(source instanceof Player player)) {
-            // Q: Easy way to add this to the entire /warp tree? Using permissions?
             source.sendMessage(Component.text("Only players can run this command."));
             return Command.SINGLE_SUCCESS;
         }
@@ -53,7 +49,7 @@ public class Create {
 
             boolean status = serverConnection.sendPluginMessage(
                 ChannelIdentifiers.CREATE_CHANNEL_ID,
-                RequestLocationMessage.serialise(CreateSubchannels.CREATE_PUBLIC, warpName)
+                RequestLocationMessage.serialise(CreateSubchannels.CREATE_PRIVATE, warpName)
             );
 
             // TODO

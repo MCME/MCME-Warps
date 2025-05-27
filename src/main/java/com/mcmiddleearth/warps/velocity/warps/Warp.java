@@ -5,70 +5,78 @@ import com.velocitypowered.api.proxy.Player;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Required;
 
+import java.util.UUID;
+
 @ConfigSerializable
 public class Warp {
-    // Used by configurate to load & dump instances of this class (Warp) to yaml
+    // Used by configurate to load & dump instances of this class (Warp) to yaml (using reflection)
     public Warp() {}
 
-    // private/public
-    // creator
+    /** The warp type - private or public */
+    public enum Type {
+        PRIVATE,
+        PUBLIC
+    }
+
+    // TODO:
     // invitations
     // permissions
     // title, subtitle, message?
     // region? -> Only for main & moria?
-    // popularity count
+    // player warp counter
 
     // If a @Required field is missing when loading a warp.yml file, configurate errors and doesn't load that warp
+    @Required private UUID creator;
     @Required private String name;
     @Required private String server;
     @Required private SimpleLocation location;
-    private boolean isPublic;
-//    @Required private boolean isPublic;
+    @Required private Warp.Type type;
 
-//    enum Type {
-//        /**
-//         * A private Warp.
-//         */
-//        PRIVATE, /**
-//         * A public Warp.
-//         */
-//        PUBLIC
-//    }
-
-    public Warp(String name, String server, SimpleLocation location) {
+    public Warp(UUID creator, String name, String server, SimpleLocation location, Warp.Type type) {
+        this.creator = creator;
         this.name = name;
         this.server = server;
         this.location = location;
+        this.type = type;
     }
 
     public String getName() { return name; }
     public String getServer() { return server; }
     public SimpleLocation getLocation() { return location; }
+    public UUID getCreator() { return creator; }
 
-    public boolean isUsable(Player player) {
-//        if (isPublic) {
-//            // if no perms return true
-//            // if player meets perms return true
-//            return false;
-//        }
-
-        // Private warp
-        // if moderator return true??? (user has mod perms)
-        // if creator return true
-//        return false;
-
-        return true;
+    public boolean isOfType(Warp.Type type) {
+        return this.type.equals(type);
     }
 
-    public boolean isModifiable(Player player) {
-//        if (isPublic) {
-//            // if public then only staff
+    /**
+     * A filter to limit what players can view and use this warp
+     */
+    public boolean isUsable(Player player) {
+        if (isOfType(Type.PUBLIC)) {
+            // TODO: Check player meets the perms (if any)
+            return true;
+        }
+
+        // Q: What about staff/moderators?
+        // TODO: Invitees
+//        if (warp.isPlayerInvited(player.getUniqueId())) {
+//            return true;
 //        }
+        return player.getUniqueId().equals(creator);
+    }
 
-        // if private then only creator
-//        return false;
+    /**
+     * A filter to limit what players can view and modify this warp
+     */
+    public boolean isModifiable(Player player) {
+        if (isOfType(Type.PUBLIC)) {
+            // TODO: Player must have staff/moderator perms
+            return true;
+        }
 
-        return true;
+        // Q: What about staff/moderators?
+        return player.getUniqueId().equals(creator);
     }
 
 //    public boolean isModifiableBy(Player player) {
