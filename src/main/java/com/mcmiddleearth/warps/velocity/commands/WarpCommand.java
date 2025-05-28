@@ -131,7 +131,8 @@ public final class WarpCommand {
         suggestions.forEach(builder::suggest);
         return builder.buildFuture();
 
-        // FIXME: Tab completion in the middle of a word
+        // FIXME: tab completion can trigger in the middle of the greedy string
+        //   * Fixed by manually setting the range?
 //        int start = builder.getStart(); // Required for Suggestion offsets
 //        String fullInput = builder.getInput();
 //
