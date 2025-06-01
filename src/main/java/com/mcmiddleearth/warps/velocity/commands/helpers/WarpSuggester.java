@@ -9,50 +9,52 @@ public class WarpSuggester {
     private static final int FUZZY_SUGGESTIONS_LIMIT = 3;
     private static final JaroWinklerDistance distance = new JaroWinklerDistance();
 
-    private final String rawInput;
     private final String input;
     private final List<String> warpNames;
 
     public WarpSuggester(List<String> warpNames, String rawInput) {
-        this.rawInput = rawInput;
         this.input = normalise(rawInput);
         // Q: Create a map of warpName to normalisedWarpName?
         this.warpNames = warpNames;
     }
 
+    // FIXME: Requires WarpManager to also not care about apostrophes
+    // -> share a base normaliser?
     private static String normalise(String s) {
         return s.toLowerCase(Locale.ROOT)
-            .replaceAll("[^a-z0-9 ]", "") // keep letters, digits, and spaces
-            .replaceAll("\\s+", " ")      // collapse multiple spaces
-            .trim();
-
-//        return Normalizer.normalize(s, Normalizer.Form.NFD)
-//            .replaceAll("\\p{M}", "") // Remove diacritics
-//            .toLowerCase(Locale.ROOT)
-//            .trim();
+            .replace("'", "")
+            // Collapse multiple spaces
+            .replaceAll("\\s+", " ")
+            // Can't use trim otherwise startsWith doesn't filter properly
+            .stripLeading();
     }
 
     public List<String> getSuggestions() {
-        if (rawInput.isEmpty()) { return warpNames; }
+        if (input.isEmpty()) { return warpNames; }
 
         List<String> startsWithSuggestions = getStartsWithSuggestions();
 
-        // Tab completion only replaces a single word
-        // Therefore if the user has entered >1 word the suggestion needs to not include
-        // what the user has already typed
-        if (rawInput.contains(" ")) { return getPartialSuggestions(rawInput, startsWithSuggestions); }
+        // Tab completion only replaces a single word,
+        // therefore if the user has entered >1 word the
+        // suggestions must not include *words* that the user has already typed
+        // TODO: Suggestions v3 - fuzzy matching on the current word
+        if (input.contains(" ")) {
+            // Even if startsWithSuggestions is empty we must return here
+            return getPartialSuggestions(input, startsWithSuggestions);
+        }
 
         if (!startsWithSuggestions.isEmpty()) {
             // There's at least 1 exact match - no need to attempt looser matching
             return startsWithSuggestions;
         }
 
-        // Q: Would it be better just to use fuzzy? Remove? Or replace with a startsWith split by space?
+        // Q: Would it be better just to use fuzzy? Or replace this with a startsWith split by space?
         List<String> containsSuggestions = getContainsSuggestions();
         if (!containsSuggestions.isEmpty()) {
             return containsSuggestions;
         }
 
+        // TODO: Explore other fuzzy matchers, like fzf
         return getFuzzySuggestions();
     }
 
@@ -60,59 +62,30 @@ public class WarpSuggester {
         return warpNames.stream().filter(warpName -> normalise(warpName).startsWith(input)).toList();
     }
 
-    private List<String> getPartialSuggestions(String rawInput, List<String> suggestions) {
-        // helm's<space> -> helm's deep
-        // helm's d -> helm's deep
-        // helm<space> -> x
-
-        // helms -> helm's deep
-        // FIXME: Normalise inside getWarp and this will be fine!
-        // helms<space> -> x
-
+    private List<String> getPartialSuggestions(String input, List<String> startsWithSuggestions) {
         List<String> updatedSuggestions = new ArrayList<>();
 
-        // trim() to remove leading spaces, split wherever there is 1 or more space
-        String[] inputWords = rawInput.trim().split("\\s+");
+        String[] inputWords = input.split(" ");
         int inputWordsCount = inputWords.length;
-        if (rawInput.endsWith(" ")) {
+        if (input.endsWith(" ")) {
             // split() doesn't include trailing empty strings, so account for that here
-            // e.g. /warp helm<space>
+            // e.g. /warp amon ^
             inputWordsCount += 1;
         }
 
-        for (String suggestion : suggestions) {
-            String[] suggestionWords = suggestion.trim().split("\\s+");
+        for (String suggestion : startsWithSuggestions) {
+            String[] suggestionWords = suggestion.split(" ");
 
-            // e.g. /warp amon hen<space>
-            if (inputWordsCount > suggestionWords.length) {
-                continue;
-            }
-
-            // comparing input (paths of th: 3) to suggestion (paths of the dead)
-            // comparing input (paths of<space>: 3) to suggestion (paths of the dead)
-            if (!isPartialWordMatch(inputWords, suggestionWords, inputWordsCount)) {
-                continue;
-            }
-
-            int firstIncompleteIndex = inputWordsCount - 1;
-            if (firstIncompleteIndex < suggestionWords.length) {
-                String remaining = String.join(" ", Arrays.copyOfRange(suggestionWords, firstIncompleteIndex, suggestionWords.length));
+            int currWordIndex = inputWordsCount - 1;
+            if (currWordIndex < suggestionWords.length) {
+                String remaining = String.join(" ", Arrays.copyOfRange(suggestionWords, currWordIndex, suggestionWords.length));
                 updatedSuggestions.add(remaining);
             }
         }
 
+        // warp amon h^ -> hen
+        // warp amon ^ -> hen
         return updatedSuggestions;
-    }
-
-    // Determining if everything up till the current word is an exact match
-    // FIXME: Shouldn't be needed with correct startsWith logic
-    private static boolean isPartialWordMatch(String[] inputWords, String[] suggestionWords, int inputWordsCount) {
-        for (int i = 0; i < inputWordsCount - 1; i++) {
-            if (!suggestionWords[i].equalsIgnoreCase(inputWords[i])) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private List<String> getContainsSuggestions() {

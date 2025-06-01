@@ -16,6 +16,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -29,7 +30,7 @@ public class Delete {
 
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("delete")
-            .then(BrigadierCommand.requiredArgumentBuilder("warpName", StringArgumentType.greedyString())
+            .then(BrigadierCommand.requiredArgumentBuilder("name", StringArgumentType.greedyString())
                 .suggests(Delete::suggest)
                 .executes(Delete::execute)
             );
@@ -43,7 +44,7 @@ public class Delete {
         }
 
         // TODO: Make this a re-usable helper
-        final String warpName = context.getArgument("warpName", String.class);
+        final String warpName = context.getArgument("name", String.class);
         Warp warp = WarpManager.getWarp(warpName);
         if (warp == null) {
             throw WARP_NOT_FOUND.create();
@@ -54,6 +55,7 @@ public class Delete {
         }
 
         WarpManager.deleteWarp(warp);
+        player.sendRichMessage("<green>Warp '%s' deleted".formatted(warpName));
         return Command.SINGLE_SUCCESS;
     }
 
@@ -64,7 +66,8 @@ public class Delete {
 
         String input = builder.getRemainingLowerCase();
         List<String> warpNames = WarpManager.getAllModifiableWarpNames(player);
-        List<String> suggestions = WarpSuggester.getSuggestions(warpNames, input);
+        var warpSuggester = new WarpSuggester(warpNames, input);
+        List<String> suggestions = warpSuggester.getSuggestions();
 
         // Q: Add a tooltip? Display server/word?, creator?, region?
         suggestions.forEach(builder::suggest);

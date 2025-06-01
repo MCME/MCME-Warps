@@ -132,7 +132,8 @@ public class WarpManager {
 
     // Utils
     private static String normalise(String name) {
-        return name.trim().toLowerCase(Locale.ROOT);
+        // Removing apostrophes so that a player isn't forced to type one
+        return name.trim().replace("'", "").toLowerCase(Locale.ROOT);
     }
 
     private static Path getWarpPath(Warp warp) {
