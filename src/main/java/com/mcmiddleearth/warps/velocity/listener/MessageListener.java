@@ -1,6 +1,7 @@
 package com.mcmiddleearth.warps.velocity.listener;
 
-import com.mcmiddleearth.warps.core.CreateSubchannels;
+import com.mcmiddleearth.warps.core.LocationActionSubchannel;
+import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.core.messageprotocols.PlayerLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
@@ -15,7 +16,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 public class MessageListener {
     @Subscribe
     public void onPluginMessageFromBackend(PluginMessageEvent event) {
-        if (!ChannelIdentifiers.CREATE_CHANNEL_ID.equals(event.getIdentifier())) {
+        if (!ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID.equals(event.getIdentifier())) {
             return;
         }
 
@@ -31,15 +32,39 @@ public class MessageListener {
         String serverName = backend.getServerInfo().getName();
 
         PlayerLocationMessage.Result result = PlayerLocationMessage.read(event.getData());
-        Warp.Type warpType = result.subchannel().equals(CreateSubchannels.CREATE_PUBLIC) ? Warp.Type.PUBLIC : Warp.Type.PRIVATE;
+        LocationActionSubchannel subchannel = result.subchannel();
 
-        Warp newWarp = new Warp(creator.getUniqueId(), result.warpName(), serverName, result.warpLocation(), warpType);
+        switch (subchannel) {
+            case LocationActionSubchannel.MOVE -> moveWarp(result, serverName, creator);
+            case LocationActionSubchannel.CREATE_PUBLIC, LocationActionSubchannel.CREATE_PRIVATE -> createWarp(result, serverName, creator);
+            default -> creator.sendMessage(Component.text("Unknown subchannel: " + subchannel, NamedTextColor.RED));
+        }
+    }
+
+    private void createWarp(PlayerLocationMessage.Result result, String serverName, Player creator) {
+        Warp.Type warpType = result.subchannel().equals(LocationActionSubchannel.CREATE_PUBLIC) ? Warp.Type.PUBLIC : Warp.Type.PRIVATE;
+
+        Warp newWarp = new Warp(
+            creator.getUniqueId(),
+            result.warpName(),
+            serverName,
+            result.warpLocation(),
+            warpType
+        );
 
         boolean addResult = WarpManager.addWarp(newWarp);
-        if (addResult) {
-            creator.sendMessage(Component.text("Warp created!", NamedTextColor.GREEN));
-        } else {
-            creator.sendMessage(Component.text("Failed to create warp", NamedTextColor.RED));
-        }
+        Component message = addResult
+            ? Component.text("Warp created!", NamedTextColor.GREEN)
+            : Component.text("Failed to create warp", NamedTextColor.RED);
+
+        creator.sendMessage(message);
+    }
+
+    private void moveWarp(PlayerLocationMessage.Result result, String serverName, Player creator) {
+        SimpleLocation newLocation = result.warpLocation();
+        WarpManager.updateWarp(result.warpName(), warp -> {
+            warp.setLocation(newLocation);
+            warp.setServer(serverName);
+        }, creator);
     }
 }

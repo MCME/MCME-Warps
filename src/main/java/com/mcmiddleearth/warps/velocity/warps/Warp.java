@@ -49,6 +49,9 @@ public class Warp {
         return this.type.equals(type);
     }
 
+    public void setServer(String server) { this.server = server; }
+    public void setLocation(SimpleLocation location) { this.location = location; }
+
     /**
      * A filter to limit what players can view and use this warp
      */

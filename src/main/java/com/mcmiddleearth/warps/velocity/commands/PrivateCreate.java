@@ -1,6 +1,6 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
-import com.mcmiddleearth.warps.core.CreateSubchannels;
+import com.mcmiddleearth.warps.core.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -48,8 +48,8 @@ public class PrivateCreate {
             player.sendMessage(Component.text("Creating warp..."));
 
             boolean status = serverConnection.sendPluginMessage(
-                ChannelIdentifiers.CREATE_CHANNEL_ID,
-                RequestLocationMessage.serialise(CreateSubchannels.CREATE_PRIVATE, warpName)
+                ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID,
+                RequestLocationMessage.serialise(LocationActionSubchannel.CREATE_PRIVATE, privatisedWarpName)
             );
 
             // TODO

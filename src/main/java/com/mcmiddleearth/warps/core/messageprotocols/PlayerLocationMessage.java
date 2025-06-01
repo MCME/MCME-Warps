@@ -3,14 +3,14 @@ package com.mcmiddleearth.warps.core.messageprotocols;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import com.mcmiddleearth.warps.core.CreateSubchannels;
+import com.mcmiddleearth.warps.core.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 
 public class PlayerLocationMessage {
 
-    public record Result(CreateSubchannels subchannel, SimpleLocation warpLocation, String warpName) {}
+    public record Result(LocationActionSubchannel subchannel, SimpleLocation warpLocation, String warpName) {}
 
-    public static byte[] serialise(CreateSubchannels subchannel, SimpleLocation data, String warpName) {
+    public static byte[] serialise(LocationActionSubchannel subchannel, SimpleLocation data, String warpName) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
 
         out.writeUTF(subchannel.name());
@@ -29,7 +29,7 @@ public class PlayerLocationMessage {
         ByteArrayDataInput in = ByteStreams.newDataInput(bytes);
 
         String strSubchannel = in.readUTF();
-        CreateSubchannels subchannel = CreateSubchannels.valueOf(strSubchannel);
+        LocationActionSubchannel subchannel = LocationActionSubchannel.valueOf(strSubchannel);
 
         String world = in.readUTF();
         double x = in.readDouble();

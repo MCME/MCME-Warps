@@ -12,8 +12,7 @@ public class TeleportMessage {
         TELEPORT
     }
 
-    // TODO: Rename to Output, Result?
-    public record TeleportResult(Subchannel subchannel, SimpleLocation data) {
+    public record Result(Subchannel subchannel, SimpleLocation data) {
     }
 
     // Q: Remove subchannel argument?
@@ -31,7 +30,7 @@ public class TeleportMessage {
         return out.toByteArray();
     }
 
-    public static TeleportResult read(byte[] bytes) {
+    public static Result read(byte[] bytes) {
         ByteArrayDataInput in = ByteStreams.newDataInput(bytes);
 
         String strSubchannel = in.readUTF();
@@ -45,6 +44,6 @@ public class TeleportMessage {
         float pitch = in.readFloat();
         SimpleLocation data = new SimpleLocation(world, x, y, z, yaw, pitch);
 
-        return new TeleportResult(subchannel, data);
+        return new Result(subchannel, data);
     }
 }

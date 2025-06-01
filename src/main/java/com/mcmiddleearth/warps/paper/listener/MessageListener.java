@@ -38,22 +38,21 @@ public class MessageListener implements PluginMessageListener {
                 // Could fix with a scheduler to teleport on next tick, but it doesn't seem to be an issue
                 player.teleportAsync(location).thenAccept(success -> {
                     if (success) {
+                        // player.sendMessage("teleport complete");
                         // TODO: Title, subtitle & message
                         // TODO: Notify player if teleport location was underground
-
-                        player.sendMessage("teleport complete");
                     }
                 });
                 break;
             }
 
-            case Channels.CREATE_WARP:  {
+            case Channels.PLAYER_LOCATION:  {
                 RequestLocationMessage.Result data = RequestLocationMessage.read(bytes);
                 SimpleLocation location = new SimpleLocation(player.getWorld().getName(), player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
 
                 player.sendPluginMessage(
                     plugin,
-                    Channels.CREATE_WARP,
+                    Channels.PLAYER_LOCATION,
                     PlayerLocationMessage.serialise(data.subchannel(), location, data.warpName())
                 );
                 break;

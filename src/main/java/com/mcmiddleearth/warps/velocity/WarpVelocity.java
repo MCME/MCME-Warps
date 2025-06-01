@@ -54,7 +54,7 @@ public class WarpVelocity {
         proxy.getEventManager().register(this, new MessageListener());
 
         proxy.getChannelRegistrar().register(ChannelIdentifiers.MAIN_ID);
-        proxy.getChannelRegistrar().register(ChannelIdentifiers.CREATE_CHANNEL_ID);
+        proxy.getChannelRegistrar().register(ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID);
 
         WarpManager.loadAllWarps();
 
@@ -68,6 +68,7 @@ public class WarpVelocity {
             .then(Create.register())
             .then(PrivateCreate.register())
             .then(Delete.register())
+            .then(Move.register())
             // The warp command is a greedy string argument, so it must be added last!
             .then(WarpCommand.register())
             .build();

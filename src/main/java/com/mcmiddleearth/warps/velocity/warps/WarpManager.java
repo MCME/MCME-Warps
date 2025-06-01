@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class WarpManager {
@@ -62,6 +63,24 @@ public class WarpManager {
             WarpVelocity.getInstance().getLogger().error("Failed to add warp {} - {}", newWarp.getName(), e.getMessage());
             return false;
         }
+    }
+
+    public static void updateWarp(String warpName, Consumer<Warp> updater, Player player) {
+        Warp warp = getWarp(warpName);
+
+        if (warp == null) {
+            player.sendRichMessage("<red>Warp '%s' does not exist, unable to update".formatted(warpName));
+            return;
+        }
+
+        // TODO: Notify the player if the delete fails or if addWarp fails
+        //  * failed to save changes to warp 'abc'
+        //  * Do this here? Or handle in the consumer?
+
+        deleteWarp(warp);
+        updater.accept(warp);
+        addWarp(warp);
+        player.sendRichMessage("<green>Warp successfully updated");
     }
 
     public static void deleteWarp(Warp warp) {
