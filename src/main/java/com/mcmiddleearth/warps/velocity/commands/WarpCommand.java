@@ -11,8 +11,10 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.velocitypowered.api.command.BrigadierCommand;
@@ -25,6 +27,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -58,6 +61,9 @@ public final class WarpCommand {
             throw WARP_NOT_FOUND.create();
         }
 
+        // Q: Integrate this directly into WarpManager?
+        // - only if always will be using either usable or modifiable
+        //   if so, then it can lead to bugs easily by forgetting this check in each command!!!
         if (!warp.isUsable(player)) {
             throw NOT_ALLOWED.create();
         }
@@ -116,43 +122,23 @@ public final class WarpCommand {
         String input = builder.getRemainingLowerCase();
         boolean isSearchEmpty = input.isEmpty();
         if (isSearchEmpty) {
-            // Only suggest some recommended warps - so that commands like pcreate & random are not hidden
-            // TODO: Use getWarp for these?
+            // Suggest a few recommended warps - otherwise subcommands like pcreate & random would be lost
+            // Q: Use getWarp for these?
+            // TODO: Display favourites - If the player has none then display...
             builder.suggest("Minas Tirith");
             builder.suggest("Cair Andros");
             builder.suggest("Dol Amroth");
+            // builder.suggest("<warp_name>"); // One alternative
             return builder.buildFuture();
         }
 
         List<String> warpNames = WarpManager.getAllUsableWarpNames(player);
-        List<String> suggestions = WarpSuggester.getSuggestions(warpNames, input);
+        var warpSuggester = new WarpSuggester(warpNames, input);
+        List<String> suggestions = warpSuggester.getSuggestions();
 
         // Q: Add a tooltip? Display server/word?, creator?, region?
         suggestions.forEach(builder::suggest);
         return builder.buildFuture();
-
-        // FIXME: tab completion can trigger in the middle of the greedy string
-        //   * Fixed by manually setting the range?
-//        int start = builder.getStart(); // Required for Suggestion offsets
-//        String fullInput = builder.getInput();
-//
-//        String input = builder.getInput().substring(builder.getStart());
-//        StringRange range = StringRange.between(builder.getStart(), builder.getInput().length());
-//        System.out.println("input - " + input + ", range - " + range);
-//
-//        for (Map.Entry<String, Double> entry : matches) {
-//            String suggestion = entry.getKey();
-//            builder.suggestions().add(new Suggestion(
-//                builder.getRange(),
-//                suggestion,
-//                null // You can also add tooltip text here
-//            ));
-//        }
-//
-//        return CompletableFuture.completedFuture(new Suggestions(
-//            StringRange.between(builder.getStart(), builder.getInput().length()),
-//            suggestions
-//        ));
     }
 }
 
