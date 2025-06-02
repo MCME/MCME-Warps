@@ -49,6 +49,7 @@ public class Warp {
         return this.type.equals(type);
     }
 
+    public void setName(String name) { this.name = name; }
     public void setServer(String server) { this.server = server; }
     public void setLocation(SimpleLocation location) { this.location = location; }
 

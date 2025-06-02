@@ -68,6 +68,7 @@ public class WarpVelocity {
             .then(Create.register())
             .then(PrivateCreate.register())
             .then(Delete.register())
+            .then(Rename.register())
             .then(Move.register())
             // The warp command is a greedy string argument, so it must be added last!
             .then(WarpCommand.register())
