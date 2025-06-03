@@ -7,6 +7,9 @@ import org.spongepowered.configurate.objectmapping.meta.Required;
 
 import java.util.UUID;
 
+// https://docs.spongepowered.org/stable/en/plugin/configuration/serialization.html#using-objectmappers
+// https://github.com/SpongePowered/Configurate/wiki/Object-Mapper
+
 @ConfigSerializable
 public class Warp {
     // Used by configurate to load & dump instances of this class (Warp) to yaml (using reflection)

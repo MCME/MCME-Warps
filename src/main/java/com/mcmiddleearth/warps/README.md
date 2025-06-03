@@ -1,7 +1,10 @@
 # Developing Locally
 
+Use ./gradlew shadowJar to build a standalone JAR
+
+## Setting up a velocity proxy
 1. run velocity > runVelocity
-2. Open `velocity.toml`
+2. Inside /run, open `velocity.toml`
     1. player-info-forwarding-mode: "modern"
     2. Delete the forced hosts section (optional)
 3. Open forward.secret and copy it
@@ -16,4 +19,4 @@ In your paper backend(s)
     2. online-mode: true
     3. paste the forwarding secret
 
-Once everything is running connect to a server with `localhost:<port>`
+Once everything is running connect to the proxy server with `localhost:<port>`
