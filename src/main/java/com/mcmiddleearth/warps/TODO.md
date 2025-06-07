@@ -15,7 +15,6 @@
 ## Commands
 * private warps
   * automatically prefix with zzz-name-...
-  * makePublic, makePrivate
   * user limit -> upon create, msg user how many remaining
 * warp permissions
 * favourite warps

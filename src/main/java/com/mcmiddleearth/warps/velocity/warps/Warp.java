@@ -59,6 +59,7 @@ public class Warp {
     public void setName(String name) { this.name = name; }
     public void setServer(String server) { this.server = server; }
     public void setLocation(SimpleLocation location) { this.location = location; }
+    public void setType(Type type) { this.type = type; }
 
     public void addPlayer(Player player) {
         this.members.put(player.getUniqueId(), player.getUsername());

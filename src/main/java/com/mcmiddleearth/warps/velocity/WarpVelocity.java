@@ -72,6 +72,8 @@ public class WarpVelocity {
             .then(Move.register())
             .then(Invite.register())
             .then(Uninvite.register())
+            .then(MakePublic.register())
+            .then(MakePrivate.register())
             // The warp command is a greedy string argument, so it must be added last!
             .then(WarpCommand.register())
             .build();
