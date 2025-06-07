@@ -10,10 +10,12 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class WarpManager {
@@ -35,8 +37,8 @@ public class WarpManager {
         return null;
     }
 
-    public static List<String> getAllWarpNames() {
-        return warps.values().stream().map(Warp::getName).toList();
+    public static List<String> getWarpNames(Predicate<Warp> filter) {
+        return warps.values().stream().filter(filter).map(Warp::getName).toList();
     }
     public static List<String> getAllModifiableWarpNames(Player player) {
         return warps.values().stream().filter(warp -> warp.isModifiable(player)).map(Warp::getName).toList();

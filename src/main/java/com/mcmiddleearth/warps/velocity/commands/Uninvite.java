@@ -1,0 +1,118 @@
+package com.mcmiddleearth.warps.velocity.commands;
+
+import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
+import com.mcmiddleearth.warps.velocity.warps.Warp;
+import com.mcmiddleearth.warps.velocity.warps.WarpManager;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.LiteralMessage;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.velocitypowered.api.command.BrigadierCommand;
+import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.proxy.Player;
+import net.kyori.adventure.text.Component;
+
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+
+public class Uninvite {
+    public static LiteralArgumentBuilder<CommandSource> register() {
+        return BrigadierCommand.literalArgumentBuilder("uninvite")
+            .then(BrigadierCommand.requiredArgumentBuilder("warp", StringArgumentType.string())
+                .suggests(Uninvite::suggestWarpName)
+                .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
+                    .suggests(Uninvite::suggestPlayer)
+                    .executes(Uninvite::execute)
+                )
+            );
+    }
+
+    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+        CommandSource source = context.getSource();
+        if (!(source instanceof Player sender)) {
+            source.sendMessage(Component.text("Only players can run this command."));
+            return Command.SINGLE_SUCCESS;
+        }
+
+        final String warpName = context.getArgument("warp", String.class);
+        final String playerName = context.getArgument("player", String.class);
+
+        Player targetPlayer = WarpVelocity.getInstance().getProxy()
+            .getPlayer(playerName)
+            .orElseThrow(() -> INVALID_PLAYER.create(playerName));
+
+        Warp warp = WarpManager.getWarp(warpName);
+        if (warp == null) throw WARP_NOT_FOUND.create();
+        if (warp.isOfType(Warp.Type.PUBLIC)) throw WARP_IS_PUBLIC.create();
+        if (!warp.isModifiable(sender)) throw NOT_ALLOWED.create();
+
+        Set<UUID> memberIDs = warp.getMembers().keySet();
+        if (!memberIDs.contains(targetPlayer.getUniqueId())) throw NOT_MEMBER_EXCEPTION.create();
+
+        warp.removePlayer(targetPlayer);
+        sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been removed from warp " + warpName);
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static CompletableFuture<Suggestions> suggestWarpName(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+        if (!(context.getSource() instanceof Player sender)) {
+            return Suggestions.empty();
+        }
+
+        String input = builder.getRemainingLowerCase();
+        List<String> warpNames = WarpManager.getWarpNames(warp -> warp.isOfType(Warp.Type.PRIVATE) && warp.isModifiable(sender));
+        var warpSuggester = new WarpSuggester(warpNames, input);
+        List<String> suggestions = warpSuggester.getSuggestions();
+
+        // curr_name has to be a string arg, so wrap multi-word suggestions in quotes
+        suggestions.forEach(suggestion -> {
+            if (suggestion.contains(" ")) builder.suggest("\"" + suggestion + "\"");
+            else builder.suggest(suggestion);
+        });
+        return builder.buildFuture();
+    }
+
+    private static CompletableFuture<Suggestions> suggestPlayer(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+        if (!(context.getSource() instanceof Player sender)) {
+            return Suggestions.empty();
+        }
+
+        String warpName = context.getArgument("warp", String.class);
+        Warp warp = WarpManager.getWarp(warpName);
+        if (warp == null) return Suggestions.empty();
+
+        Collection<String> memberNames = warp.getMembers().values();
+        String input = builder.getRemainingLowerCase();
+
+        for (String memberName : memberNames) {
+            if (memberName.toLowerCase().startsWith(input)) {
+                builder.suggest(memberName);
+            }
+        }
+
+        return builder.buildFuture();
+    }
+
+    private static final DynamicCommandExceptionType INVALID_PLAYER =
+        new DynamicCommandExceptionType(name -> new LiteralMessage("Unable to find a player with name '" + name + "'"));
+
+    private static final SimpleCommandExceptionType NOT_ALLOWED =
+        new SimpleCommandExceptionType(() -> "You are not allowed to perform this action");
+
+    private static final SimpleCommandExceptionType WARP_NOT_FOUND =
+        new SimpleCommandExceptionType(() -> "No warp found with that name");
+
+    private static final SimpleCommandExceptionType NOT_MEMBER_EXCEPTION =
+        new SimpleCommandExceptionType(() -> "That player is not a member of this warp");
+
+    private static final SimpleCommandExceptionType WARP_IS_PUBLIC =
+        new SimpleCommandExceptionType(() -> "This warp is public, all players have access");
+}

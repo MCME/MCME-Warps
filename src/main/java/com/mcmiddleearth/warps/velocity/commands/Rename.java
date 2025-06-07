@@ -53,8 +53,11 @@ public class Rename {
         var warpSuggester = new WarpSuggester(warpNames, input);
         List<String> suggestions = warpSuggester.getSuggestions();
 
-        // curr_name is a string arg, so wrap each suggestion in quotes
-        suggestions.forEach(suggestion -> builder.suggest("\"" + suggestion + "\""));
+        // curr_name has to be a string arg, so wrap multi-word suggestions in quotes
+        suggestions.forEach(suggestion -> {
+            if (suggestion.contains(" ")) builder.suggest("\"" + suggestion + "\"");
+            else builder.suggest(suggestion);
+        });
         return builder.buildFuture();
     }
 }

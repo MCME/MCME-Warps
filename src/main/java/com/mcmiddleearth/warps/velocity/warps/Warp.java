@@ -5,6 +5,8 @@ import com.velocitypowered.api.proxy.Player;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Required;
 
+import java.util.HashMap;
+import java.util.Set;
 import java.util.UUID;
 
 // https://docs.spongepowered.org/stable/en/plugin/configuration/serialization.html#using-objectmappers
@@ -22,7 +24,6 @@ public class Warp {
     }
 
     // TODO:
-    // invitations
     // permissions
     // title, subtitle, message?
     // region? -> Only for main & moria?
@@ -34,6 +35,8 @@ public class Warp {
     @Required private String server;
     @Required private SimpleLocation location;
     @Required private Warp.Type type;
+    // Fields must be non-final to be modified
+    private HashMap<UUID, String> members = new HashMap<>();
 
     public Warp(UUID creator, String name, String server, SimpleLocation location, Warp.Type type) {
         this.creator = creator;
@@ -47,6 +50,7 @@ public class Warp {
     public String getServer() { return server; }
     public SimpleLocation getLocation() { return location; }
     public UUID getCreator() { return creator; }
+    public HashMap<UUID, String> getMembers() { return members; }
 
     public boolean isOfType(Warp.Type type) {
         return this.type.equals(type);
@@ -55,6 +59,13 @@ public class Warp {
     public void setName(String name) { this.name = name; }
     public void setServer(String server) { this.server = server; }
     public void setLocation(SimpleLocation location) { this.location = location; }
+
+    public void addPlayer(Player player) {
+        this.members.put(player.getUniqueId(), player.getUsername());
+    }
+    public void removePlayer(Player player) {
+        this.members.remove(player.getUniqueId());
+    }
 
     /**
      * A filter to limit what players can view and use this warp
@@ -66,10 +77,7 @@ public class Warp {
         }
 
         // Q: What about staff/moderators?
-        // TODO: Invitees
-//        if (warp.isPlayerInvited(player.getUniqueId())) {
-//            return true;
-//        }
+        if (members.containsKey(player.getUniqueId())) return true;
         return player.getUniqueId().equals(creator);
     }
 
