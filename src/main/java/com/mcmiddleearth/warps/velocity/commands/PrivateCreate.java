@@ -15,10 +15,15 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
+import java.text.MessageFormat;
+
 public class PrivateCreate {
 
     private static final SimpleCommandExceptionType WARP_EXISTS =
         new SimpleCommandExceptionType(() -> "A warp already exists with that name");
+
+    private static final SimpleCommandExceptionType MANUAL_PREFIX =
+        new SimpleCommandExceptionType(() -> "Private warps are automatically given the 'zzz' prefix, please just provide the warp name");
 
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("pcreate")
@@ -30,22 +35,28 @@ public class PrivateCreate {
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
         CommandSource source = context.getSource();
 
-        if (!(source instanceof Player player)) {
+        if (!(source instanceof Player sender)) {
             source.sendMessage(Component.text("Only players can run this command."));
             return Command.SINGLE_SUCCESS;
         }
 
-        final String warpName = context.getArgument("name", String.class);
-        if (WarpManager.warpExists(warpName)) {
+        // TODO: Ensure warpName is valid (doesn't start with '-' etc.)
+        // FIXME: Now using greedy, need to prevent bad file names e.g. invalid characters /?!
+        final String tempWarpName = context.getArgument("name", String.class);
+
+        if (tempWarpName.startsWith("zzz")) {
+            throw MANUAL_PREFIX.create();
+        }
+
+        final String privatisedWarpName = MessageFormat.format("zzz-{0}-{1}", sender.getUsername(), tempWarpName);
+
+        if (WarpManager.warpExists(privatisedWarpName)) {
             throw WARP_EXISTS.create();
         }
 
-        // TODO: Ensure warpName is valid (doesn't start with '-' etc.)
-        // FIXME: Now using greedy, need to prevent bad file names e.g. invalid characters /?!
-
         // Send plugin message requesting player's Location
-        player.getCurrentServer().ifPresentOrElse(serverConnection -> {
-            player.sendMessage(Component.text("Creating warp..."));
+        sender.getCurrentServer().ifPresentOrElse(serverConnection -> {
+            sender.sendMessage(Component.text("Creating warp '" + privatisedWarpName + '"'));
 
             boolean status = serverConnection.sendPluginMessage(
                 ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID,
