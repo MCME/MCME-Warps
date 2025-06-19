@@ -35,7 +35,7 @@ public class Warp {
     @Required private String server;
     @Required private SimpleLocation location;
     @Required private Warp.Type type;
-    // Fields must be non-final to be modified
+    // Can't be final, otherwise Configurate can't set members on load
     private HashMap<UUID, String> members = new HashMap<>();
 
     public Warp(UUID creator, String name, String server, SimpleLocation location, Warp.Type type) {
@@ -54,6 +54,9 @@ public class Warp {
 
     public boolean isOfType(Warp.Type type) {
         return this.type.equals(type);
+    }
+    public boolean isCreator(Player player) {
+        return creator.equals(player.getUniqueId());
     }
 
     public void setName(String name) { this.name = name; }

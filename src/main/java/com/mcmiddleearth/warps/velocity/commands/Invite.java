@@ -46,16 +46,16 @@ public class Invite {
         final String warpName = context.getArgument("warp", String.class);
         final String playerName = context.getArgument("player", String.class);
 
+        Warp warp = WarpManager.getWarp(warpName);
+        if (warp == null) throw WARP_NOT_FOUND.create();
+        if (!warp.isOfType(Warp.Type.PRIVATE)) throw WARP_NOT_PRIVATE.create();
+        if (!warp.isCreator(sender)) throw NOT_ALLOWED.create();
+
         Player targetPlayer = WarpVelocity.getInstance().getProxy()
             .getPlayer(playerName)
             .orElseThrow(() -> INVALID_PLAYER.create(playerName));
 
-        Warp warp = WarpManager.getWarp(warpName);
-        if (warp == null) throw WARP_NOT_FOUND.create();
-        if (warp.isOfType(Warp.Type.PUBLIC)) throw WARP_IS_PUBLIC.create();
-        if (!warp.isModifiable(sender)) throw NOT_ALLOWED.create();
-
-        if (warp.getCreator().equals(targetPlayer.getUniqueId())) {
+        if (warp.isCreator(targetPlayer)) {
             throw ALREADY_MEMBER.create();
         }
 
@@ -77,15 +77,12 @@ public class Invite {
         }
 
         String input = builder.getRemainingLowerCase();
-        List<String> warpNames = WarpManager.getWarpNames(warp -> warp.isOfType(Warp.Type.PRIVATE) && warp.isModifiable(sender));
+        List<String> warpNames = WarpManager.getWarpNames(warp -> warp.isOfType(Warp.Type.PRIVATE) && warp.isCreator(sender));
         var warpSuggester = new WarpSuggester(warpNames, input);
         List<String> suggestions = warpSuggester.getSuggestions();
 
-        // curr_name has to be a string arg, so wrap multi-word suggestions in quotes
-        suggestions.forEach(suggestion -> {
-            if (suggestion.contains(" ")) builder.suggest("\"" + suggestion + "\"");
-            else builder.suggest(suggestion);
-        });
+        // warp can't be a greedy arg, so wrap suggestions in quotes
+        suggestions.forEach(suggestion -> builder.suggest("\"" + suggestion + "\""));
         return builder.buildFuture();
     }
 
@@ -109,7 +106,7 @@ public class Invite {
         new DynamicCommandExceptionType(name -> new LiteralMessage("Unable to find a player with name '" + name + "'"));
 
     private static final SimpleCommandExceptionType NOT_ALLOWED =
-        new SimpleCommandExceptionType(() -> "You are not allowed to perform this action");
+        new SimpleCommandExceptionType(() -> "Only the creator of a warp can invite/uninvite players");
 
     private static final SimpleCommandExceptionType WARP_NOT_FOUND =
         new SimpleCommandExceptionType(() -> "No warp found with that name");
@@ -117,6 +114,6 @@ public class Invite {
     private static final SimpleCommandExceptionType ALREADY_MEMBER =
         new SimpleCommandExceptionType(() -> "This player is already a member of the warp!");
 
-    private static final SimpleCommandExceptionType WARP_IS_PUBLIC =
-        new SimpleCommandExceptionType(() -> "This warp is public, players already have access to this warp");
+    private static final SimpleCommandExceptionType WARP_NOT_PRIVATE =
+        new SimpleCommandExceptionType(() -> "This warp isn't private, unable to perform action");
 }
