@@ -1,5 +1,6 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
+import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -31,6 +32,7 @@ public class Delete {
 
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("delete")
+            .requires(sender -> sender.hasPermission(Permission.DELETE.getNode()))
             .then(BrigadierCommand.requiredArgumentBuilder("name", StringArgumentType.greedyString())
                 .suggests(Delete::suggest)
                 .executes(Delete::execute)

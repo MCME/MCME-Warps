@@ -3,6 +3,7 @@ package com.mcmiddleearth.warps.velocity.commands;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.core.messageprotocols.TeleportMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
+import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -33,7 +34,9 @@ public class RandomCommand {
         new SimpleCommandExceptionType(() -> "There are no warps to teleport to");
 
     public static LiteralArgumentBuilder<CommandSource> register() {
-        return BrigadierCommand.literalArgumentBuilder("random").executes(RandomCommand::execute);
+        return BrigadierCommand.literalArgumentBuilder("random")
+            .requires(sender -> sender.hasPermission(Permission.RANDOM.getNode()))
+            .executes(RandomCommand::execute);
     }
 
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {

@@ -3,6 +3,7 @@ package com.mcmiddleearth.warps.velocity.commands;
 import com.mcmiddleearth.warps.core.messageprotocols.TeleportMessage;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
+import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
@@ -42,6 +43,7 @@ public final class WarpCommand {
 
     public static RequiredArgumentBuilder<CommandSource, String> register() {
             return BrigadierCommand.requiredArgumentBuilder("destination", StringArgumentType.greedyString())
+                .requires(sender -> sender.hasPermission(Permission.WARP.getNode()))
                 .suggests(WarpCommand::suggest)
                 .executes(WarpCommand::execute);
     }

@@ -3,6 +3,7 @@ package com.mcmiddleearth.warps.velocity.commands;
 import com.mcmiddleearth.warps.core.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
+import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -22,6 +23,7 @@ public class Create {
 
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("create")
+            .requires(sender -> sender.hasPermission(Permission.CREATE_PUBLIC.getNode()))
             .then(BrigadierCommand.requiredArgumentBuilder("name", StringArgumentType.greedyString())
                     .executes(Create::execute)
             );

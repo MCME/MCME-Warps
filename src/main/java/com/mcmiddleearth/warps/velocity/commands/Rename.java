@@ -1,5 +1,6 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
+import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -28,6 +29,7 @@ public class Rename {
 
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("rename")
+            .requires(sender -> sender.hasPermission(Permission.RENAME.getNode()))
             // This has to be a string argument because a greedy arg can't have anything after it
             .then(BrigadierCommand.requiredArgumentBuilder("current_name", StringArgumentType.string())
                 .suggests(Rename::suggestCurrName)

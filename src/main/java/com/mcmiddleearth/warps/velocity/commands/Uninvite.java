@@ -1,5 +1,6 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
+import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
@@ -25,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 public class Uninvite {
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("uninvite")
+            .requires(sender -> sender.hasPermission(Permission.UNINVITE.getNode()))
             .then(BrigadierCommand.requiredArgumentBuilder("warp", StringArgumentType.string())
                 .suggests(Uninvite::suggestWarpName)
                 .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())

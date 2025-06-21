@@ -1,5 +1,6 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
+import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -28,9 +29,8 @@ public class MakePublic {
 
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("makePublic")
+            .requires(sender -> sender.hasPermission(Permission.MAKE_PUBLIC.getNode()))
             .then(BrigadierCommand.requiredArgumentBuilder("warp-name", StringArgumentType.greedyString())
-                // TODO: Only staff
-                //.requires()
                 .suggests(MakePublic::suggest)
                 .executes(MakePublic::execute)
             );

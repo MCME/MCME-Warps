@@ -3,6 +3,7 @@ package com.mcmiddleearth.warps.velocity.commands;
 import com.mcmiddleearth.warps.core.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
+import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -31,6 +32,7 @@ public class Move {
 
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("move")
+            .requires(sender -> sender.hasPermission(Permission.MOVE.getNode()))
             .then(BrigadierCommand.requiredArgumentBuilder("name", StringArgumentType.greedyString())
                 .suggests(Move::suggest)
                 .executes(Move::execute)
