@@ -52,10 +52,13 @@ public class MessageListener {
             warpType
         );
 
-        boolean addResult = WarpManager.addWarp(newWarp);
-        Component message = addResult
-            ? Component.text("Warp created!", NamedTextColor.GREEN)
-            : Component.text("Failed to create warp", NamedTextColor.RED);
+        Component message;
+        try {
+            WarpManager.addWarp(newWarp);
+            message = Component.text("Warp created!", NamedTextColor.GREEN);
+        } catch (Exception e) {
+            message = Component.text("Failed to create warp", NamedTextColor.RED);
+        }
 
         creator.sendMessage(message);
     }
@@ -65,6 +68,6 @@ public class MessageListener {
         WarpManager.updateWarp(result.warpName(), warp -> {
             warp.setLocation(newLocation);
             warp.setServer(serverName);
-        }, creator);
+        }, creator, "Warp successfully moved");
     }
 }

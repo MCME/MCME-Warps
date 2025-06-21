@@ -46,6 +46,16 @@ public class Warp {
         this.type = type;
     }
 
+    // Copy Constructor
+    public Warp(Warp otherWarp) {
+        this.creator = otherWarp.creator;
+        this.name = otherWarp.name;
+        this.server = otherWarp.server;
+        this.location = otherWarp.location;
+        this.type = otherWarp.type;
+        this.members = otherWarp.members;
+    }
+
     public String getName() { return name; }
     public String getServer() { return server; }
     public SimpleLocation getLocation() { return location; }

@@ -1,6 +1,7 @@
 package com.mcmiddleearth.warps.velocity.warps;
 
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mojang.brigadier.Command;
 import com.velocitypowered.api.proxy.Player;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.configurate.ConfigurateException;
@@ -10,10 +11,7 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -51,56 +49,83 @@ public class WarpManager {
         String warpName = normalise(warp.getName());
 
         if (warps.containsKey(warpName)) {
-            throw new Exception("Warp already exists");
+            throw new Exception("A warp already exists with name '" + warpName + "'");
         }
         warps.put(warpName, warp);
     }
 
-    public static boolean addWarp(Warp newWarp) {
+    public static void addWarp(Warp newWarp) throws IllegalStateException {
         try {
             putWarp(newWarp);
             saveWarp(newWarp);
-            return true;
         } catch (Exception e) {
             WarpVelocity.getInstance().getLogger().error("Failed to add warp {} - {}", newWarp.getName(), e.getMessage());
-            return false;
+            throw new IllegalStateException(e.getMessage());
         }
     }
 
-    public static void updateWarp(String warpName, Consumer<Warp> updater, Player player) {
+    public static int updateWarp(String warpName, Consumer<Warp> updater, Player player, String successMsg) {
         Warp warp = getWarp(warpName);
 
         if (warp == null) {
-            player.sendRichMessage("<red>Warp '%s' does not exist, unable to update".formatted(warpName));
-            return;
+            player.sendRichMessage("<red>Warp '%s' does not exist, unable to perform the update".formatted(warpName));
+            return 0;
         }
 
-        // TODO: Notify the player if the delete fails or if addWarp fails
-        //  * failed to save changes to warp 'abc'
-        //  * Do this here? Or handle in the consumer?
+        Warp preUpdateWarp = new Warp(warp);
 
-        deleteWarp(warp);
+        try {
+            deleteWarp(warp);
+        } catch (Exception e) {
+            player.sendRichMessage("<red>" + e.getMessage());
+            return 0;
+        }
+
         updater.accept(warp);
-        addWarp(warp);
-        player.sendRichMessage("<green>Warp successfully updated");
+
+        try {
+            addWarp(warp);
+            player.sendRichMessage("<green>" + successMsg);
+            return Command.SINGLE_SUCCESS;
+        } catch (IllegalStateException e) {
+            player.sendRichMessage("<red>" + e.getMessage());
+            player.sendRichMessage("<red>Failed to perform the update, rolling back...");
+
+            // If the put succeeded but the save failed this rollback won't
+            // remove the erroneous new Warp, but this shouldn't be common
+
+            try {
+                addWarp(preUpdateWarp);
+            } catch (Exception addOldWarpException) {
+                player.sendRichMessage("<red>Rollback failed - " + e.getMessage());
+                return 0;
+            }
+
+            player.sendRichMessage("<red>Rollback successful");
+            return 0;
+        }
     }
 
-    public static void deleteWarp(Warp warp) {
+    public static void deleteWarp(Warp warp) throws Exception {
         String warpName = normalise(warp.getName());
         warps.remove(warpName);
 
         Path warpPath = getWarpPath(warp);
         try {
-            Files.deleteIfExists(warpPath);
-        } catch (IOException e) {
+            boolean result = Files.deleteIfExists(warpPath);
+            if (!result) {
+                throw new Exception("File does not exist");
+            }
+        } catch (Exception e) {
             WarpVelocity.getInstance().getLogger()
                 .error("An error occurred whilst deleting the warp file at {} - {}",
                     warpPath, e.getMessage()
                 );
+            throw new Exception("An error occurred whilst deleting the warp file for " + warpName);
         }
     };
 
-    public static void saveWarp(Warp warp) {
+    public static void saveWarp(Warp warp) throws Exception {
         Path path = getWarpPath(warp);
         YamlConfigurationLoader loader = YamlConfigurationLoader.builder().path(path).build();
 
@@ -115,6 +140,7 @@ public class WarpManager {
                 .error( "An error occurred whilst saving warp {} - {}",
                     warp.getName(), e.getMessage()
                 );
+            throw new Exception("Failed to save warp '%s' to disk".formatted(warp.getName()));
         }
     }
 

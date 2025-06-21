@@ -15,6 +15,7 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.text.MessageFormat;
 import java.util.List;
@@ -38,7 +39,7 @@ public class Delete {
 
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
         CommandSource source = context.getSource();
-        if (!(source instanceof Player player)) {
+        if (!(source instanceof Player sender)) {
             source.sendMessage(Component.text("Only players can run this command."));
             return Command.SINGLE_SUCCESS;
         }
@@ -50,22 +51,27 @@ public class Delete {
             throw WARP_NOT_FOUND.create();
         }
 
-        if (!warp.isModifiable(player)) {
+        if (!warp.isModifiable(sender)) {
             throw NOT_ALLOWED.create();
         }
 
-        WarpManager.deleteWarp(warp);
-        player.sendRichMessage("<green>Warp '%s' deleted".formatted(warpName));
-        return Command.SINGLE_SUCCESS;
+        try {
+            WarpManager.deleteWarp(warp);
+            sender.sendRichMessage("<green>Warp '%s' deleted".formatted(warpName));
+            return Command.SINGLE_SUCCESS;
+        } catch (Exception e) {
+            sender.sendMessage(Component.text(e.getMessage(), NamedTextColor.RED));
+            return 0;
+        }
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
-        if (!(context.getSource() instanceof Player player)) {
+        if (!(context.getSource() instanceof Player sender)) {
             return Suggestions.empty();
         }
 
         String input = builder.getRemainingLowerCase();
-        List<String> warpNames = WarpManager.getAllModifiableWarpNames(player);
+        List<String> warpNames = WarpManager.getAllModifiableWarpNames(sender);
         var warpSuggester = new WarpSuggester(warpNames, input);
         List<String> suggestions = warpSuggester.getSuggestions();
 

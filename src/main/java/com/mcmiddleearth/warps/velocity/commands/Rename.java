@@ -53,8 +53,7 @@ public class Rename {
            throw MANUAL_PREFIX.create();
         }
 
-        WarpManager.updateWarp(currName, warp -> warp.setName(newName), sender);
-        return Command.SINGLE_SUCCESS;
+        return WarpManager.updateWarp(currName, warp -> warp.setName(newName), sender, "<green>Renamed warp '%s' to '%s'".formatted(currName, newName));
     }
 
     private static CompletableFuture<Suggestions> suggestCurrName(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
@@ -67,11 +66,8 @@ public class Rename {
         var warpSuggester = new WarpSuggester(warpNames, input);
         List<String> suggestions = warpSuggester.getSuggestions();
 
-        // curr_name has to be a string arg, so wrap multi-word suggestions in quotes
-        suggestions.forEach(suggestion -> {
-            if (suggestion.contains(" ")) builder.suggest("\"" + suggestion + "\"");
-            else builder.suggest(suggestion);
-        });
+        // curr_name can't be a greedy arg, so wrap suggestions in quotes
+        suggestions.forEach(suggestion -> builder.suggest("\"" + suggestion + "\""));
         return builder.buildFuture();
     }
 }

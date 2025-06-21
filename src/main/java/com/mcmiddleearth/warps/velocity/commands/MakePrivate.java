@@ -49,10 +49,7 @@ public class MakePrivate {
         if (warp.isOfType(Warp.Type.PRIVATE)) throw ALREADY_PRIVATE.create();
 
         // Q: Add the zzz-<playerName> prefix???
-        WarpManager.updateWarp(warpName,w -> w.setType(Warp.Type.PRIVATE), sender);
-        sender.sendRichMessage("<green>Warp '%s' is now private".formatted(warpName));
-
-        return Command.SINGLE_SUCCESS;
+        return WarpManager.updateWarp(warpName,w -> w.setType(Warp.Type.PRIVATE), sender, "<green>Warp '%s' is now private".formatted(warpName));
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {

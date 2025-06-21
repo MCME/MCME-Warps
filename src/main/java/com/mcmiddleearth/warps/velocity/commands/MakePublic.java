@@ -49,10 +49,7 @@ public class MakePublic {
         if (warp.isOfType(Warp.Type.PUBLIC)) throw ALREADY_PUBLIC.create();
 
         // Q: Strip the zzz-<playerName> prefix???
-        WarpManager.updateWarp(warpName,w -> w.setType(Warp.Type.PUBLIC), sender);
-        sender.sendRichMessage("<green>Warp '%s' is now public".formatted(warpName));
-
-        return Command.SINGLE_SUCCESS;
+        return WarpManager.updateWarp(warpName,w -> w.setType(Warp.Type.PUBLIC), sender, "<green>Warp '%s' is now public".formatted(warpName));
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
