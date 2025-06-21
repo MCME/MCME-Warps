@@ -59,9 +59,14 @@ public class Uninvite {
         if (!memberIDs.contains(targetPlayer.getUniqueId())) throw NOT_MEMBER_EXCEPTION.create();
 
         warp.removePlayer(targetPlayer);
-        sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been removed from warp " + warpName);
-
-        return Command.SINGLE_SUCCESS;
+        try {
+            WarpManager.saveWarp(warp);
+            sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been removed from warp " + warpName);
+            return Command.SINGLE_SUCCESS;
+        } catch (Exception e) {
+            sender.sendRichMessage("<red>" + e.getMessage());
+            return 0;
+        }
     }
 
     private static CompletableFuture<Suggestions> suggestWarpName(CommandContext<CommandSource> context, SuggestionsBuilder builder) {

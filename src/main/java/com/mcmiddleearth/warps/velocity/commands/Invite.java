@@ -57,9 +57,9 @@ public class Invite {
             .getPlayer(playerName)
             .orElseThrow(() -> INVALID_PLAYER.create(playerName));
 
-        if (warp.isCreator(targetPlayer)) {
-            throw ALREADY_MEMBER.create();
-        }
+//        if (warp.isCreator(targetPlayer)) {
+//            throw ALREADY_MEMBER.create();
+//        }
 
         Set<UUID> memberIDs = warp.getMembers().keySet();
         if (memberIDs.contains(targetPlayer.getUniqueId())) {
@@ -67,10 +67,15 @@ public class Invite {
         }
 
         warp.addPlayer(targetPlayer);
-        sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been added to warp " + warpName);
-        targetPlayer.sendRichMessage("<green>You have been added to warp " + warpName);
-
-        return Command.SINGLE_SUCCESS;
+        try {
+            WarpManager.saveWarp(warp);
+            sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been added to warp " + warpName);
+            targetPlayer.sendRichMessage("<green>You have been added to warp " + warpName);
+            return Command.SINGLE_SUCCESS;
+        } catch (Exception e) {
+            sender.sendRichMessage("<red>" + e.getMessage());
+            return 0;
+        }
     }
 
     private static CompletableFuture<Suggestions> suggestWarpName(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
