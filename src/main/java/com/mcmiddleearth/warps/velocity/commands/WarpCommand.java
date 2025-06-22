@@ -5,6 +5,7 @@ import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -34,10 +35,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public final class WarpCommand {
-    // TODO: Extract
-    private static final SimpleCommandExceptionType WARP_NOT_FOUND =
-        new SimpleCommandExceptionType(() -> "No warp found with that name");
-
     private static final SimpleCommandExceptionType NOT_ALLOWED =
         new SimpleCommandExceptionType(() -> "You are not allowed to perform this action");
 
@@ -56,13 +53,7 @@ public final class WarpCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        // TODO: Make this a re-usable helper
-        final String warpName = context.getArgument("destination", String.class);
-        Warp warp = WarpManager.getWarp(warpName);
-        if (warp == null) {
-            throw WARP_NOT_FOUND.create();
-        }
-
+        Warp warp = CommandUtils.getWarp(context, "name").value();
         // Q: Integrate this directly into WarpManager?
         // - only if always will be using either usable or modifiable
         //   if so, then it can lead to bugs easily by forgetting this check in each command!!!

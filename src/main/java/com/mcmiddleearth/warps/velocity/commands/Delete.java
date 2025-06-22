@@ -1,6 +1,7 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
 import com.mcmiddleearth.warps.velocity.Permission;
+import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -23,10 +24,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class Delete {
-    // TODO: Extract
-    private static final SimpleCommandExceptionType WARP_NOT_FOUND =
-        new SimpleCommandExceptionType(() -> "No warp found with that name");
-
     private static final SimpleCommandExceptionType NOT_ALLOWED =
         new SimpleCommandExceptionType(() -> "You are not allowed to perform this action");
 
@@ -46,20 +43,14 @@ public class Delete {
             return Command.SINGLE_SUCCESS;
         }
 
-        // TODO: Make this a re-usable helper
-        final String warpName = context.getArgument("name", String.class);
-        Warp warp = WarpManager.getWarp(warpName);
-        if (warp == null) {
-            throw WARP_NOT_FOUND.create();
-        }
-
-        if (!warp.isModifiable(sender)) {
+        var warpArg = CommandUtils.getWarp(context, "name");
+        if (!warpArg.value().isModifiable(sender)) {
             throw NOT_ALLOWED.create();
         }
 
         try {
-            WarpManager.deleteWarp(warp);
-            sender.sendRichMessage("<green>Warp '%s' deleted".formatted(warpName));
+            WarpManager.deleteWarp(warpArg.value());
+            sender.sendRichMessage("<green>Warp '%s' deleted".formatted(warpArg.input()));
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
             sender.sendMessage(Component.text(e.getMessage(), NamedTextColor.RED));

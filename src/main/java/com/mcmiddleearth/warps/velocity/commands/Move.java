@@ -4,6 +4,7 @@ import com.mcmiddleearth.warps.core.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
+import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -24,9 +25,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class Move {
-    private static final SimpleCommandExceptionType WARP_NOT_FOUND =
-        new SimpleCommandExceptionType(() -> "No warp found with that name");
-
     private static final SimpleCommandExceptionType NOT_ALLOWED =
         new SimpleCommandExceptionType(() -> "You are not allowed to perform this action");
 
@@ -46,16 +44,12 @@ public class Move {
             return Command.SINGLE_SUCCESS;
         }
 
-        final String warpName = context.getArgument("name", String.class);
-        Warp warp = WarpManager.getWarp(warpName);
-        if (warp == null) {
-            throw WARP_NOT_FOUND.create();
-        }
+        var warpArg = CommandUtils.getWarp(context, "name");
 
         // Q: Integrate this directly into WarpManager?
         // - only if always will be using either usable or modifiable
         //   if so, then it can lead to bugs easily by forgetting this check in each command!!!
-        if (!warp.isModifiable(player)) {
+        if (!warpArg.value().isModifiable(player)) {
             throw NOT_ALLOWED.create();
         }
 
@@ -65,7 +59,7 @@ public class Move {
 
             boolean status = serverConnection.sendPluginMessage(
                 ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID,
-                RequestLocationMessage.serialise(LocationActionSubchannel.MOVE, warpName)
+                RequestLocationMessage.serialise(LocationActionSubchannel.MOVE, warpArg.input())
             );
 
             // TODO
