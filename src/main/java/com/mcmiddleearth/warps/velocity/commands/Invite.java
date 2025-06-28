@@ -2,6 +2,7 @@ package com.mcmiddleearth.warps.velocity.commands;
 
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -48,8 +49,7 @@ public class Invite {
         final String warpName = context.getArgument("warp", String.class);
         final String playerName = context.getArgument("player", String.class);
 
-        Warp warp = WarpManager.getWarp(warpName);
-        if (warp == null) throw WARP_NOT_FOUND.create();
+        Warp warp = CommandUtils.getWarp( context, "warp").value();
         if (!warp.isOfType(Warp.Type.PRIVATE)) throw WARP_NOT_PRIVATE.create();
         if (!warp.isCreator(sender)) throw NOT_ALLOWED.create();
 
@@ -57,9 +57,9 @@ public class Invite {
             .getPlayer(playerName)
             .orElseThrow(() -> INVALID_PLAYER.create(playerName));
 
-//        if (warp.isCreator(targetPlayer)) {
-//            throw ALREADY_MEMBER.create();
-//        }
+        if (warp.isCreator(targetPlayer)) {
+            throw ALREADY_MEMBER.create();
+        }
 
         Set<UUID> memberIDs = warp.getMembers().keySet();
         if (memberIDs.contains(targetPlayer.getUniqueId())) {
@@ -114,9 +114,6 @@ public class Invite {
 
     private static final SimpleCommandExceptionType NOT_ALLOWED =
         new SimpleCommandExceptionType(() -> "Only the creator of a warp can invite/uninvite players");
-
-    private static final SimpleCommandExceptionType WARP_NOT_FOUND =
-        new SimpleCommandExceptionType(() -> "No warp found with that name");
 
     private static final SimpleCommandExceptionType ALREADY_MEMBER =
         new SimpleCommandExceptionType(() -> "This player is already a member of the warp!");

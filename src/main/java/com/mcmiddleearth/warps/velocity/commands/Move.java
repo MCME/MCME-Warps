@@ -5,6 +5,7 @@ import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -39,27 +40,24 @@ public class Move {
 
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
         CommandSource source = context.getSource();
-        if (!(source instanceof Player player)) {
+        if (!(source instanceof Player sender)) {
             source.sendMessage(Component.text("Only players can run this command."));
             return Command.SINGLE_SUCCESS;
         }
 
-        var warpArg = CommandUtils.getWarp(context, "name");
-
-        // Q: Integrate this directly into WarpManager?
-        // - only if always will be using either usable or modifiable
-        //   if so, then it can lead to bugs easily by forgetting this check in each command!!!
-        if (!warpArg.value().isModifiable(player)) {
-            throw NOT_ALLOWED.create();
-        }
+        Warp warp = CommandUtils.getWarp(
+            context,
+            "name",
+            WarpPredicates.modifiableBy(sender)
+        ).value();
 
         // Send plugin message requesting player's Location
-        player.getCurrentServer().ifPresentOrElse(serverConnection -> {
-            player.sendMessage(Component.text("Moving warp..."));
+        sender.getCurrentServer().ifPresentOrElse(serverConnection -> {
+            sender.sendMessage(Component.text("Moving warp..."));
 
             boolean status = serverConnection.sendPluginMessage(
                 ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID,
-                RequestLocationMessage.serialise(LocationActionSubchannel.MOVE, warpArg.input())
+                RequestLocationMessage.serialise(LocationActionSubchannel.MOVE, warp.getName())
             );
 
             // TODO
@@ -81,7 +79,6 @@ public class Move {
         var warpSuggester = new WarpSuggester(warpNames, input);
         List<String> suggestions = warpSuggester.getSuggestions();
 
-        // Q: Add a tooltip? Display server/word?, creator?, region?
         suggestions.forEach(builder::suggest);
         return builder.buildFuture();
     }

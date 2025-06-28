@@ -6,6 +6,7 @@ import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -35,9 +36,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public final class WarpCommand {
-    private static final SimpleCommandExceptionType NOT_ALLOWED =
-        new SimpleCommandExceptionType(() -> "You are not allowed to perform this action");
-
     public static RequiredArgumentBuilder<CommandSource, String> register() {
             return BrigadierCommand.requiredArgumentBuilder("destination", StringArgumentType.greedyString())
                 .requires(sender -> sender.hasPermission(Permission.WARP.getNode()))
@@ -47,23 +45,21 @@ public final class WarpCommand {
 
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
         CommandSource source = context.getSource();
-        if (!(source instanceof Player player)) {
+        if (!(source instanceof Player sender)) {
             // Q: Easy way to add this to the entire /warp tree? Using permissions?
             source.sendMessage(Component.text("Only players can run this command."));
             return Command.SINGLE_SUCCESS;
         }
 
-        Warp warp = CommandUtils.getWarp(context, "name").value();
-        // Q: Integrate this directly into WarpManager?
-        // - only if always will be using either usable or modifiable
-        //   if so, then it can lead to bugs easily by forgetting this check in each command!!!
-        if (!warp.isUsable(player)) {
-            throw NOT_ALLOWED.create();
-        }
+        Warp warp = CommandUtils.getWarp(
+            context,
+            "destination",
+            WarpPredicates.usableBy(sender)
+        ).value();
 
-        Optional<ServerConnection> optCurrServer = player.getCurrentServer();
+        Optional<ServerConnection> optCurrServer = sender.getCurrentServer();
         if (optCurrServer.isEmpty()) {
-            player.sendMessage(Component.text("No server connection found! Unable to perform warp."));
+            sender.sendMessage(Component.text("No server connection found! Unable to perform warp."));
             return Command.SINGLE_SUCCESS;
         }
 
@@ -79,17 +75,17 @@ public final class WarpCommand {
         ProxyServer proxy = WarpVelocity.getInstance().getProxy();
         Optional<RegisteredServer> optTargetServer = proxy.getServer(targetServerName);
         optTargetServer.ifPresent(targetServer -> {
-            player.createConnectionRequest(targetServer).connectWithIndication()
+            sender.createConnectionRequest(targetServer).connectWithIndication()
                 // Q: Does this block the main thread?
                 .whenCompleteAsync((success, _) -> {
                     if (!success) {
-                        player.sendMessage(
+                        sender.sendMessage(
                             Component.text("Aborting teleport, failed to connect to server '" + targetServerName + "'", NamedTextColor.RED)
                         );
                         return;
                     }
 
-                    player.sendMessage(Component.text("Changed server!"));
+                    sender.sendMessage(Component.text("Changed server!"));
                     sendTeleportMessage(targetServer, warp);
                 });
         });
@@ -108,7 +104,7 @@ public final class WarpCommand {
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
-        if (!(context.getSource() instanceof Player player)) {
+        if (!(context.getSource() instanceof Player sender)) {
             return Suggestions.empty();
         }
 
@@ -125,7 +121,7 @@ public final class WarpCommand {
             return builder.buildFuture();
         }
 
-        List<String> warpNames = WarpManager.getAllUsableWarpNames(player);
+        List<String> warpNames = WarpManager.getAllUsableWarpNames(sender);
         var warpSuggester = new WarpSuggester(warpNames, input);
         List<String> suggestions = warpSuggester.getSuggestions();
 

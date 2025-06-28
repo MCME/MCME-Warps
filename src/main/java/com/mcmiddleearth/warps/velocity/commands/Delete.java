@@ -2,6 +2,7 @@ package com.mcmiddleearth.warps.velocity.commands;
 
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -43,14 +44,15 @@ public class Delete {
             return Command.SINGLE_SUCCESS;
         }
 
-        var warpArg = CommandUtils.getWarp(context, "name");
-        if (!warpArg.value().isModifiable(sender)) {
-            throw NOT_ALLOWED.create();
-        }
+        Warp warp = CommandUtils.getWarp(
+            context,
+            "name",
+            WarpPredicates.modifiableBy(sender)
+        ).value();
 
         try {
-            WarpManager.deleteWarp(warpArg.value());
-            sender.sendRichMessage("<green>Warp '%s' deleted".formatted(warpArg.input()));
+            WarpManager.deleteWarp(warp);
+            sender.sendRichMessage("<green>Warp '%s' deleted".formatted(warp.getName()));
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
             sender.sendMessage(Component.text(e.getMessage(), NamedTextColor.RED));

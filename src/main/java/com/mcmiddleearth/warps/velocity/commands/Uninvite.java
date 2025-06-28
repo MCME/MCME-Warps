@@ -2,6 +2,8 @@ package com.mcmiddleearth.warps.velocity.commands;
 
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -46,8 +48,7 @@ public class Uninvite {
         final String warpName = context.getArgument("warp", String.class);
         final String playerName = context.getArgument("player", String.class);
 
-        Warp warp = WarpManager.getWarp(warpName);
-        if (warp == null) throw WARP_NOT_FOUND.create();
+        Warp warp = CommandUtils.getWarp( context, "warp").value();
         if (!warp.isOfType(Warp.Type.PRIVATE)) throw WARP_NOT_PRIVATE.create();
         if (!warp.isCreator(sender)) throw NOT_ALLOWED.create();
 
@@ -110,9 +111,6 @@ public class Uninvite {
 
     private static final SimpleCommandExceptionType NOT_ALLOWED =
         new SimpleCommandExceptionType(() -> "Only the creator of a warp can invite/uninvite players");
-
-    private static final SimpleCommandExceptionType WARP_NOT_FOUND =
-        new SimpleCommandExceptionType(() -> "No warp found with that name");
 
     private static final SimpleCommandExceptionType NOT_MEMBER_EXCEPTION =
         new SimpleCommandExceptionType(() -> "That player is not a member of this warp");
