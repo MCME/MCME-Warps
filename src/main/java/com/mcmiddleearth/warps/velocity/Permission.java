@@ -12,12 +12,11 @@ public enum Permission {
     INVITE("mcmewarps.cmd.invite"),
     UNINVITE("mcmewarps.cmd.uninvite"),
     MAKE_PUBLIC("mcmewarps.cmd.make-public"),
-    MAKE_PRIVATE("mcmewarps.cmd.make-private");
+    MAKE_PRIVATE("mcmewarps.cmd.make-private"),
+    EDIT_PUBLIC_WARPS("mcmewarps.cmd.edit-public-warps");
 
     // TODO:
     // - world access perms -> https://github.com/search?q=repo%3AMyWarp%2FMyWarp%20world-access&type=code
-    // - OVERRIDE_MODIFY("mcmewarps.override.modify");
-    //   - Players with this permission can modify (delete/rename/move) public warps
     // - mcmewarps.limit.ignore -> private limit ignore
 
     // MyWarp Permissions:

@@ -1,12 +1,12 @@
 package com.mcmiddleearth.warps.velocity.warps;
 
 import com.mcmiddleearth.warps.core.SimpleLocation;
+import com.mcmiddleearth.warps.velocity.Permission;
 import com.velocitypowered.api.proxy.Player;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Required;
 
 import java.util.HashMap;
-import java.util.Set;
 import java.util.UUID;
 
 // https://docs.spongepowered.org/stable/en/plugin/configuration/serialization.html#using-objectmappers
@@ -82,7 +82,7 @@ public class Warp {
     }
 
     /**
-     * A filter to limit what players can view and use this warp
+     * Specifies which players can use this warp
      */
     public boolean isUsable(Player player) {
         if (isOfType(Type.PUBLIC)) {
@@ -90,28 +90,22 @@ public class Warp {
             return true;
         }
 
-        // Q: What about staff/moderators?
+        // Q: Should staff/moderators be able to see & use other people's private warps?
+
         if (members.containsKey(player.getUniqueId())) return true;
         return player.getUniqueId().equals(creator);
     }
 
     /**
-     * A filter to limit what players can view and modify this warp
+     * Specifies which players can modify this warp
      */
     public boolean isModifiable(Player player) {
         if (isOfType(Type.PUBLIC)) {
-            // TODO: Player must have staff/moderator perms
-            return true;
+            return player.hasPermission(Permission.EDIT_PUBLIC_WARPS.getNode());
         }
 
-        // Q: What about staff/moderators?
+        // Q: Should staff/moderators be able to see & use other people's private warps?
+
         return player.getUniqueId().equals(creator);
     }
-
-//    public boolean isModifiableBy(Player player) {
-//        return player.getUniqueId().equals(owner) || player.hasPermission("warp.admin");
-//    }
-//    public boolean isUsableBy(Player player) {
-//        return isPublic || isModifiableBy(player);
-//    }
 }
