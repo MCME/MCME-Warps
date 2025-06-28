@@ -1,14 +1,18 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
 import com.mcmiddleearth.warps.velocity.Permission;
+import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -21,11 +25,11 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class Rename {
-    private static final SimpleCommandExceptionType WARP_NOT_FOUND =
-        new SimpleCommandExceptionType(() -> "No warp found with that name");
+    private static final SimpleCommandExceptionType NOT_ALLOWED =
+        new SimpleCommandExceptionType(() -> "You are not allowed to perform this action");
 
-    private static final SimpleCommandExceptionType MANUAL_PREFIX =
-        new SimpleCommandExceptionType(() -> "The renamed warp will be automatically given the 'zzz' prefix, please just provide the warp name");
+    private static final DynamicCommandExceptionType INVALID_PRIVATE_PREFIX =
+        new DynamicCommandExceptionType(name -> new LiteralMessage("A private warp must start with zzz-" + name + "-"));
 
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("rename")
@@ -34,6 +38,7 @@ public class Rename {
             .then(BrigadierCommand.requiredArgumentBuilder("current_name", StringArgumentType.string())
                 .suggests(Rename::suggestCurrName)
                 .then(BrigadierCommand.requiredArgumentBuilder("new_name", StringArgumentType.greedyString())
+                    .suggests(Rename::suggestNewName)
                     .executes(Rename::execute)
                 )
             );
@@ -46,30 +51,61 @@ public class Rename {
             return Command.SINGLE_SUCCESS;
         }
 
-        final String currName = context.getArgument("current_name", String.class);
+        // getWarp ensures current_name is valid
+        Warp currWarp = CommandUtils.getWarp(
+            context,
+            "current_name",
+            WarpPredicates.modifiableBy(sender)
+        ).value();
+
         final String newName = context.getArgument("new_name", String.class);
 
-        Warp currWarp = WarpManager.getWarp(currName);
-        if (currWarp == null) throw WARP_NOT_FOUND.create();
-        if (currWarp.isOfType(Warp.Type.PRIVATE) && newName.startsWith("zzz")) {
-           throw MANUAL_PREFIX.create();
+        if (currWarp.isOfType(Warp.Type.PRIVATE) && !newName.startsWith("zzz-" + sender.getUsername() + "-")) {
+            throw INVALID_PRIVATE_PREFIX.create(sender.getUsername());
         }
 
-        return WarpManager.updateWarp(currName, warp -> warp.setName(newName), sender, "<green>Renamed warp '%s' to '%s'".formatted(currName, newName));
+        return WarpManager.updateWarp(currWarp.getName(),
+            warp -> warp.setName(newName),
+            sender,
+            "<green>Renamed warp '%s' to '%s'".formatted(currWarp.getName(), newName)
+        );
     }
 
     private static CompletableFuture<Suggestions> suggestCurrName(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
-        if (!(context.getSource() instanceof Player player)) {
+        if (!(context.getSource() instanceof Player sender)) {
             return Suggestions.empty();
         }
 
         String input = builder.getRemainingLowerCase();
-        List<String> warpNames = WarpManager.getAllModifiableWarpNames(player);
+        List<String> warpNames = WarpManager.getAllModifiableWarpNames(sender);
         var warpSuggester = new WarpSuggester(warpNames, input);
         List<String> suggestions = warpSuggester.getSuggestions();
 
         // curr_name can't be a greedy arg, so wrap suggestions in quotes
         suggestions.forEach(suggestion -> builder.suggest("\"" + suggestion + "\""));
+        return builder.buildFuture();
+    }
+
+    private static CompletableFuture<Suggestions> suggestNewName(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+        if (!(context.getSource() instanceof Player sender)) {
+            return Suggestions.empty();
+        }
+
+        String input = builder.getRemainingLowerCase();
+
+        final String currName = context.getArgument("current_name", String.class);
+        if (currName.toLowerCase().startsWith(input)) {
+            builder.suggest(currName);
+        }
+
+        Warp warp = WarpManager.getWarp(currName);
+        if (warp != null && warp.isOfType(Warp.Type.PRIVATE)) {
+            final String privatePrefix = "zzz-" + sender.getUsername() + "-";
+            if (!input.startsWith(privatePrefix.toLowerCase())) {
+                builder.suggest(privatePrefix);
+            }
+        }
+
         return builder.buildFuture();
     }
 }
