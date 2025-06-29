@@ -125,6 +125,18 @@ public class WarpManager {
         }
     };
 
+    public static void saveAllWarps() {
+        for (Warp w: warps.values()) {
+            try {
+                saveWarp(w);
+            } catch (Exception e) {
+                WarpVelocity.getInstance().getLogger().error(
+                    "Failed to save warp {} - {}", w.getName(), e.getMessage()
+                );
+            }
+        }
+    }
+
     public static void saveWarp(Warp warp) throws Exception {
         Path path = getWarpPath(warp);
         YamlConfigurationLoader loader = YamlConfigurationLoader.builder().path(path).build();

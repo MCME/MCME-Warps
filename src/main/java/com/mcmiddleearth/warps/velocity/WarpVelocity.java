@@ -11,6 +11,7 @@ import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -84,9 +85,9 @@ public class WarpVelocity {
 //    public void onProxyReload(ProxyReloadEvent event) {
 //        this.reloadVoiceProxyServer();
 //    }
-//
-//    @Subscribe
-//    public void onProxyShutdown(ProxyShutdownEvent event) {
-//        if (this.voiceProxyServer != null) this.voiceProxyServer.interrupt();
-//    }
+
+    @Subscribe
+    public void onProxyShutdown(ProxyShutdownEvent event) {
+        WarpManager.saveAllWarps();
+    }
 }

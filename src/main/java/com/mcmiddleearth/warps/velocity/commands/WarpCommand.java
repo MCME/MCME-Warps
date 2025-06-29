@@ -85,7 +85,6 @@ public final class WarpCommand {
                         return;
                     }
 
-                    sender.sendMessage(Component.text("Changed server!"));
                     sendTeleportMessage(targetServer, warp);
                 });
         });
@@ -101,6 +100,8 @@ public final class WarpCommand {
             ChannelIdentifiers.MAIN_ID,
             TeleportMessage.serialise(TeleportMessage.Subchannel.TELEPORT, data)
         );
+
+        warp.addVisit();
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {

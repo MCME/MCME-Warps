@@ -37,6 +37,7 @@ public class Warp {
     @Required private Warp.Type type;
     // Can't be final, otherwise Configurate can't set members on load
     private HashMap<UUID, String> members = new HashMap<>();
+    private int visits = 0;
 
     public Warp(UUID creator, String name, String server, SimpleLocation location, Warp.Type type) {
         this.creator = creator;
@@ -79,6 +80,10 @@ public class Warp {
     }
     public void removePlayer(Player player) {
         this.members.remove(player.getUniqueId());
+    }
+
+    public void addVisit() {
+        this.visits++;
     }
 
     /**
