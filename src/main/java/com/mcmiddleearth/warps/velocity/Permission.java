@@ -3,7 +3,6 @@ package com.mcmiddleearth.warps.velocity;
 public enum Permission {
     WARP("mcmewarps.cmd.warp"),
     RANDOM("mcmewarps.cmd.random"),
-    FAVOURITE("mcmewarps.cmd.favourite"),
     CREATE_PRIVATE("mcmewarps.cmd.create-private"),
     CREATE_PUBLIC("mcmewarps.cmd.create-public"),
     DELETE("mcmewarps.cmd.delete"),
@@ -16,7 +15,6 @@ public enum Permission {
     EDIT_PUBLIC_WARPS("mcmewarps.cmd.edit-public-warps");
 
     // TODO:
-    // - world access perms -> https://github.com/search?q=repo%3AMyWarp%2FMyWarp%20world-access&type=code
     // - mcmewarps.limit.ignore -> private limit ignore
 
     // MyWarp Permissions:

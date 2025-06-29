@@ -87,7 +87,8 @@ public class Warp {
     public boolean isUsable(Player player) {
         if (isOfType(Type.PUBLIC)) {
             // TODO: Check player meets the perms (if any)
-            return true;
+
+            return player.hasPermission("mcmewarps.world-access." + getLocation().world().toLowerCase());
         }
 
         // Q: Should staff/moderators be able to see & use other people's private warps?
