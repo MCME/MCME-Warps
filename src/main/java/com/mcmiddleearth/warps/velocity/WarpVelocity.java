@@ -2,6 +2,7 @@ package com.mcmiddleearth.warps.velocity;
 
 import com.google.inject.Inject;
 import com.mcmiddleearth.warps.velocity.commands.*;
+import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.listener.MessageListener;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.tree.LiteralCommandNode;
@@ -57,6 +58,7 @@ public class WarpVelocity {
         proxy.getChannelRegistrar().register(ChannelIdentifiers.MAIN_ID);
         proxy.getChannelRegistrar().register(ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID);
 
+        ConfigManager.loadConfig();
         WarpManager.loadAllWarps();
 
         CommandManager commandManager = proxy.getCommandManager();

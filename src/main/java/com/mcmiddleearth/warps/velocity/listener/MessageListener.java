@@ -4,6 +4,7 @@ import com.mcmiddleearth.warps.core.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.core.messageprotocols.PlayerLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
+import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.velocitypowered.api.event.Subscribe;
@@ -52,15 +53,19 @@ public class MessageListener {
             warpType
         );
 
-        Component message;
         try {
             WarpManager.addWarp(newWarp);
-            message = Component.text("Warp created!", NamedTextColor.GREEN);
+            creator.sendRichMessage("<green>Warp '%s' has been created!".formatted(newWarp.getName()));
+
+            if (warpType.equals(Warp.Type.PRIVATE)) {
+                final int privateLimit = ConfigManager.getConfig().getPrivateWarpLimit();
+                final int creatorPrivateWarpCount = WarpManager.getWarpNames(w -> w.isCreator(creator) && w.isOfType(Warp.Type.PRIVATE)).size();
+                creator.sendRichMessage("<gray>You have " + (privateLimit - creatorPrivateWarpCount) + " private warps remaining");
+            }
         } catch (Exception e) {
-            message = Component.text("Failed to create warp", NamedTextColor.RED);
+            creator.sendRichMessage("<red>Failed to create warp!");
         }
 
-        creator.sendMessage(message);
     }
 
     private void moveWarp(PlayerLocationMessage.Result result, String serverName, Player creator) {

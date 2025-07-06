@@ -12,13 +12,8 @@ public enum Permission {
     UNINVITE("mcmewarps.cmd.uninvite"),
     MAKE_PUBLIC("mcmewarps.cmd.make-public"),
     MAKE_PRIVATE("mcmewarps.cmd.make-private"),
-    EDIT_PUBLIC_WARPS("mcmewarps.cmd.edit-public-warps");
-
-    // TODO:
-    // - mcmewarps.limit.ignore -> private limit ignore
-
-    // MyWarp Permissions:
-    // plugin.yml -> https://github.com/MyWarp/MyWarp/blob/ef0ef6ddb18c2c86a4d7223de7fa7fb73ac67984/mywarp-bukkit/src/main/resources/plugin.yml#L64
+    EDIT_PUBLIC_WARPS("mcmewarps.cmd.edit-public-warps"),
+    IGNORE_PRIVATE_WARPS_LIMIT("mcmewarps.limits.ignore.private");
 
     private final String permissionNode;
 

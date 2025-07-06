@@ -4,6 +4,8 @@ import com.mcmiddleearth.warps.core.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
+import com.mcmiddleearth.warps.velocity.config.ConfigManager;
+import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -26,6 +28,9 @@ public class PrivateCreate {
     private static final SimpleCommandExceptionType MANUAL_PREFIX =
         new SimpleCommandExceptionType(() -> "Private warps are automatically given the 'zzz' prefix, please just provide the warp name");
 
+    private static final SimpleCommandExceptionType PRIVATE_WARP_LIMIT_REACHED =
+        new SimpleCommandExceptionType(() -> "Unable to create another private warp - you have reached the maximum (" + ConfigManager.getConfig().getPrivateWarpLimit() + ")");
+
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("pcreate")
             .requires(sender -> sender.hasPermission(Permission.CREATE_PRIVATE.getNode()))
@@ -42,14 +47,22 @@ public class PrivateCreate {
             return Command.SINGLE_SUCCESS;
         }
 
+        // Ensure the player hasn't hit their limit of private warps
+        if (!sender.hasPermission(Permission.IGNORE_PRIVATE_WARPS_LIMIT.getNode())) {
+            final int privateLimit = ConfigManager.getConfig().getPrivateWarpLimit();
+            final int senderPrivateWarpCount = WarpManager.getWarpNames(w -> w.isCreator(sender) && w.isOfType(Warp.Type.PRIVATE)).size();
+
+            if (senderPrivateWarpCount >= privateLimit) {
+                throw PRIVATE_WARP_LIMIT_REACHED.create();
+            }
+        }
+
         // TODO: Ensure warpName is valid (doesn't start with '-' etc.)
         // FIXME: Now using greedy, need to prevent bad file names e.g. invalid characters /?!
         final String tempWarpName = context.getArgument("name", String.class);
-
         if (tempWarpName.startsWith("zzz")) {
             throw MANUAL_PREFIX.create();
         }
-
         final String privatisedWarpName = MessageFormat.format("zzz-{0}-{1}", sender.getUsername(), tempWarpName);
 
         if (WarpManager.warpExists(privatisedWarpName)) {
@@ -58,8 +71,6 @@ public class PrivateCreate {
 
         // Send plugin message requesting player's Location
         sender.getCurrentServer().ifPresentOrElse(serverConnection -> {
-            sender.sendMessage(Component.text("Creating warp '" + privatisedWarpName + '"'));
-
             boolean status = serverConnection.sendPluginMessage(
                 ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID,
                 RequestLocationMessage.serialise(LocationActionSubchannel.CREATE_PRIVATE, privatisedWarpName)

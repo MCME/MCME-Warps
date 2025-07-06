@@ -1,0 +1,5 @@
+privateWarpLimit: 25
+
+serverPrefixes:
+  - { plotworld: "plot" }
+  - { terrainworld: "terr" }
