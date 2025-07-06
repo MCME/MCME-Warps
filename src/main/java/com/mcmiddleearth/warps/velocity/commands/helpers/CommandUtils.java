@@ -14,10 +14,10 @@ import java.util.function.Predicate;
 public class CommandUtils {
 
     private static final DynamicCommandExceptionType WARP_NOT_FOUND =
-        new DynamicCommandExceptionType(name -> new LiteralMessage("No warp found with name: " + name));
+        new DynamicCommandExceptionType(warpName -> new LiteralMessage("No warp found with name: " + warpName));
 
-    private static final SimpleCommandExceptionType NOT_ALLOWED =
-        new SimpleCommandExceptionType(() -> "You are not allowed to perform this action");
+    private static final DynamicCommandExceptionType NOT_ALLOWED =
+        new DynamicCommandExceptionType((warpName) -> new LiteralMessage("You do not have access to warp " + warpName));
 
     public static ArgResult<Warp> getWarp(CommandContext<CommandSource> context, String argumentName) throws CommandSyntaxException {
         return getWarp(context, argumentName, _ -> true);
@@ -36,7 +36,7 @@ public class CommandUtils {
         }
 
         if (!accessPredicate.test(warp)) {
-            throw NOT_ALLOWED.create();
+            throw NOT_ALLOWED.create(warp.getName());
         }
 
         return new ArgResult<>(warpName, warp);

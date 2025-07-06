@@ -55,7 +55,6 @@ public class RandomCommand {
         Random rand = new Random();
         String warpName = warps.get(rand.nextInt(warps.size()));
 
-        // TODO: Extract the below to a shared location
         Warp warp = WarpManager.getWarp(warpName);
         if (warp == null) {
             throw WARP_NOT_FOUND.create();
