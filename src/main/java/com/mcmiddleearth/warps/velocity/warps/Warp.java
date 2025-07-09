@@ -82,6 +82,7 @@ public class Warp {
         this.members.remove(player.getUniqueId());
     }
 
+    public int getVisits() { return this.visits; }
     public void addVisit() {
         this.visits++;
     }

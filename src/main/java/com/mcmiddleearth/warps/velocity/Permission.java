@@ -12,7 +12,8 @@ public enum Permission {
     UNINVITE("mcmewarps.cmd.uninvite"),
     MAKE_PUBLIC("mcmewarps.cmd.make-public"),
     MAKE_PRIVATE("mcmewarps.cmd.make-private"),
-    EDIT_PUBLIC_WARPS("mcmewarps.cmd.edit-public-warps"),
+    RELOAD("mcmewarps.cmd.reload"),
+    EDIT_PUBLIC_WARPS("mcmewarps.modify.public-warps"),
     IGNORE_PRIVATE_WARPS_LIMIT("mcmewarps.limits.ignore.private");
 
     private final String permissionNode;

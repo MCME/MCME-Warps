@@ -149,10 +149,38 @@ public class WarpManager {
             loader.save(root);
         } catch (IOException e) {
             WarpVelocity.getInstance().getLogger()
-                .error( "An error occurred whilst saving warp {} - {}",
+                .error("An error occurred whilst saving warp {} - {}",
                     warp.getName(), e.getMessage()
                 );
             throw new Exception("Failed to save warp '%s' to disk".formatted(warp.getName()));
+        }
+    }
+
+    public static void saveWarpVisits() {
+        for (Warp w: warps.values()) {
+            Path path = getWarpPath(w);
+            YamlConfigurationLoader loader = YamlConfigurationLoader.builder().path(path).build();
+
+            if (!Files.exists(path)) {
+                // This is only saving the visits field, so if the warp no longer exists
+                // don't save to it
+                WarpVelocity.getInstance().getLogger().error(
+                    "Failed to update the warp count for warp {} - there exists no warp file at {}",
+                    w.getName(), path
+                );
+                continue;
+            }
+
+            try {
+                ConfigurationNode root = loader.load();
+                root.node("visits").set(w.getVisits());
+                loader.save(root);
+            } catch (IOException e) {
+                WarpVelocity.getInstance().getLogger().error(
+                    "An error occurred whilst saving warp {} - {}",
+                    w.getName(), e.getMessage()
+                );
+            }
         }
     }
 
@@ -161,6 +189,8 @@ public class WarpManager {
             WarpVelocity.getInstance().getLogger().warn("The warps directory does not exist ({}), skipping warp loading", WARPS_DIRECTORY);
             return;
         }
+
+        warps.clear();
 
         try (Stream<Path> pathStream = Files.walk(WARPS_DIRECTORY)) {
             List<Path> yamlFiles = pathStream
