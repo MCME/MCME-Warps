@@ -21,7 +21,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.text.MessageFormat;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class Delete {
@@ -66,9 +68,9 @@ public class Delete {
         }
 
         String input = builder.getRemainingLowerCase();
-        List<String> warpNames = WarpManager.getAllModifiableWarpNames(sender);
+        Map<String, String> warpNames = WarpManager.getAllModifiableWarpNames(sender);
         var warpSuggester = new WarpSuggester(warpNames, input);
-        List<String> suggestions = warpSuggester.getSuggestions();
+        Collection<String> suggestions = warpSuggester.getSuggestions();
 
         // Q: Add a tooltip? Display server/word?, creator?, region?
         suggestions.forEach(builder::suggest);

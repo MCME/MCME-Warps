@@ -21,7 +21,9 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class Rename {
@@ -77,9 +79,9 @@ public class Rename {
         }
 
         String input = builder.getRemainingLowerCase();
-        List<String> warpNames = WarpManager.getAllModifiableWarpNames(sender);
+        Map<String, String> warpNames = WarpManager.getAllModifiableWarpNames(sender);
         var warpSuggester = new WarpSuggester(warpNames, input);
-        List<String> suggestions = warpSuggester.getSuggestions();
+        Collection<String> suggestions = warpSuggester.getSuggestions();
 
         // curr_name can't be a greedy arg, so wrap suggestions in quotes
         suggestions.forEach(suggestion -> builder.suggest("\"" + suggestion + "\""));

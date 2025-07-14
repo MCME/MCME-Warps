@@ -22,9 +22,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 public class RandomCommand {
     private static final SimpleCommandExceptionType WARP_NOT_FOUND =
@@ -47,7 +45,7 @@ public class RandomCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        List<String> warps = WarpManager.getAllUsableWarpNames(player);
+        ArrayList<String> warps = new ArrayList<>(WarpManager.getAllUsableWarpNames(player).values());
         if (warps.isEmpty()) {
             throw NO_WARPS.create();
         }

@@ -1,5 +1,6 @@
 package com.mcmiddleearth.warps.velocity.warps;
 
+import com.mcmiddleearth.warps.velocity.Utils;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mojang.brigadier.Command;
 import com.velocitypowered.api.proxy.Player;
@@ -14,19 +15,21 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class WarpManager {
     private static final Path WARPS_DIRECTORY =  WarpVelocity.getInstance().getDataFolder().resolve("warps");
 
+    /** A map of normalised warp names to Warps */
     private static final HashMap<String, Warp> warps = new HashMap<>();
 
     public static boolean warpExists(String warpName) {
-        return warps.containsKey(normalise(warpName));
+        return warps.containsKey(normaliseWarpName(warpName));
     }
 
     public static @Nullable Warp getWarp(String warpName) {
-        String normalisedWarpName = normalise(warpName);
+        String normalisedWarpName = normaliseWarpName(warpName);
 
         if (warpExists(warpName)) {
             return warps.get(normalisedWarpName);
@@ -35,18 +38,33 @@ public class WarpManager {
         return null;
     }
 
-    public static List<String> getWarpNames(Predicate<Warp> filter) {
-        return warps.values().stream().filter(filter).map(Warp::getName).toList();
+    public static Map<String, String> getWarpNames(Predicate<Warp> filter) {
+        return warps.entrySet().stream()
+            .filter(entry -> filter.test(entry.getValue()))
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> entry.getValue().getName()
+            ));
     }
-    public static List<String> getAllModifiableWarpNames(Player player) {
-        return warps.values().stream().filter(warp -> warp.isModifiable(player)).map(Warp::getName).toList();
+    public static Map<String, String> getAllModifiableWarpNames(Player player) {
+        return warps.entrySet().stream()
+            .filter(entry -> entry.getValue().isModifiable(player))
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> entry.getValue().getName()
+            ));
     }
-    public static List<String> getAllUsableWarpNames(Player player) {
-        return warps.values().stream().filter(warp -> warp.isUsable(player)).map(Warp::getName).toList();
+    public static Map<String, String> getAllUsableWarpNames(Player player) {
+        return warps.entrySet().stream()
+            .filter(entry -> entry.getValue().isUsable(player))
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> entry.getValue().getName()
+            ));
     }
 
     private static void putWarp(Warp warp) throws Exception {
-        String warpName = normalise(warp.getName());
+        String warpName = normaliseWarpName(warp.getName());
 
         if (warps.containsKey(warpName)) {
             throw new Exception("A warp already exists with name '" + warpName + "'");
@@ -107,7 +125,7 @@ public class WarpManager {
     }
 
     public static void deleteWarp(Warp warp) throws Exception {
-        String warpName = normalise(warp.getName());
+        String warpName = normaliseWarpName(warp.getName());
         warps.remove(warpName);
 
         Path warpPath = getWarpPath(warp);
@@ -220,13 +238,12 @@ public class WarpManager {
     }
 
     // Utils
-    private static String normalise(String name) {
-        // Removing apostrophes so that a player isn't forced to type one
-        return name.trim().replace("'", "").toLowerCase(Locale.ROOT);
+    public static String normaliseWarpName(String warpName) {
+        return Utils.normaliseString(warpName).trim();
     }
 
     private static Path getWarpPath(Warp warp) {
-        String warpName = normalise(warp.getName());
+        String warpName = normaliseWarpName(warp.getName());
 
         if (warp.isOfType(Warp.Type.PUBLIC)) {
             return WARPS_DIRECTORY

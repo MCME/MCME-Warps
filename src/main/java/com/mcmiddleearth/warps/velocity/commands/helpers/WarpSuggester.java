@@ -1,5 +1,7 @@
 package com.mcmiddleearth.warps.velocity.commands.helpers;
 
+import com.mcmiddleearth.warps.velocity.Utils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.similarity.JaroWinklerDistance;
 
 import java.util.*;
@@ -9,28 +11,31 @@ public class WarpSuggester {
     private static final int FUZZY_SUGGESTIONS_LIMIT = 3;
     private static final JaroWinklerDistance distance = new JaroWinklerDistance();
 
-    private final String input;
-    private final List<String> warpNames;
+    private final String rawInput;
+    private final String cleanedInput;
+    private final Map<String, String> warpNames;
 
-    public WarpSuggester(List<String> warpNames, String rawInput) {
-        this.input = normalise(rawInput);
-        // Q: Create a map of warpName to normalisedWarpName?
+    public WarpSuggester(Map<String, String> warpNames, String rawInput) {
+        this.rawInput = rawInput;
+        this.cleanedInput = normaliseInput(rawInput);
+
         this.warpNames = warpNames;
     }
 
-    // FIXME: Requires WarpManager to also not care about apostrophes
-    // -> share a base normaliser?
-    private static String normalise(String s) {
-        return s.toLowerCase(Locale.ROOT)
-            .replace("'", "")
-            // Collapse multiple spaces
-            .replaceAll("\\s+", " ")
-            // Can't use trim otherwise startsWith doesn't filter properly
-            .stripLeading();
+    private static String normaliseInput(String input) {
+        // Can't use trim, since trailing whitespace is used by startsWith
+        // to determine when the user has started to enter a new word
+        String temp = Utils.normaliseString(input).stripLeading();
+
+        // Some commands use StringArgument.Word, which requires quotes for typing >1 word
+        // So stripping quotes allows the suggestions to still correctly match
+        // (quotes are then added later)
+        String unquoted = StringUtils.strip(temp, "\"'");
+        return unquoted;
     }
 
-    public List<String> getSuggestions() {
-        if (input.isEmpty()) { return warpNames; }
+    public Collection<String> getSuggestions() {
+        if (rawInput.isEmpty()) { return warpNames.values(); }
 
         List<String> startsWithSuggestions = getStartsWithSuggestions();
 
@@ -38,9 +43,9 @@ public class WarpSuggester {
         // therefore if the user has entered >1 word the
         // suggestions must not include *words* that the user has already typed
         // TODO: Suggestions v3 - fuzzy matching on the current word
-        if (input.contains(" ")) {
+        if (cleanedInput.contains(" ")) {
             // Even if startsWithSuggestions is empty we must return here
-            return getPartialSuggestions(input, startsWithSuggestions);
+            return getPartialSuggestions(cleanedInput, startsWithSuggestions);
         }
 
         if (!startsWithSuggestions.isEmpty()) {
@@ -59,7 +64,15 @@ public class WarpSuggester {
     }
 
     private List<String> getStartsWithSuggestions() {
-        return warpNames.stream().filter(warpName -> normalise(warpName).startsWith(input)).toList();
+        List<String> suggestions = new ArrayList<>();
+        for (var entry : warpNames.entrySet()) {
+            // Using the normalised warp name for the comparison
+            if (entry.getKey().startsWith(cleanedInput)) {
+                // Suggesting the un-normalised warp name
+                suggestions.add(entry.getValue());
+            }
+        }
+        return suggestions;
     }
 
     private List<String> getPartialSuggestions(String input, List<String> startsWithSuggestions) {
@@ -89,7 +102,15 @@ public class WarpSuggester {
     }
 
     private List<String> getContainsSuggestions() {
-        return warpNames.stream().filter(warpName -> normalise(warpName).contains(input)).toList();
+        List<String> suggestions = new ArrayList<>();
+        for (var entry : warpNames.entrySet()) {
+            // Using the normalised warp name for the comparison
+            if (entry.getKey().contains(cleanedInput)) {
+                // Suggesting the un-normalised warp name
+                suggestions.add(entry.getValue());
+            }
+        }
+        return suggestions;
     }
 
     private record ScoredWarp(String name, double score) {}
@@ -100,14 +121,14 @@ public class WarpSuggester {
             Comparator.comparingDouble(ScoredWarp::score).reversed()
         );
 
-        for (String warpName : warpNames) {
-            String normalizedWarp = normalise(warpName);
-            double score = distance.apply(normalizedWarp, input);
+        for (var entry : warpNames.entrySet()) {
+            String normalizedWarpName = entry.getKey();
+            double score = distance.apply(normalizedWarpName, cleanedInput);
 
             // No point suggesting poor matches (lower is better)
             if (score > DISTANCE_THRESHOLD) continue;
 
-            topSuggestions.offer(new ScoredWarp(warpName, score));
+            topSuggestions.offer(new ScoredWarp(entry.getValue(), score));
             if (topSuggestions.size() > FUZZY_SUGGESTIONS_LIMIT) {
                 topSuggestions.poll(); // Remove the lowest score
             }

@@ -30,9 +30,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public final class WarpCommand {
@@ -122,9 +120,9 @@ public final class WarpCommand {
             return builder.buildFuture();
         }
 
-        List<String> warpNames = WarpManager.getAllUsableWarpNames(sender);
+        Map<String, String> warpNames = WarpManager.getAllUsableWarpNames(sender);
         var warpSuggester = new WarpSuggester(warpNames, input);
-        List<String> suggestions = warpSuggester.getSuggestions();
+        Collection<String> suggestions = warpSuggester.getSuggestions();
 
         // Q: Add a tooltip? Display server/word?, creator?, region?
         suggestions.forEach(builder::suggest);

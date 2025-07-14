@@ -21,9 +21,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class Invite {
@@ -84,9 +82,9 @@ public class Invite {
         }
 
         String input = builder.getRemainingLowerCase();
-        List<String> warpNames = WarpManager.getWarpNames(warp -> warp.isOfType(Warp.Type.PRIVATE) && warp.isCreator(sender));
+        Map<String, String> warpNames = WarpManager.getWarpNames(warp -> warp.isOfType(Warp.Type.PRIVATE) && warp.isCreator(sender));
         var warpSuggester = new WarpSuggester(warpNames, input);
-        List<String> suggestions = warpSuggester.getSuggestions();
+        Collection<String> suggestions = warpSuggester.getSuggestions();
 
         // warp can't be a greedy arg, so wrap suggestions in quotes
         suggestions.forEach(suggestion -> builder.suggest("\"" + suggestion + "\""));
