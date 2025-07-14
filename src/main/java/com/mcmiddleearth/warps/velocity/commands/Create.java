@@ -4,6 +4,7 @@ import com.mcmiddleearth.warps.core.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
+import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -35,7 +36,6 @@ public class Create {
 
         CommandSource source = context.getSource();
         if (!(source instanceof Player player)) {
-            // Q: Easy way to add this to the entire /warp tree? Using permissions?
             source.sendMessage(Component.text("Only players can run this command."));
             return Command.SINGLE_SUCCESS;
         }
@@ -48,7 +48,8 @@ public class Create {
         // TODO: Ensure warpName is valid (doesn't start with '-' etc.)
         // FIXME: Now using greedy, need to prevent bad file names e.g. invalid characters /?!
 
-        // Send plugin message requesting player's Location
+        // Send plugin message requesting player's location
+        // the response will be used in the MessageListener
         player.getCurrentServer().ifPresentOrElse(serverConnection -> {
             player.sendMessage(Component.text("Creating warp..."));
 
@@ -57,10 +58,11 @@ public class Create {
                 RequestLocationMessage.serialise(LocationActionSubchannel.CREATE_PUBLIC, warpName)
             );
 
-            // TODO
-            // if (!status) { }
+             if (!status) {
+                 WarpVelocity.getInstance().getLogger().error("Failed to send plugin message to paper backend {}", serverConnection.getServerInfo().getName());
+             }
         }, () -> {
-            // TODO: Report no connections
+            player.sendRichMessage("<red>You are not connected to a server");
         });
 
         return Command.SINGLE_SUCCESS;

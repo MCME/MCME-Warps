@@ -4,6 +4,7 @@ import com.mcmiddleearth.warps.core.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
+import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -69,17 +70,19 @@ public class PrivateCreate {
             throw WARP_EXISTS.create();
         }
 
-        // Send plugin message requesting player's Location
+        // Send plugin message requesting player's location
+        // the response will be used in the MessageListener
         sender.getCurrentServer().ifPresentOrElse(serverConnection -> {
             boolean status = serverConnection.sendPluginMessage(
                 ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID,
                 RequestLocationMessage.serialise(LocationActionSubchannel.CREATE_PRIVATE, privatisedWarpName)
             );
 
-            // TODO
-            // if (!status) { }
+            if (!status) {
+                WarpVelocity.getInstance().getLogger().error("Failed to send plugin message to paper backend {}", serverConnection.getServerInfo().getName());
+            }
         }, () -> {
-            // TODO: Report no connections
+            sender.sendRichMessage("<red>You are not connected to a server");
         });
 
         return Command.SINGLE_SUCCESS;

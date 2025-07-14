@@ -12,6 +12,7 @@ import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
@@ -85,13 +86,18 @@ public class WarpVelocity {
         commandManager.register(commandMeta, new BrigadierCommand(commandNode));
     }
 
-//    @Subscribe
-//    public void onProxyReload(ProxyReloadEvent event) {
-//        this.reloadVoiceProxyServer();
-//    }
-
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
         WarpManager.saveAllWarps();
+    }
+
+    @Subscribe
+    public void onProxyReload(ProxyReloadEvent event) {
+        // Visits are only saved on shutdown, so this is needed
+        WarpManager.saveWarpVisits();
+
+        // Reload the config & warps
+        ConfigManager.loadConfig();
+        WarpManager.loadAllWarps();
     }
 }

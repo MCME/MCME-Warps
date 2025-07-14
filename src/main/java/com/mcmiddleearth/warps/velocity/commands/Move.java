@@ -4,6 +4,7 @@ import com.mcmiddleearth.warps.core.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
+import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
@@ -61,10 +62,11 @@ public class Move {
                 RequestLocationMessage.serialise(LocationActionSubchannel.MOVE, warp.getName())
             );
 
-            // TODO
-            // if (!status) { }
+            if (!status) {
+                WarpVelocity.getInstance().getLogger().error("Failed to send plugin message to paper backend {}", serverConnection.getServerInfo().getName());
+            }
         }, () -> {
-            // TODO: Report no connections
+            sender.sendRichMessage("<red>You are not connected to a server");
         });
 
         return Command.SINGLE_SUCCESS;

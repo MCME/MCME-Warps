@@ -1,57 +1,142 @@
 
 # Questions
-* Should staff have access to all warps
-  * View/Use/Modify?
+* Should staff have access to all warps - View/Use/Modify?
 * What is warp priority?
-
-# TODOs
-* (p)create greedy string protection
-* p(create) shared code
-* warp & random shared code
-* getWarp reusable helper
-* Extract common command errors
+* Should a warp's name change when its type changes
 
 # TODO
-## Commands
-* private warps
-  * user limit -> upon create, msg user how many remaining
-* warp permissions
-* favourite warps
-* reloadAll -> if yaml's manually updated
-* region
-* welcome, title, subtitle
-    * default values, teleportAsync success
-* priority(?), info, stats, list, plist
-
-## General
-* lucky perms permissions
 * Adapt warp location if underground
-* server specific permissions - e.g. freebuild warps only for commoner+
-* Improved WarpManager errors, e.g. if server/world don't exist in /warp <name>
-* Warp name length limit? -> config.yml?
-* Warp counter
-  * Only write to yml onPluginDisable?
+  * Check if warp location is 'safe' (check if air block)
+  * Check surrounding x blocks for a 'safe' location
+* Valid warp names [\w ' _ 0-9 <space>]
+  * https://www.baeldung.com/java-validate-filename
+* Store private warps in their own folder
+* Command tree finalised
+  * /warpmanager???
+  * Rename invite & uninvite (members add/remove or addPlayer)
+  * Rename makePublic & makePrivate (setPublic/setPrivate)
+  * Suggestions v2.2 (iff greedyArg stays)
+  * Consistent use of greedy & word args for warp names
 * Migrate DB warps to .yml warps
 * Dynmap integration
-    * Custom warp symbol for WIP locations/warps
-        * https://www.mcmiddleearth.com/community/threads/change-dynmap-icons-for-warps.7068/
-        * Also a discord suggestion
+  * Custom warp symbol for WIP locations/warps
+    * https://www.mcmiddleearth.com/community/threads/change-dynmap-icons-for-warps.7068/
+    * Also a discord suggestion
 > Dynmap markers need to be created by the new Warp plugin. But that's quite simple as Dynmap plugin provides and API for that. Would be good though to have in mind that dynmap might be replaced by another map plugin.
 
-## Ideas
+## Commands
+* private warps
+  * zzz naming
+    * what happens when making a public warp private (auto prefix?)
+    * and the opposite (auto strip the prefix?)
+    * What happens when 'rename' is used!!!
+* warp permissions
+  * OR /warp invite asdf g:group-name
+* region
+* title, subtitle
+    * default values, teleportAsync success
+* priority(?), info, stats, list, plist
+* /warp player - for clicking on a sign???
+
+# Post launch
+* Server prefixes
+* Region
+  * Upon create, default to that of the nearest warp
+  * set region command
+  * Will be used by the new warp book
+* Favourite warps
+  * Display favourites in the /warp suggestions?
+* Title/subtitle???
+* warp permissions???
+* priority(?), info, stats, list, plist???
+
+# Ideas
+* Set suggested warps in the config?
+* Add multiple players to a private warp at once
+* /warp leave to leave a warp you were added to
 * Hide delete/rename/update commands until a player has made a private warp
-    * player.updateCommands() after pcreate (iff they have 0 modifiable warps)
-* suggestions onHover to show the server? (only with modifying commands?)
-* Warp server prefix [pl, fr, th, fav?]
-  * Easy server filtering
-  * Visually see which server
+    * After pcreate() in MessageListener, send a updateCommand plugin message to paper
+      * iff modifiableWarps.size() === 1
+    * Also invite/uninvite/makePublic
+    * Implementation -> .requires( player has >= 1 modifiable warp )
+      * Or - player is staff || player is creator of >=1 warp
+* Add an onHover tooltip to warp name suggestions? Server/word?, creator?, region?
 * Automatically set warp region based on nearest warp?
-    * or  average of the 3/5 nearest?
+    * or average of the 3/5 nearest?
 * Warp autocomplete - if there's only 1 suggestion then no need to tab complete
   * If <destination> doesn't exist, then re-build suggestions and if there's only 1 - use it
 * Warp name aliases?
   * Have an alias array, only show 1 alias/primary at a time in the suggestions
 
+# Code cleanup
+* Do away with WarpManager.update?
+* How to simplify saveWarp()? - RuntimeException?
+* consistent command arg names
+  * Store as static strings
+  * Centralise???
+* DRY player requirement
+  * .requires(MyCommand::isPlayer) to every command? Then assert getSource as Player?
+  * WarpUtil helper?
+  * Are there commands that could be run by a non player?
+* p(create) shared code
+* warp & random shared code
+* Shared brigadier warp arg + suggestions
+  * Have a bipredicate function for filtering warps?
+    * isModifiable, isUsable, isPrivate & sender is creator
+
 # Dev UX
-* Multi-project/module repository?
+* Multi-project/module repository
 * Add a better IDE formatter
+
+# Dynmap
+* Needs to be run from the paper backend server
+* How do all the different backend servers populate the same dynmap?
+* How to provide the backend servers with all the warps?
+  * 1 massive plugin message onStartup?
+  * Could the paper backends read from the velocity warps plugin directory?
+* How to update the dynmap?
+  * /warp reload and/or wait for the daily restart?
+  * Or do the create/delete/rename commands need to communicate with the backend server
+    * Could forward /warp create on the paper backends
+
+# Server prefixes
+Prefixes for each server, defined in the config.yml -> [pl, fr, th, fav?]
+
+Why?
+* Handy filter for warps of a specific server
+* Always know which server you are warping to
+* If the main map is copied to another server, its warps can be copied over and still usable
+
+Suggestions
+* /warp pl:gon
+* Nice to have loose matching on everything after the ':'
+
+* Should private warps have prefixes?
+  * pl:zzz-Drayz-gondor
+  * Just use an onHover tooltip instead?
+
+How
+* Q: Adding the prefix to the normalised key of the hashmap??? Or the actual warpName???
+
+These would be used as a prefix in the key of the Warps hashmap
+* When putting a warp, get the prefix for its server
+
+These would be used to prefix the name of each warp when loading each warp file and creating a warp in memory
+* How to account for a warp being renamed/moved/made public or private???
+  * rename - overwrite/add prefix after the new name is given (abc:warp -> pl:warp, warp -> pl:warp)
+  * moved - prefix needs to change -> add this to WarpManager.update?
+
+Instead of storing the 'server' in the yaml, use the name of the parent directory
+  * Make 'server' a final field that is set in the constructor
+  * This is so when a server and its warps are copied we don't have to manually change the server
+    of each file!
+  * This could be done easily post launch - warp.yml files with server would just ignore the server
+  field (and it would be deleted on save?)
+
+# Reloading warps
+* To change a warp's name change both the file name and warp name
+
+// TODO: Send an updatePlayerCommands message
+//        if (warpType.equals(Warp.Type.PRIVATE) && WarpManager.getWarpNames(warp -> warp.isCreator(creator)).size() == 1) {
+//           creator.
+//        }

@@ -30,7 +30,6 @@ public class ConfigManager {
                 Files.copy(in, CONFIG_FILE_PATH);
                 WarpVelocity.getInstance().getLogger().warn("Successfully copied the default config {}", CONFIG_FILE_PATH);
             } catch (IOException e) {
-                System.err.println("[ConfigManager] Failed to copy default config:");
                 WarpVelocity.getInstance().getLogger().error("Failed to copy the default config to the data directory - {}", e.getMessage());
                 throw new RuntimeException();
             }

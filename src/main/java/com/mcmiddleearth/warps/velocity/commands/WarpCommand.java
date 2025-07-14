@@ -34,6 +34,14 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public final class WarpCommand {
+    private static final Set<String> SuggestedWarpNames = Set.of(
+        "Minas Tirith",
+        "Cair Andros",
+        "Dol Amroth",
+        "Lond Daer Enedh"
+    );
+    private static final Collection<String> ValidatedSuggestWarpNames = WarpManager.getWarpNames(w -> SuggestedWarpNames.contains(w.getName())).values();
+
     public static RequiredArgumentBuilder<CommandSource, String> register() {
             return BrigadierCommand.requiredArgumentBuilder("destination", StringArgumentType.greedyString())
                 .requires(sender -> sender.hasPermission(Permission.WARP.getNode()))
@@ -44,7 +52,6 @@ public final class WarpCommand {
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
         CommandSource source = context.getSource();
         if (!(source instanceof Player sender)) {
-            // Q: Easy way to add this to the entire /warp tree? Using permissions?
             source.sendMessage(Component.text("Only players can run this command."));
             return Command.SINGLE_SUCCESS;
         }
@@ -114,12 +121,7 @@ public final class WarpCommand {
         boolean isSearchEmpty = input.isEmpty();
         if (isSearchEmpty) {
             // Suggest a few recommended warps - otherwise subcommands like pcreate & random would be lost
-            // Q: Use getWarp for these?
-            // TODO: Display favourites - If the player has none then display...
-            builder.suggest("Minas Tirith");
-            builder.suggest("Cair Andros");
-            builder.suggest("Dol Amroth");
-            // builder.suggest("<warp_name>"); // One alternative
+            ValidatedSuggestWarpNames.forEach(builder::suggest);
             return builder.buildFuture();
         }
 
@@ -127,7 +129,6 @@ public final class WarpCommand {
         var warpSuggester = new WarpSuggester(warpNames, input);
         Collection<String> suggestions = warpSuggester.getSuggestions();
 
-        // Q: Add a tooltip? Display server/word?, creator?, region?
         suggestions.forEach(builder::suggest);
         return builder.buildFuture();
     }

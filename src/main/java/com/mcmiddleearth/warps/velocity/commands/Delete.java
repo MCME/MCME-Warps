@@ -72,7 +72,6 @@ public class Delete {
         var warpSuggester = new WarpSuggester(warpNames, input);
         Collection<String> suggestions = warpSuggester.getSuggestions();
 
-        // Q: Add a tooltip? Display server/word?, creator?, region?
         suggestions.forEach(builder::suggest);
         return builder.buildFuture();
     }

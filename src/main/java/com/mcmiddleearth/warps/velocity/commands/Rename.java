@@ -13,7 +13,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.velocitypowered.api.command.BrigadierCommand;
@@ -27,9 +26,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class Rename {
-    private static final SimpleCommandExceptionType NOT_ALLOWED =
-        new SimpleCommandExceptionType(() -> "You are not allowed to perform this action");
-
     private static final DynamicCommandExceptionType INVALID_PRIVATE_PREFIX =
         new DynamicCommandExceptionType(name -> new LiteralMessage("A private warp must start with zzz-" + name + "-"));
 
@@ -88,7 +84,7 @@ public class Rename {
         return builder.buildFuture();
     }
 
-    private static CompletableFuture<Suggestions> suggestNewName(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+    private static CompletableFuture<Suggestions> suggestNewName(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         if (!(context.getSource() instanceof Player sender)) {
             return Suggestions.empty();
         }
