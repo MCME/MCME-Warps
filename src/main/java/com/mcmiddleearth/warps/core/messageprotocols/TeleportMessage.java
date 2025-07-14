@@ -5,21 +5,21 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 
-// TODO: Rename?
 public class TeleportMessage {
 
     public enum Subchannel {
-        TELEPORT
+        TELEPORT_SAME_SERVER,
+        TELEPORT_NEW_SERVER
     }
 
-    public record Result(Subchannel subchannel, SimpleLocation data) {
-    }
+    public record Result(Subchannel subchannel, String warpName, SimpleLocation data) {}
 
-    // Q: Remove subchannel argument?
-    public static byte[] serialise(Subchannel subchannel, SimpleLocation data) {
+    public static byte[] serialise(Subchannel subchannel, String warpName, SimpleLocation data) {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
 
         out.writeUTF(subchannel.name());
+        out.writeUTF(warpName);
+
         out.writeUTF(data.world());
         out.writeDouble(data.x());
         out.writeDouble(data.y());
@@ -36,6 +36,8 @@ public class TeleportMessage {
         String strSubchannel = in.readUTF();
         Subchannel subchannel = Subchannel.valueOf(strSubchannel);
 
+        String warpName = in.readUTF();
+
         String world = in.readUTF();
         double x = in.readDouble();
         double y = in.readDouble();
@@ -44,6 +46,6 @@ public class TeleportMessage {
         float pitch = in.readFloat();
         SimpleLocation data = new SimpleLocation(world, x, y, z, yaw, pitch);
 
-        return new Result(subchannel, data);
+        return new Result(subchannel, warpName, data);
     }
 }

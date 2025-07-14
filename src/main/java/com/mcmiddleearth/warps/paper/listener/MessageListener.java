@@ -5,6 +5,7 @@ import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.core.messageprotocols.PlayerLocationMessage;
 import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.core.messageprotocols.TeleportMessage;
+import com.mcmiddleearth.warps.core.messageprotocols.TeleportResult;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -26,23 +27,39 @@ public class MessageListener implements PluginMessageListener {
     public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte @NotNull [] bytes) {
         switch (channel) {
             case Channels.WARP: {
-                SimpleLocation data = TeleportMessage.read(bytes).data();
+                var result = TeleportMessage.read(bytes);
+                String warpName = result.warpName();
+                SimpleLocation data = result.data();
 
-                // Q: Is handling nulls needed, or can they be trusted to always come through?
                 World world = Bukkit.getWorld(data.world());
-                Location location = new Location(world, data.x(), data.y(), data.z(), data.yaw(), data.pitch());
+                if (world == null) {
+                    player.sendRichMessage("Unable to perform the teleport, no world exists with name " + data.world());
+                    break;
+                }
+                Location warpLocation = new Location(world, data.x(), data.y(), data.z(), data.yaw(), data.pitch());
 
                 // TODO: check terrain at target position and adapt if underground
 
-                // Causes player 'moved too quickly' warnings
-                // Could fix with a scheduler to teleport on next tick, but it doesn't seem to be an issue
-                player.teleportAsync(location).thenAccept(success -> {
+                if (player.getLocation().equals(warpLocation)) {
+                    // Avoid sending a message if the player swapped servers
+                    // (their previous position on that server could be the same as warpLocation)
+                    if (result.subchannel().equals(TeleportMessage.Subchannel.TELEPORT_SAME_SERVER)) {
+                        player.sendRichMessage("<gray>You are already at warp " + warpName);
+                    }
+                    break;
+                }
+
+                player.teleportAsync(warpLocation).thenAccept(success -> {
                     if (success) {
-                        // player.sendMessage("teleport complete");
-                        // TODO: Title, subtitle & message
+                        player.sendPluginMessage(
+                            plugin,
+                            Channels.WARP,
+                            TeleportResult.serialise(warpName, TeleportResult.ResultType.SUCCESS)
+                        );
                         // TODO: Notify player if teleport location was underground
                     }
                 });
+
                 break;
             }
 

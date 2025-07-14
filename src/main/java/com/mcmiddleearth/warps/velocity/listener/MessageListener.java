@@ -3,6 +3,7 @@ package com.mcmiddleearth.warps.velocity.listener;
 import com.mcmiddleearth.warps.core.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.core.messageprotocols.PlayerLocationMessage;
+import com.mcmiddleearth.warps.core.messageprotocols.TeleportResult;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
@@ -11,34 +12,47 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
+import com.velocitypowered.api.proxy.messages.ChannelIdentifier;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 public class MessageListener {
     @Subscribe
     public void onPluginMessageFromBackend(PluginMessageEvent event) {
-        if (!ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID.equals(event.getIdentifier())) {
-            return;
-        }
-
         if (!(event.getSource() instanceof ServerConnection backend)) {
             return;
         }
 
-        // Mark PluginMessage as handled, indicating that the contents
-        // should not be forwarding to their original destination.
-        event.setResult(PluginMessageEvent.ForwardResult.handled());
+        final ChannelIdentifier eventChannel = event.getIdentifier();
+        Player player = backend.getPlayer();
 
-        Player creator = backend.getPlayer();
-        String serverName = backend.getServerInfo().getName();
+        if (eventChannel.equals(ChannelIdentifiers.MAIN_ID)) {
+            // Mark PluginMessage as handled, indicating that the contents
+            // should not be forwarding to their original destination.
+            event.setResult(PluginMessageEvent.ForwardResult.handled());
 
-        PlayerLocationMessage.Result result = PlayerLocationMessage.read(event.getData());
-        LocationActionSubchannel subchannel = result.subchannel();
+            TeleportResult.Response response = TeleportResult.read(event.getData());
 
-        switch (subchannel) {
-            case LocationActionSubchannel.MOVE -> moveWarp(result, serverName, creator);
-            case LocationActionSubchannel.CREATE_PUBLIC, LocationActionSubchannel.CREATE_PRIVATE -> createWarp(result, serverName, creator);
-            default -> creator.sendMessage(Component.text("Unknown subchannel: " + subchannel, NamedTextColor.RED));
+            Warp warp = WarpManager.getWarp(response.warpName());
+            if (warp != null) {
+                warp.addVisit();
+            }
+        }
+        else if (eventChannel.equals(ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID)) {
+            // Mark PluginMessage as handled, indicating that the contents
+            // should not be forwarding to their original destination.
+            event.setResult(PluginMessageEvent.ForwardResult.handled());
+
+            String serverName = backend.getServerInfo().getName();
+
+            PlayerLocationMessage.Result result = PlayerLocationMessage.read(event.getData());
+            LocationActionSubchannel subchannel = result.subchannel();
+
+            switch (subchannel) {
+                case LocationActionSubchannel.MOVE -> moveWarp(result, serverName, player);
+                case LocationActionSubchannel.CREATE_PUBLIC, LocationActionSubchannel.CREATE_PRIVATE -> createWarp(result, serverName, player);
+                default -> player.sendMessage(Component.text("Unknown subchannel: " + subchannel, NamedTextColor.RED));
+            }
         }
     }
 
@@ -65,7 +79,6 @@ public class MessageListener {
         } catch (Exception e) {
             creator.sendRichMessage("<red>Failed to create warp!");
         }
-
     }
 
     private void moveWarp(PlayerLocationMessage.Result result, String serverName, Player creator) {

@@ -69,7 +69,7 @@ public class RandomCommand {
         final String targetServerName = warp.getServer();
 
         if (currServerName.equalsIgnoreCase(targetServerName)) {
-            sendTeleportMessage(currServer, warp);
+            sendTeleportMessage(currServer, warp, true);
             return Command.SINGLE_SUCCESS;
         }
 
@@ -87,20 +87,25 @@ public class RandomCommand {
                     }
 
                     player.sendMessage(Component.text("Changed server!"));
-                    sendTeleportMessage(targetServer, warp);
+                    sendTeleportMessage(targetServer, warp, false);
                 });
         });
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static void sendTeleportMessage(ChannelMessageSink serverConnection, Warp warp) {
+    private static void sendTeleportMessage(ChannelMessageSink serverConnection, Warp warp, Boolean isSameServer) {
         SimpleLocation data = warp.getLocation();
 
         // Messaging the backend server, using the sender's connection
         serverConnection.sendPluginMessage(
             ChannelIdentifiers.MAIN_ID,
-            TeleportMessage.serialise(TeleportMessage.Subchannel.TELEPORT, data)
-        );
+            TeleportMessage.serialise(
+                isSameServer
+                    ? TeleportMessage.Subchannel.TELEPORT_SAME_SERVER
+                    : TeleportMessage.Subchannel.TELEPORT_NEW_SERVER,
+                warp.getName(),
+                data
+            ));
     }
 }
