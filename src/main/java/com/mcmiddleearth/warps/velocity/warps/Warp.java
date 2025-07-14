@@ -1,5 +1,6 @@
 package com.mcmiddleearth.warps.velocity.warps;
 
+import com.google.common.base.Strings;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.velocitypowered.api.proxy.Player;
@@ -38,6 +39,7 @@ public class Warp {
     // Can't be final, otherwise Configurate can't set members on load
     private HashMap<UUID, String> members = new HashMap<>();
     private int visits = 0;
+    private String welcomeMessage;
 
     public Warp(UUID creator, String name, String server, SimpleLocation location, Warp.Type type) {
         this.creator = creator;
@@ -85,6 +87,17 @@ public class Warp {
     public int getVisits() { return this.visits; }
     public void addVisit() {
         this.visits++;
+    }
+
+    public String getWelcomeMessage() {
+        if (Strings.isNullOrEmpty(welcomeMessage)) {
+            return "<blue>Welcome to " + getName();
+        }
+
+        return welcomeMessage;
+    }
+    public void setWelcomeMessage(String welcomeMessage) {
+        this.welcomeMessage = welcomeMessage;
     }
 
     /**

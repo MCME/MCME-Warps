@@ -36,6 +36,9 @@ public class MessageListener {
             Warp warp = WarpManager.getWarp(response.warpName());
             if (warp != null) {
                 warp.addVisit();
+
+                final String welcomeMessage = warp.getWelcomeMessage();
+                player.sendRichMessage("<blue>" + welcomeMessage);
             }
         }
         else if (eventChannel.equals(ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID)) {
