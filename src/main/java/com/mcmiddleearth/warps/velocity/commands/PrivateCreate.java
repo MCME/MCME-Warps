@@ -13,6 +13,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.Dynamic2CommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
@@ -32,6 +33,15 @@ public class PrivateCreate {
     private static final SimpleCommandExceptionType PRIVATE_WARP_LIMIT_REACHED =
         new SimpleCommandExceptionType(() -> "Unable to create another private warp - you have reached the maximum (" + ConfigManager.getConfig().getPrivateWarpLimit() + ")");
 
+    private static final Dynamic2CommandExceptionType TOO_LONG =
+        new Dynamic2CommandExceptionType(
+            (warpName, maxLength) -> () ->
+                "'%s' is too long (%d), warp names can't contain more than %d characters".formatted(
+                    warpName,
+                    ((String) warpName).length(),
+                    (Integer) maxLength)
+        );
+
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("pcreate")
             .requires(sender -> sender.hasPermission(Permission.CREATE_PRIVATE.getNode()))
@@ -41,8 +51,8 @@ public class PrivateCreate {
     }
 
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
-        CommandSource source = context.getSource();
 
+        CommandSource source = context.getSource();
         if (!(source instanceof Player sender)) {
             source.sendMessage(Component.text("Only players can run this command."));
             return Command.SINGLE_SUCCESS;
@@ -65,6 +75,11 @@ public class PrivateCreate {
             throw MANUAL_PREFIX.create();
         }
         final String privatisedWarpName = MessageFormat.format("zzz-{0}-{1}", sender.getUsername(), tempWarpName);
+
+        final int maxLength = ConfigManager.getConfig().getWarpNameMaxLength();
+        if (privatisedWarpName.length() > maxLength) {
+            throw TOO_LONG.create(privatisedWarpName, maxLength);
+        }
 
         if (WarpManager.warpExists(privatisedWarpName)) {
             throw WARP_EXISTS.create();

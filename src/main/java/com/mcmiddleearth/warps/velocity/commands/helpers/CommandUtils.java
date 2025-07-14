@@ -13,7 +13,7 @@ import java.util.function.Predicate;
 public class CommandUtils {
 
     private static final DynamicCommandExceptionType WARP_NOT_FOUND =
-        new DynamicCommandExceptionType(warpName -> new LiteralMessage("No warp found with name: " + warpName));
+        new DynamicCommandExceptionType(warpName -> () -> "Warp names can't contain more than characters");
 
     private static final DynamicCommandExceptionType NOT_ALLOWED =
         new DynamicCommandExceptionType((warpName) -> new LiteralMessage("You do not have access to warp " + warpName));

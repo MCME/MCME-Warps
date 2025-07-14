@@ -9,8 +9,13 @@ public class Config {
     public Config() {}
 
     @Required private int privateWarpLimit;
+    @Required private int warpNameMaxLength;
 
     public int getPrivateWarpLimit() {
         return privateWarpLimit;
+    }
+
+    public int getWarpNameMaxLength() {
+        return warpNameMaxLength;
     }
 }

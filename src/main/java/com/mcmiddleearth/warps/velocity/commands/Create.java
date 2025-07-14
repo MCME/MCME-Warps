@@ -5,12 +5,14 @@ import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.Dynamic2CommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
@@ -21,6 +23,15 @@ public class Create {
 
     private static final SimpleCommandExceptionType WARP_EXISTS =
         new SimpleCommandExceptionType(() -> "A warp already exists with that name");
+
+    private static final Dynamic2CommandExceptionType TOO_LONG =
+        new Dynamic2CommandExceptionType(
+            (warpName, maxLength) -> () ->
+                "'%s' is too long (%d), warp names can't contain more than %d characters".formatted(
+                    warpName,
+                    ((String) warpName).length(),
+                    (Integer) maxLength)
+        );
 
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("create")
@@ -43,6 +54,11 @@ public class Create {
         final String warpName = context.getArgument("name", String.class);
         if (WarpManager.warpExists(warpName)) {
             throw WARP_EXISTS.create();
+        }
+
+        final int maxLength = ConfigManager.getConfig().getWarpNameMaxLength();
+        if (warpName.length() > maxLength) {
+            throw TOO_LONG.create(warpName, maxLength);
         }
 
         // TODO: Ensure warpName is valid (doesn't start with '-' etc.)
