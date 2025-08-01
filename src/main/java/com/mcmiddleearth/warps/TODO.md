@@ -10,7 +10,6 @@
   * Check surrounding x blocks for a 'safe' location
 * Valid warp names [\w ' _ 0-9 <space>]
   * https://www.baeldung.com/java-validate-filename
-* Store private warps in their own folder
 * Command tree finalised
   * /warpmanager???
   * Rename invite & uninvite (members add/remove or addPlayer)
@@ -52,6 +51,9 @@
 
 # Ideas
 * Set suggested warps in the config?
+* Randomly choose 3,5? warps to recommend each day (from the list of 'interesting' warps)
+  * Utilise the daily server restart for this behaviour
+  * Choose randomly from 3 categories of warps?
 * Add multiple players to a private warp at once
 * /warp leave to leave a warp you were added to
 * Hide delete/rename/update commands until a player has made a private warp
@@ -97,7 +99,7 @@
 * How to update the dynmap?
   * /warp reload and/or wait for the daily restart?
   * Or do the create/delete/rename commands need to communicate with the backend server
-    * Could forward /warp create on the paper backends
+    * Could forward /warp create to the paper backends
 
 # Server prefixes
 Prefixes for each server, defined in the config.yml -> [pl, fr, th, fav?]

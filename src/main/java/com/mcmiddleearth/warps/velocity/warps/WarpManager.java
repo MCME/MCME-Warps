@@ -253,6 +253,7 @@ public class WarpManager {
         }
 
         return WARPS_DIRECTORY
+            .resolve("private-warps")
             .resolve(warp.getCreator().toString())
             .resolve(warpName + ".yml");
     }
