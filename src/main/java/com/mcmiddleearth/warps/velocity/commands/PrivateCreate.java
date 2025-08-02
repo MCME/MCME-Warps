@@ -5,6 +5,7 @@ import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -33,15 +34,6 @@ public class PrivateCreate {
     private static final SimpleCommandExceptionType PRIVATE_WARP_LIMIT_REACHED =
         new SimpleCommandExceptionType(() -> "Unable to create another private warp - you have reached the maximum (" + ConfigManager.getConfig().getPrivateWarpLimit() + ")");
 
-    private static final Dynamic2CommandExceptionType TOO_LONG =
-        new Dynamic2CommandExceptionType(
-            (warpName, maxLength) -> () ->
-                "'%s' is too long (%d), warp names can't contain more than %d characters".formatted(
-                    warpName,
-                    ((String) warpName).length(),
-                    (Integer) maxLength)
-        );
-
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("pcreate")
             .requires(sender -> sender.hasPermission(Permission.CREATE_PRIVATE.getNode()))
@@ -68,18 +60,13 @@ public class PrivateCreate {
             }
         }
 
-        // TODO: Ensure warpName is valid (doesn't start with '-' etc.)
-        // FIXME: Now using greedy, need to prevent bad file names e.g. invalid characters /?!
         final String tempWarpName = context.getArgument("name", String.class);
         if (tempWarpName.startsWith("zzz")) {
             throw MANUAL_PREFIX.create();
         }
         final String privatisedWarpName = MessageFormat.format("zzz-{0}-{1}", sender.getUsername(), tempWarpName);
 
-        final int maxLength = ConfigManager.getConfig().getWarpNameMaxLength();
-        if (privatisedWarpName.length() > maxLength) {
-            throw TOO_LONG.create(privatisedWarpName, maxLength);
-        }
+        CommandUtils.validateWarpName(privatisedWarpName);
 
         if (WarpManager.warpExists(privatisedWarpName)) {
             throw WARP_EXISTS.create();

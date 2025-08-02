@@ -72,7 +72,7 @@ public class MessageListener {
 
         try {
             WarpManager.addWarp(newWarp);
-            creator.sendRichMessage("<green>Warp '%s' has been created!".formatted(newWarp.getName()));
+            creator.sendRichMessage("<green>Warp \"%s\" has been created!".formatted(newWarp.getName()));
 
             if (warpType.equals(Warp.Type.PRIVATE)) {
                 final int privateLimit = ConfigManager.getConfig().getPrivateWarpLimit();

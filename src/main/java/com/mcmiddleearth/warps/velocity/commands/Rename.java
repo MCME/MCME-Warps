@@ -4,7 +4,6 @@ import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
-import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
@@ -13,7 +12,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.Dynamic2CommandExceptionType;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -23,22 +21,12 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class Rename {
     private static final DynamicCommandExceptionType INVALID_PRIVATE_PREFIX =
         new DynamicCommandExceptionType(name -> new LiteralMessage("A private warp must start with zzz-" + name + "-"));
-
-    private static final Dynamic2CommandExceptionType TOO_LONG =
-        new Dynamic2CommandExceptionType(
-            (warpName, maxLength) -> () ->
-                "'%s' is too long (%d), warp names can't contain more than %d characters".formatted(
-                    warpName,
-                    ((String) warpName).length(),
-                    (Integer) maxLength)
-        );
 
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("rename")
@@ -73,10 +61,7 @@ public class Rename {
             throw INVALID_PRIVATE_PREFIX.create(sender.getUsername());
         }
 
-        final int maxLength = ConfigManager.getConfig().getWarpNameMaxLength();
-        if (newName.length() > maxLength) {
-            throw TOO_LONG.create(newName, maxLength);
-        }
+        CommandUtils.validateWarpName(newName);
 
         return WarpManager.updateWarp(currWarp.getName(),
             warp -> warp.setName(newName),

@@ -8,8 +8,6 @@
 * Adapt warp location if underground
   * Check if warp location is 'safe' (check if air block)
   * Check surrounding x blocks for a 'safe' location
-* Valid warp names [\w ' _ 0-9 <space>]
-  * https://www.baeldung.com/java-validate-filename
 * Command tree finalised
   * /warpmanager???
   * Rename invite & uninvite (members add/remove or addPlayer)
