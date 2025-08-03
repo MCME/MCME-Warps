@@ -5,9 +5,6 @@
 * Should a warp's name change when its type changes
 
 # TODO
-* Adapt warp location if underground
-  * Check if warp location is 'safe' (check if air block)
-  * Check surrounding x blocks for a 'safe' location
 * Command tree finalised
   * /warpmanager???
   * Rename invite & uninvite (members add/remove or addPlayer)
