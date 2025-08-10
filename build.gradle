@@ -1,10 +1,13 @@
 plugins {
     id 'java'
-    // Used to create a "fat" jar
+
+    // Fat JAR - Bundles all runtime dependencies into the JAR so they are available when run on the server
+    // Relocates dependencies to avoid conflicts
     id 'com.gradleup.shadow' version '8.3.6'
+
     // Useful for quickly testing the plugin runs on paper/velocity
-    id("xyz.jpenilla.run-paper") version "2.3.1"
-    id("xyz.jpenilla.run-velocity") version "2.3.1"
+    id 'xyz.jpenilla.run-paper'  version "2.3.1"
+    id 'xyz.jpenilla.run-velocity'  version "2.3.1"
 }
 
 group = 'com.mcmiddleearth'
@@ -20,11 +23,15 @@ repositories {
         name = "sonatype"
         url = "https://oss.sonatype.org/content/groups/public/"
     }
+    maven { url = "https://repo.mikeprimm.com/" } // For dynmap
 }
 
+// https://docs.gradle.org/current/userguide/dependency_configurations.html
 dependencies {
     // Paper
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    compileOnly("us.dynmap:DynmapCoreAPI:3.7-beta-6") // Runtime comes from the .jar in /plugins
+    compileOnly("org.spongepowered:configurate-yaml:4.2.0") // Runtime comes from plugin.yml > libraries
     // Velocity
     compileOnly("com.velocitypowered:velocity-api:3.4.0-SNAPSHOT")
     annotationProcessor("com.velocitypowered:velocity-api:3.4.0-SNAPSHOT")
@@ -71,4 +78,18 @@ processResources {
     filesMatching('plugin.yml') {
         expand props
     }
+}
+
+shadowJar {
+    archiveClassifier = ""
+
+    // Prevent conflicts if other plugins use commons.text
+    relocate("org.apache.commons.text", "com.mcmiddleearth.libs.text")
+}
+
+// Replace the normal gradle build with shadowJar
+// prevents the non fat JAR from ever being built
+jar.enabled = false;
+tasks.build {
+    dependsOn tasks.shadowJar
 }
