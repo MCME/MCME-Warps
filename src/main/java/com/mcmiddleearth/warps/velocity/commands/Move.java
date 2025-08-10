@@ -15,7 +15,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.velocitypowered.api.command.BrigadierCommand;
@@ -28,9 +27,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class Move {
-    private static final SimpleCommandExceptionType NOT_ALLOWED =
-        new SimpleCommandExceptionType(() -> "You are not allowed to perform this action");
-
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("move")
             .requires(sender -> sender.hasPermission(Permission.MOVE.getNode()))

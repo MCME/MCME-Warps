@@ -11,7 +11,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.velocitypowered.api.command.BrigadierCommand;
@@ -20,16 +19,11 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class Delete {
-    private static final SimpleCommandExceptionType NOT_ALLOWED =
-        new SimpleCommandExceptionType(() -> "You are not allowed to perform this action");
-
     public static LiteralArgumentBuilder<CommandSource> register() {
         return BrigadierCommand.literalArgumentBuilder("delete")
             .requires(sender -> sender.hasPermission(Permission.DELETE.getNode()))

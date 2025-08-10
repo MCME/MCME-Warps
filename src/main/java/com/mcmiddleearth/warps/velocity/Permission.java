@@ -14,6 +14,7 @@ public enum Permission {
     MAKE_PRIVATE("mcmewarps.cmd.make-private"),
     RELOAD("mcmewarps.cmd.reload"),
     WELCOME("mcmewarps.cmd.welcome-message"),
+    TAG("mcmewarps.cmd.tag"),
 
     EDIT_PUBLIC_WARPS("mcmewarps.modify.public-warps"),
     IGNORE_PRIVATE_WARPS_LIMIT("mcmewarps.limits.ignore.private");

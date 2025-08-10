@@ -13,9 +13,12 @@ public class DynmapAPI implements MapAPI {
 
     private final MarkerAPI markerAPI;
     private final MarkerSet markerSet;
+    private final MarkerIcon backupIcon;
 
     public DynmapAPI(DynmapCommonAPI dynmap) {
         this.markerAPI = dynmap.getMarkerAPI();
+
+        backupIcon = markerAPI.getMarkerIcon("greenflag");
 
         MarkerSet set = markerAPI.getMarkerSet(SET_ID);
         if (set == null) {
@@ -32,7 +35,7 @@ public class DynmapAPI implements MapAPI {
 
     @Override
     public void addMarker(BaseWarp warp) {
-        MarkerIcon DEFAULT_MARKER = markerAPI.getMarkerIcon("greenflag");
+        MarkerIcon icon = getMarkerIcon(warp.getTag().getValue());
 
         Marker marker = markerSet.createMarker(
             /* Marker ID */                  warp.getName() + "Id",
@@ -42,9 +45,17 @@ public class DynmapAPI implements MapAPI {
             /* X coordinate */               warp.getLocation().x(),
             /* Y coordinate */               warp.getLocation().y(),
             /* Z coordinate */               warp.getLocation().z(),
-            /* Related MarkerIcon object */  DEFAULT_MARKER,
+            /* Related MarkerIcon object */  icon,
             /* Marker is persistent */       false
         );
+    }
+
+    private MarkerIcon getMarkerIcon(String iconName) {
+        MarkerIcon icon = markerAPI.getMarkerIcon(iconName);
+
+        if (icon != null) return icon;
+
+        return backupIcon;
     }
 
     @Override

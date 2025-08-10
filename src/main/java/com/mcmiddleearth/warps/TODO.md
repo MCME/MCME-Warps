@@ -15,14 +15,6 @@
 * Dynmap
   * Reactive updates
     * WatchService to watch for changes in the symlinked folder
-  * Custom warp symbol for WIP locations/warps
-    * https://www.mcmiddleearth.com/community/threads/change-dynmap-icons-for-warps.7068/
-    * WIP - Construction/Caution/Bricks/Hammer/Yellow flag
-    * Custom marker icons - farms,cities???
-    * REQUIRES: tagging of warp status/warp
-      * Add 'tag' to Warp.class, defaulting to DEFAULT
-      * Enum class or map of valid warp tags
-      * /warp setTag
 
 ## Commands
 * private warps
@@ -49,8 +41,16 @@
 * Title/subtitle???
 * warp permissions???
 * priority(?), info, stats, list, plist???
+* WarpTags
+  * Configure tags via config.yml instead of statically in code?
+  * More tags - INCOMPLETE (purple flag), CAPITAL? FARM? TOWER?
+  * Custom icons
 
 # Ideas
+* Dynmap labels
+  * Regions
+  * Mountain ranges
+* Prevent (public) warps at the exact same location?
 * Set suggested warps in the config?
 * Randomly choose 3,5? warps to recommend each day (from the list of 'interesting' warps)
   * Utilise the daily server restart for this behaviour
