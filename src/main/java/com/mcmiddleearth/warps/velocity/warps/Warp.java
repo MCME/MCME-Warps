@@ -1,6 +1,7 @@
 package com.mcmiddleearth.warps.velocity.warps;
 
 import com.google.common.base.Strings;
+import com.mcmiddleearth.warps.core.BaseWarp;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.velocitypowered.api.proxy.Player;
@@ -14,7 +15,7 @@ import java.util.UUID;
 // https://github.com/SpongePowered/Configurate/wiki/Object-Mapper
 
 @ConfigSerializable
-public class Warp {
+public class Warp extends BaseWarp {
     // Used by configurate to load & dump instances of this class (Warp) to yaml (using reflection)
     public Warp() {}
 
@@ -32,9 +33,7 @@ public class Warp {
 
     // If a @Required field is missing when loading a warp.yml file, configurate errors and doesn't load that warp
     @Required private UUID creator;
-    @Required private String name;
     @Required private String server;
-    @Required private SimpleLocation location;
     @Required private Warp.Type type;
     // Can't be final, otherwise Configurate can't set members on load
     private HashMap<UUID, String> members = new HashMap<>();
@@ -57,11 +56,11 @@ public class Warp {
         this.location = otherWarp.location;
         this.type = otherWarp.type;
         this.members = otherWarp.members;
+        this.visits = otherWarp.visits;
+        this.welcomeMessage = otherWarp.welcomeMessage;
     }
 
-    public String getName() { return name; }
     public String getServer() { return server; }
-    public SimpleLocation getLocation() { return location; }
     public UUID getCreator() { return creator; }
     public HashMap<UUID, String> getMembers() { return members; }
 

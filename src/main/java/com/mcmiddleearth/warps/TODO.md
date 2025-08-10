@@ -12,11 +12,17 @@
   * Suggestions v2.2 (iff greedyArg stays)
   * Consistent use of greedy & word args for warp names
 * Migrate DB warps to .yml warps
-* Dynmap integration
+* Dynmap
+  * Reactive updates
+    * WatchService to watch for changes in the symlinked folder
   * Custom warp symbol for WIP locations/warps
     * https://www.mcmiddleearth.com/community/threads/change-dynmap-icons-for-warps.7068/
-    * Also a discord suggestion
-> Dynmap markers need to be created by the new Warp plugin. But that's quite simple as Dynmap plugin provides and API for that. Would be good though to have in mind that dynmap might be replaced by another map plugin.
+    * WIP - Construction/Caution/Bricks/Hammer/Yellow flag
+    * Custom marker icons - farms,cities???
+    * REQUIRES: tagging of warp status/warp
+      * Add 'tag' to Warp.class, defaulting to DEFAULT
+      * Enum class or map of valid warp tags
+      * /warp setTag
 
 ## Commands
 * private warps
@@ -84,17 +90,6 @@
 # Dev UX
 * Multi-project/module repository
 * Add a better IDE formatter
-
-# Dynmap
-* Needs to be run from the paper backend server
-* How do all the different backend servers populate the same dynmap?
-* How to provide the backend servers with all the warps?
-  * 1 massive plugin message onStartup?
-  * Could the paper backends read from the velocity warps plugin directory?
-* How to update the dynmap?
-  * /warp reload and/or wait for the daily restart?
-  * Or do the create/delete/rename commands need to communicate with the backend server
-    * Could forward /warp create to the paper backends
 
 # Server prefixes
 Prefixes for each server, defined in the config.yml -> [pl, fr, th, fav?]
