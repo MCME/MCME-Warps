@@ -47,20 +47,10 @@ public class WarpManager {
             ));
     }
     public static Map<String, String> getAllModifiableWarpNames(Player player) {
-        return warps.entrySet().stream()
-            .filter(entry -> entry.getValue().isModifiable(player))
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> entry.getValue().getName()
-            ));
+        return getWarpNames(warp -> warp.isModifiable(player));
     }
     public static Map<String, String> getAllUsableWarpNames(Player player) {
-        return warps.entrySet().stream()
-            .filter(entry -> entry.getValue().isUsable(player))
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> entry.getValue().getName()
-            ));
+        return getWarpNames(warp -> warp.isUsable(player));
     }
 
     private static void putWarp(Warp warp) throws Exception {

@@ -12,8 +12,7 @@
   * Suggestions v2.2 (iff greedyArg stays)
   * Consistent use of greedy & word args for warp names
 * Migrate DB warps to .yml warps
-* Dynmap
-  * Reactive updates
+* Dynmap reactive updates
     * WatchService to watch for changes in the symlinked folder
 
 ## Commands
@@ -47,14 +46,15 @@
   * Custom icons
 
 # Ideas
+* Suggested warps
+  * Set suggested warps in the config?
+  * Randomly choose 3,5? warps to recommend each day (from the list of 'interesting' warps)
+    * Utilise the daily server restart for this behaviour
+    * Choose randomly from 3 categories of warps?
 * Dynmap labels
   * Regions
   * Mountain ranges
 * Prevent (public) warps at the exact same location?
-* Set suggested warps in the config?
-* Randomly choose 3,5? warps to recommend each day (from the list of 'interesting' warps)
-  * Utilise the daily server restart for this behaviour
-  * Choose randomly from 3 categories of warps?
 * Add multiple players to a private warp at once
 * /warp leave to leave a warp you were added to
 * Hide delete/rename/update commands until a player has made a private warp
@@ -63,6 +63,7 @@
     * Also invite/uninvite/makePublic
     * Implementation -> .requires( player has >= 1 modifiable warp )
       * Or - player is staff || player is creator of >=1 warp
+      * if (warpType.equals(Warp.Type.PRIVATE) && WarpManager.getWarpNames(warp -> warp.isCreator(creator)).size() == 1)
 * Add an onHover tooltip to warp name suggestions? Server/word?, creator?, region?
 * Automatically set warp region based on nearest warp?
     * or average of the 3/5 nearest?
@@ -77,15 +78,15 @@
 * consistent command arg names
   * Store as static strings
   * Centralise???
+* Shared brigadier warp arg + suggestions
+  * Have a bipredicate function for filtering warps?
+    * isModifiable, isUsable, isPrivate & sender is creator
 * DRY player requirement
   * .requires(MyCommand::isPlayer) to every command? Then assert getSource as Player?
   * WarpUtil helper?
   * Are there commands that could be run by a non player?
 * p(create) shared code
 * warp & random shared code
-* Shared brigadier warp arg + suggestions
-  * Have a bipredicate function for filtering warps?
-    * isModifiable, isUsable, isPrivate & sender is creator
 
 # Dev UX
 * Multi-project/module repository
@@ -127,8 +128,3 @@ Instead of storing the 'server' in the yaml, use the name of the parent director
 
 # Reloading warps
 * To change a warp's name change both the file name and warp name
-
-// TODO: Send an updatePlayerCommands message
-//        if (warpType.equals(Warp.Type.PRIVATE) && WarpManager.getWarpNames(warp -> warp.isCreator(creator)).size() == 1) {
-//           creator.
-//        }

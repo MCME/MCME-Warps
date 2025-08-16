@@ -29,7 +29,6 @@ public class WarpSuggester {
 
         // Some commands use StringArgument.Word, which requires quotes for typing >1 word
         // So stripping quotes allows the suggestions to still correctly match
-        // (quotes are then added later)
         String unquoted = StringUtils.strip(temp, "\"'");
         return unquoted;
     }
