@@ -22,11 +22,10 @@ import org.slf4j.Logger;
 import java.nio.file.Path;
 
 @Plugin(
-    id = "warp-velocity",
-    name = "warp-velocity",
-    // version = BuildConstants.VERSION
-    // Q: Is this used anywhere/needed?
-    version = "1.0"
+    id = "mcme-warps-velocity",
+    name = "MCME-Warps-Velocity",
+    version = BuildConstants.VERSION,
+    authors = {"_Drayz_"}
 )
 public class WarpVelocity {
 

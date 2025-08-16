@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    id 'eclipse'
+    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.2'
 
     // Fat JAR - Bundles all runtime dependencies into the JAR so they are available when run on the server
     // Relocates dependencies to avoid conflicts
@@ -11,7 +13,7 @@ plugins {
 }
 
 group = 'com.mcmiddleearth'
-version = '1.0-SNAPSHOT'
+version = '0.1.0'
 
 repositories {
     mavenCentral()
@@ -71,17 +73,8 @@ tasks.withType(JavaCompile).configureEach {
     }
 }
 
-processResources {
-    def props = [version: version]
-    inputs.properties props
-    filteringCharset 'UTF-8'
-    filesMatching('plugin.yml') {
-        expand props
-    }
-}
-
 shadowJar {
-    archiveClassifier = ""
+    archiveClassifier = "" // Removes -all from the end of the generated JAR
 
     // Prevent conflicts if other plugins use commons.text
     relocate("org.apache.commons.text", "com.mcmiddleearth.libs.text")
@@ -93,3 +86,36 @@ jar.enabled = false;
 tasks.build {
     dependsOn tasks.shadowJar
 }
+
+// Dynamically adding the version to the paper plugin.yml
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+// Dynamically adding the version to the velocity plugin
+// A task that copies the template to build/generated/sources/templates, whilst replacing the placeholder {version}
+def templateSource = file('src/main/templates')
+def templateDest = layout.buildDirectory.dir('generated/sources/templates')
+def generateTemplates = tasks.register('generateTemplates', Copy) { task ->
+    def props = [
+            'version': project.version
+    ]
+    task.inputs.properties props
+
+    task.from templateSource
+    task.into templateDest
+    task.expand props
+}
+
+// Instructing gradle to also compile the BuildConstants.java file
+sourceSets.main.java.srcDir(generateTemplates.map { it.outputs })
+
+// When importing the project into an IDE, generate the BuildConstant template - otherwise there would be errors when
+// building the project for the first time
+project.idea.project.settings.taskTriggers.afterSync generateTemplates
+project.eclipse.synchronizationTasks(generateTemplates)

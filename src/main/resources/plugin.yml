@@ -1,8 +1,9 @@
-name: MCME-Warps
-version: '1.0-SNAPSHOT'
+name: MCME-Warps-Paper
+version: ${version}
 main: com.mcmiddleearth.warps.paper.WarpPaper
 api-version: '1.21'
 libraries:
   - com.google.guava:guava:30.1.1-jre
   - org.spongepowered:configurate-yaml:4.2.0
 softdepend: [dynmap]
+authors: [_Drayz_]
