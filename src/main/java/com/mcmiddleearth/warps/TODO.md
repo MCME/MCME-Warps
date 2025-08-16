@@ -7,8 +7,6 @@
 # TODO
 * Command tree finalised
   * /warpmanager???
-  * Rename invite & uninvite (members add/remove or addPlayer)
-  * Rename makePublic & makePrivate (setPublic/setPrivate)
   * Suggestions v2.2 (iff greedyArg stays)
   * Consistent use of greedy & word args for warp names
 * Migrate DB warps to .yml warps

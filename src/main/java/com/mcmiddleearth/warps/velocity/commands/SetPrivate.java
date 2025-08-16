@@ -18,23 +18,22 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class MakePublic {
+public class SetPrivate {
     private static final SimpleCommandExceptionType WARP_NOT_FOUND =
         new SimpleCommandExceptionType(() -> "No warp found with that name");
 
-    private static final SimpleCommandExceptionType ALREADY_PUBLIC =
-        new SimpleCommandExceptionType(() -> "This warp is already public");
+    private static final SimpleCommandExceptionType ALREADY_PRIVATE =
+        new SimpleCommandExceptionType(() -> "This warp is already private");
 
     public static LiteralArgumentBuilder<CommandSource> register() {
-        return BrigadierCommand.literalArgumentBuilder("makePublic")
-            .requires(sender -> sender.hasPermission(Permission.MAKE_PUBLIC.getNode()))
+        return BrigadierCommand.literalArgumentBuilder("set-private")
+            .requires(sender -> sender.hasPermission(Permission.SET_PRIVATE.getNode()))
             .then(BrigadierCommand.requiredArgumentBuilder("warp-name", StringArgumentType.greedyString())
-                .suggests(MakePublic::suggest)
-                .executes(MakePublic::execute)
+                .suggests(SetPrivate::suggest)
+                .executes(SetPrivate::execute)
             );
     }
 
@@ -48,10 +47,10 @@ public class MakePublic {
         final String warpName = context.getArgument("warp-name", String.class);
         Warp warp = WarpManager.getWarp(warpName);
         if (warp == null) throw WARP_NOT_FOUND.create();
-        if (warp.isOfType(Warp.Type.PUBLIC)) throw ALREADY_PUBLIC.create();
+        if (warp.isOfType(Warp.Type.PRIVATE)) throw ALREADY_PRIVATE.create();
 
-        // Q: Strip the zzz-<playerName> prefix???
-        return WarpManager.updateWarp(warpName,w -> w.setType(Warp.Type.PUBLIC), sender, "<green>Warp '%s' is now public".formatted(warpName));
+        // Q: Add the zzz-<playerName> prefix???
+        return WarpManager.updateWarp(warpName,w -> w.setType(Warp.Type.PRIVATE), sender, "<green>Warp '%s' is now private".formatted(warpName));
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
@@ -60,7 +59,7 @@ public class MakePublic {
         }
 
         String input = builder.getRemainingLowerCase();
-        Map<String, String> warpNames = WarpManager.getWarpNames(warp -> warp.isOfType(Warp.Type.PRIVATE));
+        Map<String, String> warpNames = WarpManager.getWarpNames(warp -> warp.isOfType(Warp.Type.PUBLIC));
         var warpSuggester = new WarpSuggester(warpNames, input);
         Collection<String> suggestions = warpSuggester.getSuggestions();
 

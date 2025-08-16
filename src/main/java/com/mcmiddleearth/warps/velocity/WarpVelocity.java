@@ -62,28 +62,31 @@ public class WarpVelocity {
         WarpManager.loadAllWarps();
 
         CommandManager commandManager = proxy.getCommandManager();
-        CommandMeta commandMeta = commandManager.metaBuilder("warp")
+
+        CommandMeta warpCommandMeta = commandManager.metaBuilder("warp")
             .plugin(this)
             .build();
-        LiteralCommandNode<CommandSource> commandNode = BrigadierCommand.literalArgumentBuilder("warp")
-            // subcommands
+        LiteralCommandNode<CommandSource> warpCommandNode = BrigadierCommand.literalArgumentBuilder("warp")
             .then(RandomCommand.register())
+            .then(PrivateCreate.register())
             .then(Create.register())
             .then(PrivateCreate.register())
             .then(Delete.register())
             .then(Rename.register())
             .then(Move.register())
-            .then(Invite.register())
-            .then(Uninvite.register())
-            .then(MakePublic.register())
-            .then(MakePrivate.register())
+            .then(AddMember.register())
+            .then(RemoveMember.register())
+            .then(SetPublic.register())
+            .then(SetPrivate.register())
             .then(Reload.register())
             .then(Welcome.register())
             .then(Tag.register())
             // The warp command is a greedy string argument, so it must be added last!
+            // regardless it kind of breaks the permissions and suggestions of other subcommands
             .then(WarpCommand.register())
             .build();
-        commandManager.register(commandMeta, new BrigadierCommand(commandNode));
+
+        commandManager.register(warpCommandMeta, new BrigadierCommand(warpCommandNode));
     }
 
     @Subscribe

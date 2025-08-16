@@ -3,7 +3,6 @@ package com.mcmiddleearth.warps.velocity.commands;
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
-import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -25,15 +24,15 @@ import net.kyori.adventure.text.Component;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-public class Uninvite {
+public class AddMember {
     public static LiteralArgumentBuilder<CommandSource> register() {
-        return BrigadierCommand.literalArgumentBuilder("uninvite")
-            .requires(sender -> sender.hasPermission(Permission.UNINVITE.getNode()))
+        return BrigadierCommand.literalArgumentBuilder("add-member")
+            .requires(sender -> sender.hasPermission(Permission.ADD_MEMBER.getNode()))
             .then(BrigadierCommand.requiredArgumentBuilder("warp", StringArgumentType.string())
-                .suggests(Uninvite::suggestWarpName)
+                .suggests(AddMember::suggestWarpName)
                 .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
-                    .suggests(Uninvite::suggestPlayer)
-                    .executes(Uninvite::execute)
+                    .suggests(AddMember::suggestPlayer)
+                    .executes(AddMember::execute)
                 )
             );
     }
@@ -56,13 +55,20 @@ public class Uninvite {
             .getPlayer(playerName)
             .orElseThrow(() -> INVALID_PLAYER.create(playerName));
 
-        Set<UUID> memberIDs = warp.getMembers().keySet();
-        if (!memberIDs.contains(targetPlayer.getUniqueId())) throw NOT_MEMBER_EXCEPTION.create();
+        if (warp.isCreator(targetPlayer)) {
+            throw ALREADY_MEMBER.create();
+        }
 
-        warp.removePlayer(targetPlayer);
+        Set<UUID> memberIDs = warp.getMembers().keySet();
+        if (memberIDs.contains(targetPlayer.getUniqueId())) {
+            throw ALREADY_MEMBER.create();
+        }
+
+        warp.addPlayer(targetPlayer);
         try {
             WarpManager.saveWarp(warp);
-            sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been removed from warp " + warpName);
+            sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been added to warp " + warpName);
+            targetPlayer.sendRichMessage("<green>You have been added to warp " + warpName);
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
             sender.sendRichMessage("<red>" + e.getMessage());
@@ -90,19 +96,14 @@ public class Uninvite {
             return Suggestions.empty();
         }
 
-        String warpName = context.getArgument("warp", String.class);
-        Warp warp = WarpManager.getWarp(warpName);
-        if (warp == null) return Suggestions.empty();
-
-        Collection<String> memberNames = warp.getMembers().values();
+        // Suggest online players
         String input = builder.getRemainingLowerCase();
-
-        for (String memberName : memberNames) {
-            if (memberName.toLowerCase().startsWith(input)) {
-                builder.suggest(memberName);
+        WarpVelocity.getInstance().getProxy().getAllPlayers().forEach(player -> {
+            String username = player.getUsername().toLowerCase();
+            if (username.startsWith(input)) {
+                builder.suggest(player.getUsername());
             }
-        }
-
+        });
         return builder.buildFuture();
     }
 
@@ -110,10 +111,10 @@ public class Uninvite {
         new DynamicCommandExceptionType(name -> new LiteralMessage("Unable to find a player with name '" + name + "'"));
 
     private static final SimpleCommandExceptionType NOT_ALLOWED =
-        new SimpleCommandExceptionType(() -> "Only the creator of a warp can invite/uninvite players");
+        new SimpleCommandExceptionType(() -> "Only the creator of a warp can add/remove members");
 
-    private static final SimpleCommandExceptionType NOT_MEMBER_EXCEPTION =
-        new SimpleCommandExceptionType(() -> "That player is not a member of this warp");
+    private static final SimpleCommandExceptionType ALREADY_MEMBER =
+        new SimpleCommandExceptionType(() -> "This player is already a member of the warp!");
 
     private static final SimpleCommandExceptionType WARP_NOT_PRIVATE =
         new SimpleCommandExceptionType(() -> "This warp isn't private, unable to perform action");

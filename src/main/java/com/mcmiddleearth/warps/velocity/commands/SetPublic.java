@@ -21,19 +21,19 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class MakePrivate {
+public class SetPublic {
     private static final SimpleCommandExceptionType WARP_NOT_FOUND =
         new SimpleCommandExceptionType(() -> "No warp found with that name");
 
-    private static final SimpleCommandExceptionType ALREADY_PRIVATE =
-        new SimpleCommandExceptionType(() -> "This warp is already private");
+    private static final SimpleCommandExceptionType ALREADY_PUBLIC =
+        new SimpleCommandExceptionType(() -> "This warp is already public");
 
     public static LiteralArgumentBuilder<CommandSource> register() {
-        return BrigadierCommand.literalArgumentBuilder("makePrivate")
-            .requires(sender -> sender.hasPermission(Permission.MAKE_PRIVATE.getNode()))
+        return BrigadierCommand.literalArgumentBuilder("set-public")
+            .requires(sender -> sender.hasPermission(Permission.SET_PUBLIC.getNode()))
             .then(BrigadierCommand.requiredArgumentBuilder("warp-name", StringArgumentType.greedyString())
-                .suggests(MakePrivate::suggest)
-                .executes(MakePrivate::execute)
+                .suggests(SetPublic::suggest)
+                .executes(SetPublic::execute)
             );
     }
 
@@ -47,10 +47,10 @@ public class MakePrivate {
         final String warpName = context.getArgument("warp-name", String.class);
         Warp warp = WarpManager.getWarp(warpName);
         if (warp == null) throw WARP_NOT_FOUND.create();
-        if (warp.isOfType(Warp.Type.PRIVATE)) throw ALREADY_PRIVATE.create();
+        if (warp.isOfType(Warp.Type.PUBLIC)) throw ALREADY_PUBLIC.create();
 
-        // Q: Add the zzz-<playerName> prefix???
-        return WarpManager.updateWarp(warpName,w -> w.setType(Warp.Type.PRIVATE), sender, "<green>Warp '%s' is now private".formatted(warpName));
+        // Q: Strip the zzz-<playerName> prefix???
+        return WarpManager.updateWarp(warpName,w -> w.setType(Warp.Type.PUBLIC), sender, "<green>Warp '%s' is now public".formatted(warpName));
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
@@ -59,7 +59,7 @@ public class MakePrivate {
         }
 
         String input = builder.getRemainingLowerCase();
-        Map<String, String> warpNames = WarpManager.getWarpNames(warp -> warp.isOfType(Warp.Type.PUBLIC));
+        Map<String, String> warpNames = WarpManager.getWarpNames(warp -> warp.isOfType(Warp.Type.PRIVATE));
         var warpSuggester = new WarpSuggester(warpNames, input);
         Collection<String> suggestions = warpSuggester.getSuggestions();
 
