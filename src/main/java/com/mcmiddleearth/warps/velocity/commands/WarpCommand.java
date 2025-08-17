@@ -4,8 +4,8 @@ import com.mcmiddleearth.warps.core.messageprotocols.TeleportMessage;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
-import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
+import com.mcmiddleearth.warps.velocity.commands.helpers.ServerConnectUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
@@ -14,21 +14,15 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.ChannelMessageSink;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -77,22 +71,11 @@ public final class WarpCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        ProxyServer proxy = WarpVelocity.getInstance().getProxy();
-        Optional<RegisteredServer> optTargetServer = proxy.getServer(targetServerName);
-        optTargetServer.ifPresent(targetServer -> {
-            sender.createConnectionRequest(targetServer).connectWithIndication()
-                // Q: Does this block the main thread?
-                .whenCompleteAsync((success, _) -> {
-                    if (!success) {
-                        sender.sendMessage(
-                            Component.text("Aborting teleport, failed to connect to server '" + targetServerName + "'", NamedTextColor.RED)
-                        );
-                        return;
-                    }
-
-                    sendTeleportMessage(targetServer, warp, false);
-                });
-        });
+        ServerConnectUtils.connectPlayerToServer(
+            sender,
+            targetServerName,
+            targetServer -> sendTeleportMessage(targetServer, warp, false)
+        );
 
         return Command.SINGLE_SUCCESS;
     }
