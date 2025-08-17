@@ -1,9 +1,6 @@
 package com.mcmiddleearth.warps.paper;
 
-import com.mcmiddleearth.warps.core.BaseWarp;
-import com.mcmiddleearth.warps.core.Channels;
-import com.mcmiddleearth.warps.core.SafeEnumSerializer;
-import com.mcmiddleearth.warps.core.WarpTag;
+import com.mcmiddleearth.warps.core.*;
 import com.mcmiddleearth.warps.paper.listener.MessageListener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -61,17 +58,7 @@ public final class WarpPaper extends JavaPlugin {
 
             for (Path file : yamlFiles) {
                 try {
-                    YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
-                        .defaultOptions(opts -> opts.serializers(build ->
-                            build.register(
-                                WarpTag.class,
-                                new SafeEnumSerializer<>(WarpTag.class, WarpTag.DEFAULT))
-                            )
-                        )
-                        .path(file)
-                        .build();
-
-                    ConfigurationNode root = loader.load();
+                    ConfigurationNode root = WarpLoader.build(file).load();
                     BaseWarp baseWarp = root.get(BaseWarp.class);
                     mapAPI.addMarker(baseWarp);
 

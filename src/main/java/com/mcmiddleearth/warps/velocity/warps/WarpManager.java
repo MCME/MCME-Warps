@@ -1,5 +1,6 @@
 package com.mcmiddleearth.warps.velocity.warps;
 
+import com.mcmiddleearth.warps.core.WarpLoader;
 import com.mcmiddleearth.warps.velocity.Utils;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mojang.brigadier.Command;
@@ -219,11 +220,7 @@ public class WarpManager {
     }
 
     public static Warp loadWarp(Path filePath) throws ConfigurateException {
-        YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
-            .path(filePath)
-            .build();
-
-        ConfigurationNode root = loader.load();
+        ConfigurationNode root = WarpLoader.build(filePath).load();
         return root.get(Warp.class);
     }
 
