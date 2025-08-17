@@ -91,18 +91,17 @@ public class Rename {
         }
 
         String input = builder.getRemainingLowerCase();
+        if (!input.isEmpty()) {
+            return Suggestions.empty();
+        }
 
         final String currName = context.getArgument("current_name", String.class);
-        if (currName.toLowerCase().startsWith(input)) {
-            builder.suggest(currName);
-        }
+        builder.suggest(currName);
 
         Warp warp = WarpManager.getWarp(currName);
         if (warp != null && warp.isOfType(Warp.Type.PRIVATE)) {
             final String privatePrefix = "zzz-" + sender.getUsername() + "-";
-            if (!input.startsWith(privatePrefix.toLowerCase())) {
-                builder.suggest(privatePrefix);
-            }
+            builder.suggest(privatePrefix);
         }
 
         return builder.buildFuture();

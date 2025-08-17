@@ -27,8 +27,9 @@ public class Welcome {
         return BrigadierCommand.literalArgumentBuilder("welcome")
             .requires(sender -> sender.hasPermission(Permission.WELCOME.getNode()))
             .then(BrigadierCommand.requiredArgumentBuilder("warp-name", StringArgumentType.string())
-                .suggests(Welcome::suggest)
+                .suggests(Welcome::suggestWarp)
                 .then(BrigadierCommand.requiredArgumentBuilder("welcome-message", StringArgumentType.greedyString())
+                    .suggests(Welcome::suggestWelcome)
                     .executes(Welcome::execute)
                 )
             );
@@ -53,7 +54,7 @@ public class Welcome {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    private static CompletableFuture<Suggestions> suggestWarp(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         if (!(context.getSource() instanceof Player sender)) {
             return Suggestions.empty();
         }
@@ -63,6 +64,20 @@ public class Welcome {
         var warpSuggester = new WarpSuggester(warpNames, input);
         warpSuggester.getSuggestions().forEach(suggestion -> builder.suggest("\"" + suggestion + "\""));
 
+        return builder.buildFuture();
+    }
+
+    private static CompletableFuture<Suggestions> suggestWelcome(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+        if (!(context.getSource() instanceof Player sender)) {
+            return Suggestions.empty();
+        }
+
+        if (!builder.getRemainingLowerCase().isEmpty()) {
+            return Suggestions.empty();
+        }
+
+        Warp warp = CommandUtils.getWarp( context, "warp-name").value();
+        builder.suggest(warp.getWelcomeMessage());
         return builder.buildFuture();
     }
 }
