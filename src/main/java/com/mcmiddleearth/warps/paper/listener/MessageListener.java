@@ -96,7 +96,6 @@ public class MessageListener implements PluginMessageListener {
                 if (wasBaseUnsafe) {
                     player.sendRichMessage("<gray>\"%s\" is not safe. You were placed nearby".formatted(warpName));
                 }
-
             }
         });
     }

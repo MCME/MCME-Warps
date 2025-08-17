@@ -26,12 +26,6 @@ public class Warp extends BaseWarp {
         PUBLIC
     }
 
-    // TODO:
-    // permissions
-    // title, subtitle, message?
-    // region? -> Only for main & moria?
-    // player warp counter
-
     // If a @Required field is missing when loading a warp.yml file, configurate errors and doesn't load that warp
     @Required private UUID creator;
     @Required private String server;
@@ -106,12 +100,8 @@ public class Warp extends BaseWarp {
      */
     public boolean isUsable(Player player) {
         if (isOfType(Type.PUBLIC)) {
-            // TODO: Check player meets the perms (if any)
-
             return player.hasPermission("mcmewarps.world-access." + getLocation().world().toLowerCase());
         }
-
-        // Q: Should staff/moderators be able to see & use other people's private warps?
 
         if (members.containsKey(player.getUniqueId())) return true;
         return player.getUniqueId().equals(creator);
@@ -124,8 +114,6 @@ public class Warp extends BaseWarp {
         if (isOfType(Type.PUBLIC)) {
             return player.hasPermission(Permission.EDIT_PUBLIC_WARPS.getNode());
         }
-
-        // Q: Should staff/moderators be able to see & use other people's private warps?
 
         return player.getUniqueId().equals(creator);
     }

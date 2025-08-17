@@ -1,6 +1,6 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
-import com.mcmiddleearth.warps.core.LocationActionSubchannel;
+import com.mcmiddleearth.warps.core.messageprotocols.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;

@@ -23,6 +23,8 @@ public class CommandUtils {
     private static final DynamicCommandExceptionType NOT_ALLOWED =
         new DynamicCommandExceptionType((warpName) -> new LiteralMessage("You do not have access to warp " + warpName));
 
+    private CommandUtils() { }
+
     public static ArgResult<Warp> getWarp(CommandContext<CommandSource> context, String argumentName) throws CommandSyntaxException {
         return getWarp(context, argumentName, _ -> true);
     }

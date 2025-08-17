@@ -19,29 +19,25 @@
     * what happens when making a public warp private (auto prefix?)
     * and the opposite (auto strip the prefix?)
     * What happens when 'rename' is used!!!
-* warp permissions
-  * OR /warp invite asdf g:group-name
-* region
-* title, subtitle
-    * default values, teleportAsync success
-* priority(?), info, stats, list, plist
-* /warp player - for clicking on a sign???
 
 # Post launch
 * Server prefixes
-* Region
+* Warp region
+  * Only for moria & mainworld warps?
   * Upon create, default to that of the nearest warp
-  * set region command
   * Will be used by the new warp book
+  * /warp region command
 * Favourite warps
   * Display favourites in the /warp suggestions?
-* Title/subtitle???
-* warp permissions???
+## Maybe?
+* More warp tags
+  * INCOMPLETE (purple flag), CAPITAL? FARM? TOWER?
+  * Custom icons?
+* Warp title & subtitle (v. similar to /warp welcome)
+* warp permissions??? (e.g. public warp only for staff/commoners etc.)
+  * Add the permissions check to Warp.isUsable() 
+  * OR add permissions to private warps -> /warp invite asdf g:group-name
 * priority(?), info, stats, list, plist???
-* WarpTags
-  * Configure tags via config.yml instead of statically in code?
-  * More tags - INCOMPLETE (purple flag), CAPITAL? FARM? TOWER?
-  * Custom icons
 
 # Ideas
 * Suggested warps
@@ -69,6 +65,7 @@
   * If <destination> doesn't exist, then re-build suggestions and if there's only 1 - use it
 * Warp name aliases?
   * Have an alias array, only show 1 alias/primary at a time in the suggestions
+* /warp player - for clicking on a sign???
 
 # Code cleanup
 * Do away with WarpManager.update?

@@ -6,6 +6,9 @@ import com.velocitypowered.api.proxy.Player;
 import java.util.function.Predicate;
 
 public class WarpPredicates {
+
+    private WarpPredicates() {}
+
     public static Predicate<Warp> usableBy(Player player) {
         return warp -> warp.isUsable(player);
     }

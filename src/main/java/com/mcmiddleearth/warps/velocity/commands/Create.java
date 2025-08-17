@@ -1,6 +1,6 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
-import com.mcmiddleearth.warps.core.LocationActionSubchannel;
+import com.mcmiddleearth.warps.core.messageprotocols.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
@@ -31,8 +31,6 @@ public class Create {
             );
     }
 
-    // Q: Forward /warp create to the backend instead?
-    // - Removes the need for RequestLocationMessages
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
 
         CommandSource source = context.getSource();

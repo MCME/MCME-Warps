@@ -1,6 +1,6 @@
 package com.mcmiddleearth.warps.velocity.listener;
 
-import com.mcmiddleearth.warps.core.LocationActionSubchannel;
+import com.mcmiddleearth.warps.core.messageprotocols.LocationActionSubchannel;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.core.messageprotocols.PlayerLocationMessage;
 import com.mcmiddleearth.warps.core.messageprotocols.TeleportResult;

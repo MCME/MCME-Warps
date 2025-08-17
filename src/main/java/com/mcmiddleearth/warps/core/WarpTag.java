@@ -1,6 +1,7 @@
 package com.mcmiddleearth.warps.core;
 
 public enum WarpTag {
+    // Full list: https://github.com/webbukkit/dynmap/wiki/Using-Markers#marker-icons
     DEFAULT("greenflag"),
     WIP("construction");
 
