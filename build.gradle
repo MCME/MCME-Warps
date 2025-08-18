@@ -55,7 +55,7 @@ tasks {
   }
 }
 
-def targetJavaVersion = 23
+def targetJavaVersion = 21
 java {
     def javaVersion = JavaVersion.toVersion(targetJavaVersion)
     sourceCompatibility = javaVersion

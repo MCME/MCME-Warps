@@ -26,7 +26,7 @@ public class CommandUtils {
     private CommandUtils() { }
 
     public static ArgResult<Warp> getWarp(CommandContext<CommandSource> context, String argumentName) throws CommandSyntaxException {
-        return getWarp(context, argumentName, _ -> true);
+        return getWarp(context, argumentName, warp -> true);
     }
 
     public static ArgResult<Warp> getWarp(
