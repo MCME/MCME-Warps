@@ -1,4 +1,4 @@
-package com.mcmiddleearth.warps.velocity;
+package com.mcmiddleearth.warps.core;
 
 import org.apache.commons.lang3.StringUtils;
 

@@ -12,7 +12,7 @@ import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -36,11 +36,14 @@ public final class WarpCommand {
     );
     private static final Collection<String> ValidatedSuggestWarpNames = WarpManager.getWarpNames(w -> SuggestedWarpNames.contains(w.getName())).values();
 
-    public static RequiredArgumentBuilder<CommandSource, String> register() {
-            return BrigadierCommand.requiredArgumentBuilder("destination", StringArgumentType.greedyString())
-                .requires(sender -> sender.hasPermission(Permission.WARP.getNode()))
-                .suggests(WarpCommand::suggest)
-                .executes(WarpCommand::execute);
+    public static LiteralArgumentBuilder<CommandSource> register() {
+        return BrigadierCommand.literalArgumentBuilder("to")
+            .requires(sender -> sender.hasPermission(Permission.WARP.getNode()))
+            .then(
+                BrigadierCommand.requiredArgumentBuilder("destination", StringArgumentType.greedyString())
+                    .suggests(WarpCommand::suggest)
+                    .executes(WarpCommand::execute)
+            );
     }
 
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {

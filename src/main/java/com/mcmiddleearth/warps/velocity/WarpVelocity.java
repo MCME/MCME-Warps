@@ -63,27 +63,11 @@ public class WarpVelocity {
 
         CommandManager commandManager = proxy.getCommandManager();
 
-        CommandMeta warpCommandMeta = commandManager.metaBuilder("warpgo")
+        CommandMeta warpCommandMeta = commandManager.metaBuilder("warp")
             .plugin(this)
             .build();
-        LiteralCommandNode<CommandSource> warpCommandNode = BrigadierCommand.literalArgumentBuilder("warpgo")
+        LiteralCommandNode<CommandSource> warpCommandNode = BrigadierCommand.literalArgumentBuilder("warp")
             .then(RandomCommand.register())
-            .then(PrivateCreate.register())
-            // The warp command is a greedy string argument, so it must be added last!
-            // Existing Issues:
-            // 1. Permissions - If suggestions are added to this warp command arg, then all the subcommands
-            //                  above appear in suggestions (even if the player doesn't have the permission)
-            //
-            // 2. Subcommand suggestions - If this arg is a greedyString arg then suggestions for the above subcommands
-            //                             will only appear after typing something (/warp delete w)
-            .then(WarpCommand.register())
-            .build();
-
-        CommandMeta managerCommandMeta = commandManager.metaBuilder("warpmanager")
-            .plugin(this)
-            .build();
-        LiteralCommandNode<CommandSource> managerCommandNode = BrigadierCommand.literalArgumentBuilder("warpmanager")
-            // subcommands
             .then(Create.register())
             .then(PrivateCreate.register())
             .then(Delete.register())
@@ -96,10 +80,10 @@ public class WarpVelocity {
             .then(Reload.register())
             .then(Welcome.register())
             .then(Tag.register())
+            .then(WarpCommand.register())
             .build();
 
         commandManager.register(warpCommandMeta, new BrigadierCommand(warpCommandNode));
-        commandManager.register(managerCommandMeta, new BrigadierCommand(managerCommandNode));
     }
 
     @Subscribe
