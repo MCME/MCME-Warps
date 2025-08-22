@@ -2,7 +2,6 @@ package com.mcmiddleearth.warps.paper;
 
 import com.mcmiddleearth.warps.core.BaseWarp;
 import org.dynmap.DynmapCommonAPI;
-import org.dynmap.markers.Marker;
 import org.dynmap.markers.MarkerAPI;
 import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
@@ -30,6 +29,7 @@ public class DynmapAPI implements MapAPI {
             );
         }
 
+        set.setLabelShow(false);
         this.markerSet = set;
     }
 
@@ -37,7 +37,7 @@ public class DynmapAPI implements MapAPI {
     public void addMarker(BaseWarp warp) {
         MarkerIcon icon = getMarkerIcon(warp.getTag().getValue());
 
-        Marker marker = markerSet.createMarker(
+        markerSet.createMarker(
             /* Marker ID */                  warp.getName() + "Id",
             /* Marker label */               warp.getName(),
             /* Process label as HTML */      false,
