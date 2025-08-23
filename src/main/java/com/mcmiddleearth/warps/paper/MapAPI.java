@@ -4,6 +4,6 @@ import com.mcmiddleearth.warps.core.BaseWarp;
 
 public interface MapAPI {
     void addMarker(BaseWarp warp);
-    void removeMarker(String id);
+    void removeMarker(String warpName);
     void clearMarkers();
 }

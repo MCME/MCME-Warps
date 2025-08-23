@@ -1,7 +1,9 @@
 package com.mcmiddleearth.warps.paper;
 
 import com.mcmiddleearth.warps.core.BaseWarp;
+import com.mcmiddleearth.warps.core.Utils;
 import org.dynmap.DynmapCommonAPI;
+import org.dynmap.markers.Marker;
 import org.dynmap.markers.MarkerAPI;
 import org.dynmap.markers.MarkerIcon;
 import org.dynmap.markers.MarkerSet;
@@ -38,7 +40,7 @@ public class DynmapAPI implements MapAPI {
         MarkerIcon icon = getMarkerIcon(warp.getIcon().getValue());
 
         markerSet.createMarker(
-            /* Marker ID */                  warp.getName() + "Id",
+            /* Marker ID */                  getMarkerId(warp.getName()),
             /* Marker label */               warp.getName(),
             /* Process label as HTML */      false,
             /* World to display marker in */ warp.getLocation().world(),
@@ -59,10 +61,18 @@ public class DynmapAPI implements MapAPI {
     }
 
     @Override
-    public void removeMarker(String id) {
+    public void removeMarker(String warpName) {
+        Marker marker = markerSet.findMarker(getMarkerId(warpName));
+        if (marker != null) {
+            marker.deleteMarker();
+        }
     }
 
     @Override
     public void clearMarkers() {
+    }
+
+    private String getMarkerId(String warpName) {
+        return Utils.normaliseString(warpName) + "Id";
     }
 }

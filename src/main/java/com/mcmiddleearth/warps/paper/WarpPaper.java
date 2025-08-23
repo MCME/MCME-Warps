@@ -8,13 +8,14 @@ import org.dynmap.DynmapCommonAPI;
 import org.spongepowered.configurate.ConfigurationNode;
 
 import java.io.IOException;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.List;
 import java.util.stream.Stream;
 
 public final class WarpPaper extends JavaPlugin {
+
+    private final Path WARPS_DIRECTORY = this.getDataPath().resolve("warps");
+    private WarpWatcher watcher;
 
     @Override
     public void onEnable() {
@@ -37,27 +38,26 @@ public final class WarpPaper extends JavaPlugin {
 
         Plugin dynmapPlugin = getServer().getPluginManager().getPlugin("dynmap");
 
-        // TODO: Reactive updates
-        // Have a thread which reacts to every change
-        //  * What if 2 changes back to back, milliseconds apart?
-        // OR Every 5 minutes, updated warps with delete/created/edited files
-
         if (dynmapPlugin instanceof DynmapCommonAPI dynmap) {
             MapAPI mapAPI = new DynmapAPI(dynmap);
             loadMarkers(mapAPI);
+
+            WarpWatcher watcher;
+            watcher = new WarpWatcher(this, WARPS_DIRECTORY, mapAPI);
+            watcher.start();
+            this.watcher = watcher;
         } else {
             getComponentLogger().warn("Dynmap not found, skipping warp loading");
         }
+
     }
 
     @Override
     public void onDisable() {
+        if (watcher != null) watcher.stop();
     }
 
     private void loadMarkers(MapAPI mapAPI) {
-        final Path dataPath = this.getDataPath();
-        final Path WARPS_DIRECTORY =  dataPath.resolve("warps");
-
         if (!Files.exists(WARPS_DIRECTORY)) {
             getComponentLogger().warn("The warps directory does not exist ({}), skipping warp loading", WARPS_DIRECTORY);
             return;

@@ -1,7 +1,7 @@
 package com.mcmiddleearth.warps.velocity.warps;
 
 import com.mcmiddleearth.warps.core.WarpLoader;
-import com.mcmiddleearth.warps.velocity.Utils;
+import com.mcmiddleearth.warps.core.Utils;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mojang.brigadier.Command;
 import com.velocitypowered.api.proxy.Player;

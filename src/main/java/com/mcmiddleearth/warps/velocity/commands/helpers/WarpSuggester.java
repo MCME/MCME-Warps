@@ -1,6 +1,6 @@
 package com.mcmiddleearth.warps.velocity.commands.helpers;
 
-import com.mcmiddleearth.warps.velocity.Utils;
+import com.mcmiddleearth.warps.core.Utils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.similarity.JaroWinklerDistance;
 
