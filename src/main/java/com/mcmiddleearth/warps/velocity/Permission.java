@@ -16,7 +16,8 @@ public enum Permission {
     WELCOME("mcmewarps.cmd.welcome-message"),
     TAG("mcmewarps.cmd.tag"),
 
-    EDIT_PUBLIC_WARPS("mcmewarps.modify.public-warps"),
+    OVERRIDE_USE("mcmewarps.override.use"),
+    OVERRIDE_MODIFY("mcmewarps.override.modify"),
     IGNORE_PRIVATE_WARPS_LIMIT("mcmewarps.limits.ignore.private");
 
     private final String permissionNode;

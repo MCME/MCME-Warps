@@ -99,6 +99,8 @@ public class Warp extends BaseWarp {
      * Specifies which players can use this warp
      */
     public boolean isUsable(Player player) {
+        if (player.hasPermission(Permission.OVERRIDE_USE.getNode())) return true;
+
         final String worldName = getLocation().world().toLowerCase();
         if (!player.hasPermission("mcmewarps.world-access." + worldName)) {
             return false;
@@ -118,8 +120,10 @@ public class Warp extends BaseWarp {
      * Specifies which players can modify this warp
      */
     public boolean isModifiable(Player player) {
+        if (player.hasPermission(Permission.OVERRIDE_MODIFY.getNode())) return true;
+
         if (isOfType(Type.PUBLIC)) {
-            return player.hasPermission(Permission.EDIT_PUBLIC_WARPS.getNode());
+            return false;
         }
 
         return player.getUniqueId().equals(creator);
