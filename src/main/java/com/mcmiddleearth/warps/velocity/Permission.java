@@ -14,7 +14,7 @@ public enum Permission {
     SET_PRIVATE("mcmewarps.cmd.set-private"),
     RELOAD("mcmewarps.cmd.reload"),
     WELCOME("mcmewarps.cmd.welcome-message"),
-    TAG("mcmewarps.cmd.tag"),
+    SET_ICON("mcmewarps.cmd.set-icon"),
 
     OVERRIDE_USE("mcmewarps.override.use"),
     OVERRIDE_MODIFY("mcmewarps.override.modify"),

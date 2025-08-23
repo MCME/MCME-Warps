@@ -14,9 +14,9 @@ public class BaseWarp {
     // If a @Required field is missing when loading a warp.yml file, configurate errors and doesn't load that warp
     @Required protected String name;
     @Required protected SimpleLocation location;
-    protected WarpTag tag = WarpTag.DEFAULT;
+    protected WarpIcon icon = WarpIcon.DEFAULT;
 
     public String getName() { return name; }
     public SimpleLocation getLocation() { return location; }
-    public WarpTag getTag() { return tag; }
+    public WarpIcon getIcon() { return icon; }
 }

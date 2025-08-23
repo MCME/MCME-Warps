@@ -3,7 +3,7 @@ package com.mcmiddleearth.warps.velocity.warps;
 import com.google.common.base.Strings;
 import com.mcmiddleearth.warps.core.BaseWarp;
 import com.mcmiddleearth.warps.core.SimpleLocation;
-import com.mcmiddleearth.warps.core.WarpTag;
+import com.mcmiddleearth.warps.core.WarpIcon;
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.velocitypowered.api.proxy.Player;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
@@ -69,7 +69,7 @@ public class Warp extends BaseWarp {
     public void setName(String name) { this.name = name; }
     public void setServer(String server) { this.server = server; }
     public void setLocation(SimpleLocation location) { this.location = location; }
-    public void setTag(WarpTag tag) { this.tag = tag; }
+    public void setIcon(WarpIcon icon) { this.icon = icon; }
     public void setType(Type type) { this.type = type; }
 
     public void addPlayer(Player player) {

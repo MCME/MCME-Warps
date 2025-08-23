@@ -1,6 +1,6 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
-import com.mcmiddleearth.warps.core.WarpTag;
+import com.mcmiddleearth.warps.core.WarpIcon;
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
@@ -24,18 +24,18 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class Tag {
-    private static final SimpleCommandExceptionType INVALID_TAG =
-        new SimpleCommandExceptionType(() -> "Invalid warp tag");
+public class SetIcon {
+    private static final SimpleCommandExceptionType INVALID_ICON =
+        new SimpleCommandExceptionType(() -> "Invalid warp icon");
 
     public static LiteralArgumentBuilder<CommandSource> register() {
-        return BrigadierCommand.literalArgumentBuilder("setTag")
-            .requires(sender -> sender.hasPermission(Permission.TAG.getNode()))
+        return BrigadierCommand.literalArgumentBuilder("setIcon")
+            .requires(sender -> sender.hasPermission(Permission.SET_ICON.getNode()))
             .then(BrigadierCommand.requiredArgumentBuilder("warp", StringArgumentType.string())
-                .suggests(Tag::suggestWarpName)
-                .then(BrigadierCommand.requiredArgumentBuilder("tag", StringArgumentType.word())
-                    .suggests(Tag::suggestTag)
-                    .executes(Tag::execute)
+                .suggests(SetIcon::suggestWarpName)
+                .then(BrigadierCommand.requiredArgumentBuilder("icon", StringArgumentType.word())
+                    .suggests(SetIcon::suggestIcon)
+                    .executes(SetIcon::execute)
                 )
             );
     }
@@ -53,13 +53,13 @@ public class Tag {
             WarpPredicates.modifiableBy(sender)
         ).value();
 
-        final String strWarpTag = context.getArgument("tag", String.class);
-        final WarpTag warpTag = getWarpTag(strWarpTag);
-        warp.setTag(warpTag);
+        final String strWarpIcon = context.getArgument("icon", String.class);
+        final WarpIcon warpIcon = getWarpIcon(strWarpIcon);
+        warp.setIcon(warpIcon);
 
         try {
             WarpManager.saveWarp(warp);
-            sender.sendRichMessage("<green> Updated the tag for \"%s\" to %s".formatted(warp.getName(), strWarpTag));
+            sender.sendRichMessage("<green> Updated the icon for \"%s\" to %s".formatted(warp.getName(), strWarpIcon));
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
             sender.sendRichMessage("<red>" + e.getMessage());
@@ -67,11 +67,11 @@ public class Tag {
         }
     }
 
-    private static WarpTag getWarpTag(String tag) throws CommandSyntaxException {
+    private static WarpIcon getWarpIcon(String icon) throws CommandSyntaxException {
         try {
-            return WarpTag.valueOf(tag);
+            return WarpIcon.valueOf(icon);
         } catch (Exception e) {
-            throw INVALID_TAG.create();
+            throw INVALID_ICON.create();
         }
     }
 
@@ -88,16 +88,16 @@ public class Tag {
         return builder.buildFuture();
     }
 
-    private static CompletableFuture<Suggestions> suggestTag(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    private static CompletableFuture<Suggestions> suggestIcon(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         if (!(context.getSource() instanceof Player sender)) {
             return Suggestions.empty();
         }
 
         String input = builder.getRemainingLowerCase();
-        EnumSet.allOf(WarpTag.class).forEach(tag -> {
-            String tagName = tag.name();
-            if (tagName.startsWith(input)) {
-                builder.suggest(tagName);
+        EnumSet.allOf(WarpIcon.class).forEach(icon -> {
+            String iconName = icon.name();
+            if (iconName.startsWith(input)) {
+                builder.suggest(iconName);
             }
         });
         return builder.buildFuture();

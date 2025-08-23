@@ -17,8 +17,8 @@ public class WarpLoader {
 
     private static ConfigurationOptions applyDefaultOptions(ConfigurationOptions options) {
         return options.serializers(build -> build.register(
-            WarpTag.class,
-            new SafeEnumSerializer<>(WarpTag.class, WarpTag.DEFAULT)
+            WarpIcon.class,
+            new SafeEnumSerializer<>(WarpIcon.class, WarpIcon.DEFAULT)
         ));
     }
 }

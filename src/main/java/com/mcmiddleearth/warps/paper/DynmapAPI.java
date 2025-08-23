@@ -35,7 +35,7 @@ public class DynmapAPI implements MapAPI {
 
     @Override
     public void addMarker(BaseWarp warp) {
-        MarkerIcon icon = getMarkerIcon(warp.getTag().getValue());
+        MarkerIcon icon = getMarkerIcon(warp.getIcon().getValue());
 
         markerSet.createMarker(
             /* Marker ID */                  warp.getName() + "Id",

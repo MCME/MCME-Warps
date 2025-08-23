@@ -79,7 +79,7 @@ public class WarpVelocity {
             .then(SetPrivate.register())
             .then(Reload.register())
             .then(Welcome.register())
-            .then(Tag.register())
+            .then(SetIcon.register())
             .then(WarpCommand.register())
             .build();
 
