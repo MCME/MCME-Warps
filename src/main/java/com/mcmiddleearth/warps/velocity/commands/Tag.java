@@ -81,7 +81,7 @@ public class Tag {
         }
 
         String input = builder.getRemainingLowerCase();
-        Map<String, String> warpNames = WarpManager.getAllModifiableWarpNames(sender);
+        Map<String, String> warpNames = WarpManager.getWarpNames(w -> w.isOfType(Warp.Type.PUBLIC));
         var warpSuggester = new WarpSuggester(warpNames, input);
         warpSuggester.getSuggestions().forEach(suggestion -> builder.suggest("\"" + suggestion + "\""));
 
