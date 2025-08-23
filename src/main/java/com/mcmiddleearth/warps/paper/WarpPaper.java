@@ -6,13 +6,11 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapCommonAPI;
 import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -27,7 +25,22 @@ public final class WarpPaper extends JavaPlugin {
         getServer().getMessenger().registerOutgoingPluginChannel(this, Channels.WARP);
         getServer().getMessenger().registerOutgoingPluginChannel(this, Channels.PLAYER_LOCATION);
 
+        final Path dataPath = this.getDataPath();
+        if (!Files.exists(dataPath)) {
+            getComponentLogger().info("Creating the MCME-Warps data directory");
+            try {
+                Files.createDirectories(dataPath);
+            } catch (IOException e) {
+                getComponentLogger().error("Something went wrong whilst creating the data directory ({}) - {}", dataPath, e.getMessage());
+            }
+        }
+
         Plugin dynmapPlugin = getServer().getPluginManager().getPlugin("dynmap");
+
+        // TODO: Reactive updates
+        // Have a thread which reacts to every change
+        //  * What if 2 changes back to back, milliseconds apart?
+        // OR Every 5 minutes, updated warps with delete/created/edited files
 
         if (dynmapPlugin instanceof DynmapCommonAPI dynmap) {
             MapAPI mapAPI = new DynmapAPI(dynmap);
@@ -42,7 +55,8 @@ public final class WarpPaper extends JavaPlugin {
     }
 
     private void loadMarkers(MapAPI mapAPI) {
-        final Path WARPS_DIRECTORY =  Paths.get(this.getDataFolder().getPath()).resolve("warps");
+        final Path dataPath = this.getDataPath();
+        final Path WARPS_DIRECTORY =  dataPath.resolve("warps");
 
         if (!Files.exists(WARPS_DIRECTORY)) {
             getComponentLogger().warn("The warps directory does not exist ({}), skipping warp loading", WARPS_DIRECTORY);
