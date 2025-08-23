@@ -23,14 +23,15 @@ import net.kyori.adventure.text.Component;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class SetIcon {
     private static final SimpleCommandExceptionType INVALID_ICON =
         new SimpleCommandExceptionType(() -> "Invalid warp icon");
 
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("setIcon")
-            .requires(sender -> sender.hasPermission(Permission.SET_ICON.getNode()))
+            .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("warp", StringArgumentType.string())
                 .suggests(SetIcon::suggestWarpName)
                 .then(BrigadierCommand.requiredArgumentBuilder("icon", StringArgumentType.word())

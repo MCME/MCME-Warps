@@ -21,6 +21,7 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
 import java.text.MessageFormat;
+import java.util.function.Predicate;
 
 public class PrivateCreate {
 
@@ -33,9 +34,9 @@ public class PrivateCreate {
     private static final SimpleCommandExceptionType PRIVATE_WARP_LIMIT_REACHED =
         new SimpleCommandExceptionType(() -> "Unable to create another private warp - you have reached the maximum (" + ConfigManager.getConfig().getPrivateWarpLimit() + ")");
 
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("pcreate")
-            .requires(sender -> sender.hasPermission(Permission.CREATE_PRIVATE.getNode()))
+            .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("name", StringArgumentType.greedyString())
                 .executes(PrivateCreate::execute)
             );

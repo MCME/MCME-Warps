@@ -25,11 +25,12 @@ import net.kyori.adventure.text.Component;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class Move {
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("move")
-            .requires(sender -> sender.hasPermission(Permission.MOVE.getNode()))
+            .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("name", StringArgumentType.greedyString())
                 .suggests(Move::suggest)
                 .executes(Move::execute)

@@ -23,11 +23,12 @@ import net.kyori.adventure.text.Component;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class RemoveMember {
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("remove-member")
-            .requires(sender -> sender.hasPermission(Permission.REMOVE_MEMBER.getNode()))
+            .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("warp", StringArgumentType.string())
                 .suggests(RemoveMember::suggestWarpName)
                 .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())

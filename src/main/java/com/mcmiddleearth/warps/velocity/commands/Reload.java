@@ -9,10 +9,12 @@ import com.mojang.brigadier.context.CommandContext;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 
+import java.util.function.Predicate;
+
 public class Reload {
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("reload")
-            .requires(sender -> sender.hasPermission(Permission.RELOAD.getNode()))
+            .requires(requirement)
             .executes(Reload::execute);
     }
 

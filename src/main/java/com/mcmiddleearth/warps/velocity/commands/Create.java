@@ -18,14 +18,16 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
+import java.util.function.Predicate;
+
 public class Create {
 
     private static final SimpleCommandExceptionType WARP_EXISTS =
         new SimpleCommandExceptionType(() -> "A warp already exists with that name");
 
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("create")
-            .requires(sender -> sender.hasPermission(Permission.CREATE_PUBLIC.getNode()))
+            .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("name", StringArgumentType.greedyString())
                     .executes(Create::execute)
             );

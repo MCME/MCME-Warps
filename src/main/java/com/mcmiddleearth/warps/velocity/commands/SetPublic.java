@@ -20,6 +20,7 @@ import net.kyori.adventure.text.Component;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class SetPublic {
     private static final SimpleCommandExceptionType WARP_NOT_FOUND =
@@ -28,9 +29,9 @@ public class SetPublic {
     private static final SimpleCommandExceptionType ALREADY_PUBLIC =
         new SimpleCommandExceptionType(() -> "This warp is already public");
 
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("set-public")
-            .requires(sender -> sender.hasPermission(Permission.SET_PUBLIC.getNode()))
+            .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("warp-name", StringArgumentType.greedyString())
                 .suggests(SetPublic::suggest)
                 .executes(SetPublic::execute)

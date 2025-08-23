@@ -20,6 +20,7 @@ import com.velocitypowered.api.proxy.messages.ChannelMessageSink;
 import net.kyori.adventure.text.Component;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class RandomCommand {
     private static final SimpleCommandExceptionType WARP_NOT_FOUND =
@@ -28,9 +29,9 @@ public class RandomCommand {
     private static final SimpleCommandExceptionType NO_WARPS =
         new SimpleCommandExceptionType(() -> "There are no warps to teleport to");
 
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("random")
-            .requires(sender -> sender.hasPermission(Permission.RANDOM.getNode()))
+            .requires(requirement)
             .executes(RandomCommand::execute);
     }
 

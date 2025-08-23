@@ -26,6 +26,7 @@ import net.kyori.adventure.text.Component;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public final class WarpCommand {
     private static final Set<String> SuggestedWarpNames = Set.of(
@@ -36,9 +37,9 @@ public final class WarpCommand {
     );
     private static final Collection<String> ValidatedSuggestWarpNames = WarpManager.getWarpNames(w -> SuggestedWarpNames.contains(w.getName())).values();
 
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("to")
-            .requires(sender -> sender.hasPermission(Permission.WARP.getNode()))
+            .requires(requirement)
             .then(
                 BrigadierCommand.requiredArgumentBuilder("destination", StringArgumentType.greedyString())
                     .suggests(WarpCommand::suggest)

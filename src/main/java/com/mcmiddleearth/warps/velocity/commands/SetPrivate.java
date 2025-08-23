@@ -20,6 +20,7 @@ import net.kyori.adventure.text.Component;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class SetPrivate {
     private static final SimpleCommandExceptionType WARP_NOT_FOUND =
@@ -28,9 +29,9 @@ public class SetPrivate {
     private static final SimpleCommandExceptionType ALREADY_PRIVATE =
         new SimpleCommandExceptionType(() -> "This warp is already private");
 
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("set-private")
-            .requires(sender -> sender.hasPermission(Permission.SET_PRIVATE.getNode()))
+            .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("warp-name", StringArgumentType.greedyString())
                 .suggests(SetPrivate::suggest)
                 .executes(SetPrivate::execute)

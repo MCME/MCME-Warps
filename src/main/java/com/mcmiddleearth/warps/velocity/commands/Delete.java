@@ -22,11 +22,12 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class Delete {
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("delete")
-            .requires(sender -> sender.hasPermission(Permission.DELETE.getNode()))
+            .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("name", StringArgumentType.greedyString())
                 .suggests(Delete::suggest)
                 .executes(Delete::execute)

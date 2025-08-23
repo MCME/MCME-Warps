@@ -20,12 +20,13 @@ import net.kyori.adventure.text.Component;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class Welcome {
     // /warp welcome <warp> <message>
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("welcome")
-            .requires(sender -> sender.hasPermission(Permission.WELCOME.getNode()))
+            .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("warp-name", StringArgumentType.string())
                 .suggests(Welcome::suggestWarp)
                 .then(BrigadierCommand.requiredArgumentBuilder("welcome-message", StringArgumentType.greedyString())

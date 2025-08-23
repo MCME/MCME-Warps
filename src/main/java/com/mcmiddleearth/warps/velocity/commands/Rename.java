@@ -23,14 +23,15 @@ import net.kyori.adventure.text.Component;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class Rename {
     private static final DynamicCommandExceptionType INVALID_PRIVATE_PREFIX =
         new DynamicCommandExceptionType(name -> new LiteralMessage("A private warp must start with zzz-" + name + "-"));
 
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("rename")
-            .requires(sender -> sender.hasPermission(Permission.RENAME.getNode()))
+            .requires(requirement)
             // This has to be a string argument because a greedy arg can't have anything after it
             .then(BrigadierCommand.requiredArgumentBuilder("current_name", StringArgumentType.string())
                 .suggests(Rename::suggestCurrName)

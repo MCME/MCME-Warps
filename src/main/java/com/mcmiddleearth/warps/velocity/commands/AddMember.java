@@ -23,11 +23,12 @@ import net.kyori.adventure.text.Component;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class AddMember {
-    public static LiteralArgumentBuilder<CommandSource> register() {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("add-member")
-            .requires(sender -> sender.hasPermission(Permission.ADD_MEMBER.getNode()))
+            .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("warp", StringArgumentType.string())
                 .suggests(AddMember::suggestWarpName)
                 .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())

@@ -16,10 +16,12 @@ import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
+import java.util.function.Predicate;
 
 @Plugin(
     id = "mcme-warps-velocity",
@@ -66,21 +68,23 @@ public class WarpVelocity {
         CommandMeta warpCommandMeta = commandManager.metaBuilder("warp")
             .plugin(this)
             .build();
+
         LiteralCommandNode<CommandSource> warpCommandNode = BrigadierCommand.literalArgumentBuilder("warp")
-            .then(RandomCommand.register())
-            .then(Create.register())
-            .then(PrivateCreate.register())
-            .then(Delete.register())
-            .then(Rename.register())
-            .then(Move.register())
-            .then(AddMember.register())
-            .then(RemoveMember.register())
-            .then(SetPublic.register())
-            .then(SetPrivate.register())
-            .then(Reload.register())
-            .then(Welcome.register())
-            .then(SetIcon.register())
-            .then(WarpCommand.register())
+            .then(WarpCommand.register( WarpRequirements.hasPerm(Permission.WARP) ))
+            .then(RandomCommand.register( WarpRequirements.hasPerm(Permission.RANDOM) ))
+            .then(Create.register( WarpRequirements.hasPerm(Permission.CREATE_PUBLIC) ))
+            .then(PrivateCreate.register( WarpRequirements.hasPerm(Permission.CREATE_PRIVATE) ))
+            .then(SetPublic.register( WarpRequirements.hasPerm(Permission.SET_PUBLIC) ))
+            .then(SetPrivate.register( WarpRequirements.hasPerm(Permission.SET_PRIVATE) ))
+            .then(Reload.register( WarpRequirements.hasPerm(Permission.RELOAD) ))
+            .then(SetIcon.register( WarpRequirements.hasPerm(Permission.SET_ICON) ))
+            // Commands that require modifiable warps
+            .then(Delete.register( WarpRequirements.hasPermAndWarps(Permission.DELETE) ))
+            .then(Rename.register( WarpRequirements.hasPermAndWarps(Permission.RENAME) ))
+            .then(Move.register( WarpRequirements.hasPermAndWarps(Permission.MOVE) ))
+            .then(AddMember.register( WarpRequirements.hasPermAndWarps(Permission.ADD_MEMBER) ))
+            .then(RemoveMember.register( WarpRequirements.hasPermAndWarps(Permission.REMOVE_MEMBER) ))
+            .then(Welcome.register( WarpRequirements.hasPermAndWarps(Permission.WELCOME) ))
             .build();
 
         commandManager.register(warpCommandMeta, new BrigadierCommand(warpCommandNode));
@@ -99,5 +103,26 @@ public class WarpVelocity {
         // Reload the config & warps
         ConfigManager.loadConfig();
         WarpManager.loadAllWarps();
+    }
+
+    private static final class WarpRequirements {
+        private WarpRequirements() {}
+
+        public static Predicate<CommandSource> hasPerm(Permission perm) {
+            return sender -> sender.hasPermission(perm.getNode());
+        }
+
+        public static Predicate<CommandSource> hasModifiableWarp() {
+            return sender -> {
+                if (sender instanceof Player player) {
+                    return WarpManager.getAllModifiableWarpNames(player).size() > 0;
+                }
+                return true;
+            };
+        }
+
+        public static Predicate<CommandSource> hasPermAndWarps(Permission perm) {
+            return hasPerm(perm).and(hasModifiableWarp());
+        }
     }
 }
