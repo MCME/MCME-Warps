@@ -99,11 +99,18 @@ public class Warp extends BaseWarp {
      * Specifies which players can use this warp
      */
     public boolean isUsable(Player player) {
-        if (isOfType(Type.PUBLIC)) {
-            return player.hasPermission("mcmewarps.world-access." + getLocation().world().toLowerCase());
+        final String worldName = getLocation().world().toLowerCase();
+        if (!player.hasPermission("mcmewarps.world-access." + worldName)) {
+            return false;
         }
 
-        if (members.containsKey(player.getUniqueId())) return true;
+        if (isOfType(Type.PUBLIC)) {
+            return true;
+        }
+
+        final boolean isMember = members.containsKey(player.getUniqueId());
+        if (isMember) return true;
+
         return player.getUniqueId().equals(creator);
     }
 
