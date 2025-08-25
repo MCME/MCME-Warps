@@ -1,10 +1,9 @@
 package com.mcmiddleearth.warps.velocity.listener;
 
-import com.mcmiddleearth.warps.core.messageprotocols.LocationActionSubchannel;
+import com.mcmiddleearth.warps.core.messageprotocols.*;
 import com.mcmiddleearth.warps.core.SimpleLocation;
-import com.mcmiddleearth.warps.core.messageprotocols.PlayerLocationMessage;
-import com.mcmiddleearth.warps.core.messageprotocols.TeleportResult;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
+import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -72,15 +71,27 @@ public class MessageListener {
 
         try {
             WarpManager.addWarp(newWarp);
-            creator.sendRichMessage("<green>Warp \"%s\" has been created!".formatted(newWarp.getName()));
-
-            if (warpType.equals(Warp.Type.PRIVATE)) {
-                final int privateLimit = ConfigManager.getConfig().getPrivateWarpLimit();
-                final int creatorPrivateWarpCount = WarpManager.getWarpNames(w -> w.isCreator(creator) && w.isOfType(Warp.Type.PRIVATE)).size();
-                creator.sendRichMessage("<gray>You have " + (privateLimit - creatorPrivateWarpCount) + " private warps remaining");
-            }
         } catch (Exception e) {
             creator.sendRichMessage("<red>Failed to create warp!");
+            return;
+        }
+
+        creator.sendRichMessage("<green>Warp \"%s\" has been created!".formatted(newWarp.getName()));
+
+        if (warpType.equals(Warp.Type.PRIVATE)) {
+            final int privateLimit = ConfigManager.getConfig().getPrivateWarpLimit();
+            final int creatorPrivateWarpCount = WarpManager.getWarpNames(w -> w.isCreator(creator) && w.isOfType(Warp.Type.PRIVATE)).size();
+            creator.sendRichMessage("<gray>You have " + (privateLimit - creatorPrivateWarpCount) + " private warps remaining");
+        }
+
+        boolean isFirstModifiableWarp = WarpManager.getAllModifiableWarpNames(creator).size() == 1;
+        if (isFirstModifiableWarp) {
+            creator.getCurrentServer().ifPresent(serverConnection -> {
+                serverConnection.sendPluginMessage(
+                    ChannelIdentifiers.MISC_ID,
+                    MiscMessage.serialise(MiscMessage.Subchannel.UPDATE_COMMANDS)
+                );
+            });
         }
     }
 

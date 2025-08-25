@@ -2,10 +2,7 @@ package com.mcmiddleearth.warps.paper.listener;
 
 import com.mcmiddleearth.warps.core.Channels;
 import com.mcmiddleearth.warps.core.SimpleLocation;
-import com.mcmiddleearth.warps.core.messageprotocols.PlayerLocationMessage;
-import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
-import com.mcmiddleearth.warps.core.messageprotocols.TeleportMessage;
-import com.mcmiddleearth.warps.core.messageprotocols.TeleportResult;
+import com.mcmiddleearth.warps.core.messageprotocols.*;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -33,6 +30,7 @@ public class MessageListener implements PluginMessageListener {
         switch (channel) {
             case Channels.WARP -> handleWarpRequest(player, bytes);
             case Channels.PLAYER_LOCATION -> handleLocationRequest(player, bytes);
+            case Channels.MISC -> handleMisc(player, bytes);
             default -> plugin.getComponentLogger().warn(Component.text("Channel '" + channel + "' has no handler!"));
         }
     }
@@ -50,7 +48,6 @@ public class MessageListener implements PluginMessageListener {
             Channels.PLAYER_LOCATION,
             PlayerLocationMessage.serialise(data.subchannel(), location, data.warpName())
         );
-
     }
 
     private void handleWarpRequest(Player player, byte[] bytes) {
@@ -145,5 +142,13 @@ public class MessageListener implements PluginMessageListener {
 
         // No safe block found
         return Optional.empty();
+    }
+
+    private void handleMisc(Player player, byte[] bytes) {
+        MiscMessage.Result data = MiscMessage.read(bytes);
+
+        if (data.subchannel().equals(MiscMessage.Subchannel.UPDATE_COMMANDS)) {
+            player.updateCommands();
+        }
     }
 }

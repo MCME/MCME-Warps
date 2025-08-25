@@ -1,5 +1,7 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
+import com.mcmiddleearth.warps.core.messageprotocols.MiscMessage;
+import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
@@ -49,12 +51,24 @@ public class Delete {
 
         try {
             WarpManager.deleteWarp(warp);
-            sender.sendRichMessage("<green>Warp '%s' deleted".formatted(warp.getName()));
-            return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
             sender.sendMessage(Component.text(e.getMessage(), NamedTextColor.RED));
             return 0;
         }
+
+        sender.sendRichMessage("<green>Warp '%s' deleted".formatted(warp.getName()));
+
+        boolean hasNoModifiableWarps = WarpManager.getAllModifiableWarpNames(sender).isEmpty();
+        if (hasNoModifiableWarps) {
+            sender.getCurrentServer().ifPresent(serverConnection -> {
+                serverConnection.sendPluginMessage(
+                    ChannelIdentifiers.MISC_ID,
+                    MiscMessage.serialise(MiscMessage.Subchannel.UPDATE_COMMANDS)
+                );
+            });
+        }
+
+        return Command.SINGLE_SUCCESS;
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {

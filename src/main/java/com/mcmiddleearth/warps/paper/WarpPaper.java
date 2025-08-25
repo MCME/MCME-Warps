@@ -22,6 +22,7 @@ public final class WarpPaper extends JavaPlugin {
         var listener = new MessageListener(this);
         getServer().getMessenger().registerIncomingPluginChannel(this, Channels.WARP, listener);
         getServer().getMessenger().registerIncomingPluginChannel(this, Channels.PLAYER_LOCATION, listener);
+        getServer().getMessenger().registerIncomingPluginChannel(this, Channels.MISC, listener);
 
         getServer().getMessenger().registerOutgoingPluginChannel(this, Channels.WARP);
         getServer().getMessenger().registerOutgoingPluginChannel(this, Channels.PLAYER_LOCATION);
