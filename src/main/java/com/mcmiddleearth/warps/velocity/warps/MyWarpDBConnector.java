@@ -29,9 +29,6 @@ public class MyWarpDBConnector {
 
     private boolean connected = false;
 
-    // private ExecutorService executor = Executors.newSingleThreadExecutor();
-    // private ScheduledTask keepAliveTask;
-
     public MyWarpDBConnector() {
         Config.Sql config = ConfigManager.getConfig().sql();
         dbUser = config.user();
@@ -42,47 +39,17 @@ public class MyWarpDBConnector {
 
         loadWorldUUIDs();
         connect();
-//        keepAliveTask = WarpVelocity.getInstance().getScheduler()
-//            .schedule(ConnectBungeePlugin.getInstance(), () -> {
-//                checkConnection();
-//                WarpHandler.updateCache();
-//            },10,60,TimeUnit.SECONDS);
     }
 
     public void disconnect() {
         connected = false;
-//        if(keepAliveTask!=null) {
-//            keepAliveTask.cancel();
-//        }
+
         try {
             dbConnection.close();
         } catch (SQLException ex) {
             Logger.getLogger(MyWarpDBConnector.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
-//    private boolean checkConnection() {
-//        try {
-//            if(connected && dbConnection.isValid(5)) {
-//                ConnectBungeePlugin.getInstance().getLogger().log(Level.INFO,
-//                    "Successfully checked connection to myWarp database.");
-//                connected = true;
-//            } else {
-//                //throw new SQLException();
-//                if(dbConnection!=null) {
-//                    dbConnection.close();
-//                }
-//                ConnectBungeePlugin.getInstance().getLogger().log(Level.INFO,
-//                    "Reconnecting to myWarp database.");
-//                connect();
-//            }
-//            return true;
-//        } catch (SQLException ex) {
-//            Logger.getLogger(MyWarpDBConnector.class.getName()).log(Level.SEVERE, "No DB connection!!", ex);
-//            connected = false;
-//            return false;
-//        }
-//    }
 
     private void connect() {
         try {
@@ -108,8 +75,7 @@ public class MyWarpDBConnector {
                 LEFT JOIN warp_player_map ON warp.warp_id = warp_player_map.warp_id
                 LEFT JOIN player AS invited ON wpm.player_id = invited.player_id
                 """);
-            // Q: Is this needed???
-//            getWarps.setQueryTimeout(1);
+            getWarps.setQueryTimeout(15);
 
         } catch (SQLException ex) {
             Logger.getLogger(MyWarpDBConnector.class.getName()).log(Level.SEVERE, null, ex);
