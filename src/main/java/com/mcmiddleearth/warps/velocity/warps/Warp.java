@@ -83,6 +83,9 @@ public class Warp extends BaseWarp {
     public void addVisit() {
         this.visits++;
     }
+    public void setVisits(int visits) {
+        this.visits = visits;
+    }
 
     public String getWelcomeMessage() {
         if (Strings.isNullOrEmpty(welcomeMessage)) {

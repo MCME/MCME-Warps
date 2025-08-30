@@ -63,7 +63,7 @@ public class CommandUtils {
     static final Set<Character> BLACKLIST = Set.of('/', '\\', '<', '>', ':', '"', '|', '*', '?', '!');
 
     public static void validateWarpName(String warpName) throws CommandSyntaxException {
-        final int maxLength = ConfigManager.getConfig().getWarpNameMaxLength();
+        final int maxLength = ConfigManager.getConfig().warpNameMaxLength();
         if (warpName.length() > maxLength) {
             throw TOO_LONG.create(warpName, maxLength);
         }

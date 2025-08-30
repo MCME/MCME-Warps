@@ -79,7 +79,7 @@ public class MessageListener {
         creator.sendRichMessage("<green>Warp \"%s\" has been created!".formatted(newWarp.getName()));
 
         if (warpType.equals(Warp.Type.PRIVATE)) {
-            final int privateLimit = ConfigManager.getConfig().getPrivateWarpLimit();
+            final int privateLimit = ConfigManager.getConfig().privateWarpLimit();
             final int creatorPrivateWarpCount = WarpManager.getWarpNames(w -> w.isCreator(creator) && w.isOfType(Warp.Type.PRIVATE)).size();
             creator.sendRichMessage("<gray>You have " + (privateLimit - creatorPrivateWarpCount) + " private warps remaining");
         }

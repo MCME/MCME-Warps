@@ -3,6 +3,7 @@ package com.mcmiddleearth.warps.velocity.warps;
 import com.mcmiddleearth.warps.core.WarpLoader;
 import com.mcmiddleearth.warps.core.Utils;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mojang.brigadier.Command;
 import com.velocitypowered.api.proxy.Player;
 import org.jetbrains.annotations.Nullable;
@@ -194,12 +195,28 @@ public class WarpManager {
     }
 
     public static void loadAllWarps() {
+        warps.clear();
+
         if (!Files.exists(WARPS_DIRECTORY)) {
-            WarpVelocity.getInstance().getLogger().warn("The warps directory does not exist ({}), skipping warp loading", WARPS_DIRECTORY);
+            WarpVelocity.getInstance().getLogger().warn("The warps directory does not exist ({}), attempting to load from the warps DB", WARPS_DIRECTORY);
+
+            var DB = new MyWarpDBConnector();
+            if (!DB.isConnected()) {
+                WarpVelocity.getInstance().getLogger().error("Unable to connect to the warps DB, skipping warp loading");
+                return;
+            }
+            var warps = DB.getWarps();
+            warps.forEach(w -> {
+                try {
+                    putWarp(w);
+                } catch (Exception e) {
+                    WarpVelocity.getInstance().getLogger().error("Failed to load warp, {}", e.getMessage());
+                }
+            });
+            DB.disconnect();
+
             return;
         }
-
-        warps.clear();
 
         try (Stream<Path> pathStream = Files.walk(WARPS_DIRECTORY)) {
             List<Path> yamlFiles = pathStream
