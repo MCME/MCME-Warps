@@ -105,8 +105,7 @@ public class MyWarpDBConnector {
                     if (warp != null) {
                         UUID memberUUID = rs.getObject("invited.uuid", UUID.class);
                         if (memberUUID != null) {
-                            // FIXME: Remove player name from membership
-                            warp.addPlayer(memberUUID);
+                            warp.addMember(memberUUID);
                         }
                     }
                 } catch (SQLException e) {

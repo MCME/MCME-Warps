@@ -9,7 +9,8 @@ import com.velocitypowered.api.proxy.Player;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Required;
 
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 
 // https://docs.spongepowered.org/stable/en/plugin/configuration/serialization.html#using-objectmappers
@@ -31,7 +32,7 @@ public class Warp extends BaseWarp {
     @Required private String server;
     @Required private Warp.Type type;
     // Can't be final, otherwise Configurate can't set members on load
-    private HashMap<UUID, String> members = new HashMap<>();
+    private Set<UUID> members = Collections.emptySet();
     private int visits = 0;
     private String welcomeMessage;
 
@@ -57,7 +58,7 @@ public class Warp extends BaseWarp {
 
     public String getServer() { return server; }
     public UUID getCreator() { return creator; }
-    public HashMap<UUID, String> getMembers() { return members; }
+    public Set<UUID> getMembers() { return members; }
 
     public boolean isOfType(Warp.Type type) {
         return this.type.equals(type);
@@ -72,11 +73,11 @@ public class Warp extends BaseWarp {
     public void setIcon(WarpIcon icon) { this.icon = icon; }
     public void setType(Type type) { this.type = type; }
 
-    public void addPlayer(Player player) {
-        this.members.put(player.getUniqueId(), player.getUsername());
+    public void addMember(UUID playerId) {
+        this.members.add(playerId);
     }
-    public void removePlayer(Player player) {
-        this.members.remove(player.getUniqueId());
+    public void removeMember(UUID playerId) {
+        this.members.remove(playerId);
     }
 
     public int getVisits() { return this.visits; }
@@ -113,7 +114,7 @@ public class Warp extends BaseWarp {
             return true;
         }
 
-        final boolean isMember = members.containsKey(player.getUniqueId());
+        final boolean isMember = members.contains(player.getUniqueId());
         if (isMember) return true;
 
         return player.getUniqueId().equals(creator);

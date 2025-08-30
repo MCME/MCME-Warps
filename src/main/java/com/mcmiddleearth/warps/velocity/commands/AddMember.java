@@ -1,6 +1,5 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
-import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
@@ -60,12 +59,12 @@ public class AddMember {
             throw ALREADY_MEMBER.create();
         }
 
-        Set<UUID> memberIDs = warp.getMembers().keySet();
+        Set<UUID> memberIDs = warp.getMembers();
         if (memberIDs.contains(targetPlayer.getUniqueId())) {
             throw ALREADY_MEMBER.create();
         }
 
-        warp.addPlayer(targetPlayer);
+        warp.addMember(targetPlayer.getUniqueId());
         try {
             WarpManager.saveWarp(warp);
             sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been added to warp " + warpName);

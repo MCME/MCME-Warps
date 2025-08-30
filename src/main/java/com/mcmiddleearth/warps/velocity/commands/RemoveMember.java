@@ -1,6 +1,5 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
-import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
@@ -31,8 +30,8 @@ public class RemoveMember {
             .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("warp", StringArgumentType.string())
                 .suggests(RemoveMember::suggestWarpName)
-                .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
-                    .suggests(RemoveMember::suggestPlayer)
+                .then(BrigadierCommand.requiredArgumentBuilder("member", StringArgumentType.word())
+                    .suggests(RemoveMember::suggestMembers)
                     .executes(RemoveMember::execute)
                 )
             );
@@ -46,7 +45,7 @@ public class RemoveMember {
         }
 
         final String warpName = context.getArgument("warp", String.class);
-        final String playerName = context.getArgument("player", String.class);
+        final String playerName = context.getArgument("member", String.class);
 
         Warp warp = CommandUtils.getWarp( context, "warp").value();
         if (!warp.isOfType(Warp.Type.PRIVATE)) throw WARP_NOT_PRIVATE.create();
@@ -56,10 +55,10 @@ public class RemoveMember {
             .getPlayer(playerName)
             .orElseThrow(() -> INVALID_PLAYER.create(playerName));
 
-        Set<UUID> memberIDs = warp.getMembers().keySet();
+        Set<UUID> memberIDs = warp.getMembers();
         if (!memberIDs.contains(targetPlayer.getUniqueId())) throw NOT_MEMBER_EXCEPTION.create();
 
-        warp.removePlayer(targetPlayer);
+        warp.removeMember(targetPlayer.getUniqueId());
         try {
             WarpManager.saveWarp(warp);
             sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been removed from warp " + warpName);
@@ -85,7 +84,7 @@ public class RemoveMember {
         return builder.buildFuture();
     }
 
-    private static CompletableFuture<Suggestions> suggestPlayer(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    private static CompletableFuture<Suggestions> suggestMembers(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         if (!(context.getSource() instanceof Player sender)) {
             return Suggestions.empty();
         }
@@ -94,20 +93,22 @@ public class RemoveMember {
         Warp warp = WarpManager.getWarp(warpName);
         if (warp == null) return Suggestions.empty();
 
-        Collection<String> memberNames = warp.getMembers().values();
         String input = builder.getRemainingLowerCase();
 
-        for (String memberName : memberNames) {
-            if (memberName.toLowerCase().startsWith(input)) {
-                builder.suggest(memberName);
+        Set<UUID> memberIDs = warp.getMembers();
+        memberIDs.forEach(id -> WarpVelocity.getInstance().getProxy().getPlayer(id).ifPresent(onlineMember -> {
+            String name = onlineMember.getUsername();
+
+            if (name.toLowerCase().startsWith(input)) {
+                builder.suggest(name);
             }
-        }
+        }));
 
         return builder.buildFuture();
     }
 
     private static final DynamicCommandExceptionType INVALID_PLAYER =
-        new DynamicCommandExceptionType(name -> new LiteralMessage("Unable to find a player with name '" + name + "'"));
+        new DynamicCommandExceptionType(name -> new LiteralMessage("Unable to find an *online* player with the name: " + name));
 
     private static final SimpleCommandExceptionType NOT_ALLOWED =
         new SimpleCommandExceptionType(() -> "Only the creator of a warp can add/remove members");
