@@ -9,6 +9,7 @@ import org.spongepowered.configurate.ConfigurationNode;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.HashMap;
 
 public class WarpWatcher {
     private final JavaPlugin plugin;
@@ -17,6 +18,7 @@ public class WarpWatcher {
 
     private WatchService watchService;
     private Thread watcherThread;
+    private HashMap<WatchKey, Path> keyToPath = new HashMap<>();
 
     public WarpWatcher(JavaPlugin plugin, Path warpDir, MapAPI mapAPI) {
         this.plugin = plugin;
@@ -28,18 +30,19 @@ public class WarpWatcher {
         try {
             watchService = FileSystems.getDefault().newWatchService();
 
+            // Register each (world) folder within warpDir
             try (var stream = Files.list(warpDir)) {
                 stream
                     .filter(Files::isDirectory)
-                    .forEach(warpFolder -> {
+                    .forEach(worldPath -> {
                         try {
-                            warpFolder.register(
+                            var key = worldPath.register(
                                 watchService,
                                 StandardWatchEventKinds.ENTRY_CREATE,
                                 StandardWatchEventKinds.ENTRY_DELETE,
-                                // FIXME: When the proxy shutdowns this picks that every file was saved?!
                                 StandardWatchEventKinds.ENTRY_MODIFY
                             );
+                            keyToPath.put(key, worldPath);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
@@ -62,7 +65,7 @@ public class WarpWatcher {
                     WatchEvent.Kind<?> kind = event.kind();
 
                     // Resolve relative path to absolute
-                    Path changed = warpDir.resolve((Path) event.context());
+                    Path changed = keyToPath.get(key).resolve((Path) event.context());
 
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
                         try {
