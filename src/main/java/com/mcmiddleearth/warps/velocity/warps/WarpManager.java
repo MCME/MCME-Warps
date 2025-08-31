@@ -148,11 +148,11 @@ public class WarpManager {
     }
 
     public static void saveWarp(Warp warp) throws Exception {
-        Path path = getWarpPath(warp);
-        YamlConfigurationLoader loader = YamlConfigurationLoader.builder().path(path).build();
+        Path warpPath = getWarpPath(warp);
+        YamlConfigurationLoader loader = WarpLoader.build(warpPath);
 
         try {
-            Files.createDirectories(path.getParent());
+            Files.createDirectories(warpPath.getParent());
 
             ConfigurationNode root = loader.load();
             root.set(Warp.class, warp);
