@@ -2,7 +2,9 @@ package com.mcmiddleearth.warps.paper;
 
 import com.mcmiddleearth.warps.core.BaseWarp;
 import com.mcmiddleearth.warps.core.WarpLoader;
+import net.kyori.adventure.text.Component;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 
 import java.io.IOException;
@@ -74,11 +76,17 @@ public class WarpWatcher {
                                 String warpName = com.google.common.io.Files.getNameWithoutExtension(changed.getFileName().toString());
                                 mapAPI.removeMarker(warpName);
                             }
+                            else if (kind.name().equals(StandardWatchEventKinds.ENTRY_MODIFY.name())) {
+                                String warpName = com.google.common.io.Files.getNameWithoutExtension(changed.getFileName().toString());
+                                mapAPI.removeMarker(warpName);
 
-                            // TODO: Modify -> remove and add???
-                        } catch (Exception e) {
-                            // FIXME:
-                            System.out.println("Failed to handle event");
+                                ConfigurationNode root = WarpLoader.build(changed).load();
+                                BaseWarp baseWarp = root.get(BaseWarp.class);
+                                if (baseWarp == null) return;
+                                mapAPI.addMarker(baseWarp);
+                            }
+                        } catch (ConfigurateException e) {
+                            plugin.getComponentLogger().error(Component.text("Failed to handle warp marker update - " + e.getMessage()));
                         }
                     });
                 }
