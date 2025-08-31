@@ -3,7 +3,6 @@ package com.mcmiddleearth.warps.velocity.commands;
 import com.mcmiddleearth.warps.core.messageprotocols.TeleportMessage;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
-import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.ServerConnectUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
@@ -28,7 +27,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
-public final class WarpCommand {
+public final class To {
     private static final Set<String> SuggestedWarpNames = Set.of(
         "Minas Tirith",
         "Cair Andros",
@@ -42,8 +41,8 @@ public final class WarpCommand {
             .requires(requirement)
             .then(
                 BrigadierCommand.requiredArgumentBuilder("destination", StringArgumentType.greedyString())
-                    .suggests(WarpCommand::suggest)
-                    .executes(WarpCommand::execute)
+                    .suggests(To::suggest)
+                    .executes(To::execute)
             );
     }
 
@@ -120,6 +119,3 @@ public final class WarpCommand {
         return builder.buildFuture();
     }
 }
-
-
-

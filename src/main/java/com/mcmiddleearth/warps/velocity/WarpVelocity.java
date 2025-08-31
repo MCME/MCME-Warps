@@ -68,9 +68,8 @@ public class WarpVelocity {
         CommandMeta warpCommandMeta = commandManager.metaBuilder("warp")
             .plugin(this)
             .build();
-
         LiteralCommandNode<CommandSource> warpCommandNode = BrigadierCommand.literalArgumentBuilder("warp")
-            .then(WarpCommand.register( WarpRequirements.hasPerm(Permission.WARP) ))
+            .then(To.register( WarpRequirements.hasPerm(Permission.WARP) ))
             .then(RandomCommand.register( WarpRequirements.hasPerm(Permission.RANDOM) ))
             .then(Create.register( WarpRequirements.hasPerm(Permission.CREATE_PUBLIC) ))
             .then(PrivateCreate.register( WarpRequirements.hasPerm(Permission.CREATE_PRIVATE) ))
@@ -88,6 +87,13 @@ public class WarpVelocity {
             .build();
 
         commandManager.register(warpCommandMeta, new BrigadierCommand(warpCommandNode));
+
+        CommandMeta toCommandMeta = commandManager.metaBuilder("to")
+            .plugin(this)
+            .build();
+        commandManager.register(toCommandMeta, new BrigadierCommand(
+            To.register( WarpRequirements.hasPerm(Permission.WARP) )
+        ));
     }
 
     @Subscribe
