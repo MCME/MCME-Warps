@@ -56,7 +56,7 @@ public class AddMember {
             .orElseThrow(() -> INVALID_PLAYER.create(playerName));
 
         if (warp.isCreator(targetPlayer)) {
-            throw ALREADY_MEMBER.create();
+            throw IS_CREATOR.create();
         }
 
         Set<UUID> memberIDs = warp.getMembers();
@@ -115,6 +115,9 @@ public class AddMember {
 
     private static final SimpleCommandExceptionType ALREADY_MEMBER =
         new SimpleCommandExceptionType(() -> "This player is already a member of the warp!");
+
+    private static final SimpleCommandExceptionType IS_CREATOR =
+        new SimpleCommandExceptionType(() -> "You can't add the creator");
 
     private static final SimpleCommandExceptionType WARP_NOT_PRIVATE =
         new SimpleCommandExceptionType(() -> "This warp isn't private, unable to perform action");
