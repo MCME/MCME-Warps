@@ -1,17 +1,11 @@
 
 # Questions
-* Should staff have access to all warps - View/Use/Modify?
 * What is warp priority?
 * Should a warp's name change when its type changes
 
 # TODO
-* Command tree finalised
-  * /warpmanager???
-  * Suggestions v2.2 (iff greedyArg stays)
-  * Consistent use of greedy & word args for warp names
-* Migrate DB warps to .yml warps
-* Dynmap reactive updates
-    * WatchService to watch for changes in the symlinked folder
+* addMember/removeMember -> members add/remove
+* Simplify the update warp logic?
 
 ## Commands
 * private warps
@@ -21,7 +15,19 @@
     * What happens when 'rename' is used!!!
 
 # Post launch
+* Suggestions
+  * BUG: Quoted suggestions are invalid if the warp name has >1 word
+  * Fuzzy suggestions for word 2+
+  * Hide suggestions if it matches the user's search term?
+  * Consistent use of greedy & word args for warp names
 * Server prefixes
+* Add/Remove offline members
+  * Cache player names and UUIDs on PlayerJoin
+    * Use these to allow adding & removing offline players to private warps
+  * Luckperms
+    * Remove any offline player from a warp (not just those who logged within the last 24hrs)
+      * On plugin load lookup the player names OR do it as an async suggestion
+  * Or store the UUIDs of all players that have been invited in a yaml??? And load into memory???
 * Warp region
   * Only for moria & mainworld warps?
   * Upon create, default to that of the nearest warp
@@ -33,6 +39,7 @@
 * More warp tags
   * INCOMPLETE (purple flag), CAPITAL? FARM? TOWER?
   * Custom icons?
+  * Different scaled icons for importance/population size
 * Warp title & subtitle (v. similar to /warp welcome)
 * warp permissions??? (e.g. public warp only for staff/commoners etc.)
   * Add the permissions check to Warp.isUsable() 
@@ -41,7 +48,7 @@
 
 # Ideas
 * Suggested warps
-  * Set suggested warps in the config?
+  * Set suggested warps in the config? OR an isFeatured flag in the yml warp files???
   * Randomly choose 3,5? warps to recommend each day (from the list of 'interesting' warps)
     * Utilise the daily server restart for this behaviour
     * Choose randomly from 3 categories of warps?
@@ -74,7 +81,7 @@
   * Store as static strings
   * Centralise???
 * Shared brigadier warp arg + suggestions
-  * Have a bipredicate function for filtering warps?
+  * Have a BiPredicate function for filtering warps?
     * isModifiable, isUsable, isPrivate & sender is creator
 * DRY player requirement
   * .requires(MyCommand::isPlayer) to every command? Then assert getSource as Player?
