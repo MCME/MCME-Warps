@@ -20,7 +20,7 @@ mcmewarps.cmd.set-public
 mcmewarps.cmd.set-private
 mcmewarps.cmd.reload
 mcmewarps.cmd.welcome-message
-mcmewarps.cmd.tag
+mcmewarps.cmd.set-icon
 
 mcmewarps.limits.ignore.private
 
