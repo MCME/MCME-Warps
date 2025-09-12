@@ -9,7 +9,7 @@ import com.velocitypowered.api.proxy.Player;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Required;
 
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -32,7 +32,7 @@ public class Warp extends BaseWarp {
     @Required private String server;
     @Required private Warp.Type type;
     // Can't be final, otherwise Configurate can't set members on load
-    private Set<UUID> members = Collections.emptySet();
+    private Set<UUID> members = new HashSet<>();
     private int visits = 0;
     private String welcomeMessage;
 

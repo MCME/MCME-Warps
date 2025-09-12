@@ -205,20 +205,24 @@ public class WarpManager {
                 WarpVelocity.getInstance().getLogger().error("Unable to connect to the warps DB, skipping warp loading");
                 return;
             }
+
+            int counter = 0;
             var warps = DB.getWarps();
-            warps.forEach(w -> {
+            for (Warp w : warps) {
                 try {
                     putWarp(w);
+                    counter++;
                 } catch (Exception e) {
                     WarpVelocity.getInstance().getLogger().error("Failed to load warp, {}", e.getMessage());
                 }
-            });
+            }
             DB.disconnect();
-
+            WarpVelocity.getInstance().getLogger().info("Loaded {}/{} warps", counter, warps.size());
             return;
         }
 
         try (Stream<Path> pathStream = Files.walk(WARPS_DIRECTORY)) {
+            int counter = 0;
             List<Path> yamlFiles = pathStream
                 .filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".yml"))
                 .toList();
@@ -227,10 +231,13 @@ public class WarpManager {
                 try {
                     Warp warp = loadWarp(file);
                     putWarp(warp);
+                    counter++;
                 } catch (Exception e) {
                     WarpVelocity.getInstance().getLogger().error("Failed to load warp at {} - {}", file, e.getMessage());
                 }
             }
+
+            WarpVelocity.getInstance().getLogger().info("Loaded {}/{} warps", counter, yamlFiles.size());
         } catch (IOException e) {
             throw new RuntimeException("Failed to scan warp directory: " + WARPS_DIRECTORY, e);
         }

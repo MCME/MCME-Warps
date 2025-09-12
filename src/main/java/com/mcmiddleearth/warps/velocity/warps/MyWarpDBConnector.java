@@ -10,8 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.*;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class MyWarpDBConnector {
 
@@ -47,16 +45,19 @@ public class MyWarpDBConnector {
         try {
             dbConnection.close();
         } catch (SQLException ex) {
-            Logger.getLogger(MyWarpDBConnector.class.getName()).log(Level.SEVERE, null, ex);
+            WarpVelocity.getInstance().getLogger().error("Failed to close the db connection", ex);
         }
     }
 
     private void connect() {
         try {
-            dbConnection = DriverManager.getConnection(
-                "jdbc:mysql://"+dbIp+":"+port+"/"+dbName,
-                dbUser, dbPassword);
+            Class.forName("com.mysql.cj.jdbc.Driver");
 
+            final String url = "jdbc:mysql://"+dbIp+":"+port+"/"+dbName;
+            dbConnection = DriverManager.getConnection(url, dbUser, dbPassword);
+
+            // JOIN == INNER JOIN: Returns only the rows that have a match in both tables
+            // LEFT JOIN: Returns all rows from the left table, using null if there are no matches in the right table
             getWarps = dbConnection.prepareStatement("""
                 SELECT
                     w.warp_id,
@@ -66,20 +67,23 @@ public class MyWarpDBConnector {
                     w.creation_date,
                     w.visits,
                     w.welcome_message,
-                    owner.uuid
+                    owner.uuid,
                     world.uuid,
                     invited.uuid
                 FROM warp w
-                JOIN player AS owner ON warp.player_id = owner.player_id
+                JOIN player AS owner ON w.player_id = owner.player_id
                 JOIN world ON w.world_id = world.world_id
-                LEFT JOIN warp_player_map ON warp.warp_id = warp_player_map.warp_id
-                LEFT JOIN player AS invited ON wpm.player_id = invited.player_id
+                LEFT JOIN warp_player_map ON w.warp_id = warp_player_map.warp_id
+                LEFT JOIN player AS invited ON warp_player_map.player_id = invited.player_id
                 """);
             getWarps.setQueryTimeout(15);
+            connected = true;
 
         } catch (SQLException ex) {
-            Logger.getLogger(MyWarpDBConnector.class.getName()).log(Level.SEVERE, null, ex);
+            WarpVelocity.getInstance().getLogger().error("Failed to connect to MySQL DB", ex);
             connected = false;
+        } catch (Exception e) {
+            WarpVelocity.getInstance().getLogger().error("Error occurred whilst registering the jdbc driver", e);
         }
     }
 
@@ -91,7 +95,7 @@ public class MyWarpDBConnector {
                 try {
                     String warpId = rs.getString("w.warp_id");
 
-                    // Warps can have many members, resulting in many rows of the same warp
+                    // Warps can have many members, resulting in many rows of the same warp (from the LEFT JOIN)
                     // Only create a new warp if we haven't already done so
                     Warp warp = warps.computeIfAbsent(warpId, id -> {
                         try {
@@ -140,8 +144,6 @@ public class MyWarpDBConnector {
         Warp tempWarp = new Warp(
             rs.getObject("owner.uuid", UUID.class),
             rs.getString("w.name"),
-            // FIXME: How to get the server??? Are they all named the same as the world?
-            //  * What about plotworld?
             world,
             loc,
             type
@@ -164,7 +166,7 @@ public class MyWarpDBConnector {
                 worldUUID.put(line[0], line[1]);
             }
         } catch (IOException ex) {
-            Logger.getLogger(MyWarpDBConnector.class.getName()).log(Level.SEVERE, null, ex);
+            WarpVelocity.getInstance().getLogger().error("Failed to load world UUIDs", ex);
         }
     }
 

@@ -6,6 +6,6 @@ warp-name-max-length: 64
 #sql:
 #  user:
 #  password:
-#  dbName:
+#  db-name:
 #  ip:
 #  port:
