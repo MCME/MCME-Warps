@@ -4,6 +4,8 @@ A velocity & paper plugin using yaml storage with dynmap integration
 * The velocity plugin provides a config.yml file - see the default [here](src/main/resources/default-config.yml)
 * The paper plugin loads all `*.yml` (from the `plugins/MCME-Warps-Paper/warps` directory) into the 
 dynmap
+  * If symlinking: symlink the `/warps` directory in the paper backend to it's corresponding 
+    server folder inside the `/plugins/mcme-warps-velocity/warps` folder of the proxy
 
 ## Permissions
 ```

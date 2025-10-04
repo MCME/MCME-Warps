@@ -18,7 +18,7 @@ public class WarpWatcher {
 
     private WatchService watchService;
     private Thread watcherThread;
-    private HashMap<WatchKey, Path> keyToPath = new HashMap<>();
+    private final HashMap<WatchKey, Path> registeredDirectoryKeyToWorldPath = new HashMap<>();
 
     public WarpWatcher(JavaPlugin plugin, Path warpDir, MapAPI mapAPI) {
         this.plugin = plugin;
@@ -42,7 +42,7 @@ public class WarpWatcher {
                                 StandardWatchEventKinds.ENTRY_DELETE,
                                 StandardWatchEventKinds.ENTRY_MODIFY
                             );
-                            keyToPath.put(key, worldPath);
+                            registeredDirectoryKeyToWorldPath.put(key, worldPath);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
@@ -62,28 +62,33 @@ public class WarpWatcher {
             try {
                 WatchKey key = watchService.take(); // blocks until event
                 for (WatchEvent<?> event : key.pollEvents()) {
-                    WatchEvent.Kind<?> kind = event.kind();
+                    // Safe to cast this because we are only watching for create/delete/modify
+                    // This path is relative from the registered world directory
+                    Path worldRelativePath = (Path) event.context();
+                    // A path from the dataDirectory of the warp that was created/deleted/modified
+                    Path warpPath = registeredDirectoryKeyToWorldPath.get(key).resolve(worldRelativePath);
 
-                    // Resolve relative path to absolute
-                    Path changed = keyToPath.get(key).resolve((Path) event.context());
+                    WarpPaper.getInstance().debug(event.kind().name());
+                    WarpPaper.getInstance().debug(worldRelativePath);
+                    WarpPaper.getInstance().debug(warpPath);
 
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
                         try {
-                            if (kind.name().equals(StandardWatchEventKinds.ENTRY_CREATE.name())) {
-                                ConfigurationNode root = WarpLoader.build(changed).load();
+                            if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
+                                ConfigurationNode root = WarpLoader.build(warpPath).load();
                                 BaseWarp baseWarp = root.get(BaseWarp.class);
                                 if (baseWarp == null) return;
                                 mapAPI.addMarker(baseWarp);
                             }
-                            else if (kind.name().equals(StandardWatchEventKinds.ENTRY_DELETE.name())) {
-                                String warpName = com.google.common.io.Files.getNameWithoutExtension(changed.getFileName().toString());
+                            else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
+                                String warpName = com.google.common.io.Files.getNameWithoutExtension(warpPath.getFileName().toString());
                                 mapAPI.removeMarker(warpName);
                             }
-                            else if (kind.name().equals(StandardWatchEventKinds.ENTRY_MODIFY.name())) {
-                                String warpName = com.google.common.io.Files.getNameWithoutExtension(changed.getFileName().toString());
+                            else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
+                                String warpName = com.google.common.io.Files.getNameWithoutExtension(warpPath.getFileName().toString());
                                 mapAPI.removeMarker(warpName);
 
-                                ConfigurationNode root = WarpLoader.build(changed).load();
+                                ConfigurationNode root = WarpLoader.build(warpPath).load();
                                 BaseWarp baseWarp = root.get(BaseWarp.class);
                                 if (baseWarp == null) return;
                                 mapAPI.addMarker(baseWarp);

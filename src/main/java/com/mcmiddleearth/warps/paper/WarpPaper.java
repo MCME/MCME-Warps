@@ -5,6 +5,7 @@ import com.mcmiddleearth.warps.paper.listener.MessageListener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapCommonAPI;
+import org.slf4j.event.Level;
 import org.spongepowered.configurate.ConfigurationNode;
 
 import java.io.IOException;
@@ -14,11 +15,20 @@ import java.util.stream.Stream;
 
 public final class WarpPaper extends JavaPlugin {
 
+    private static WarpPaper instance;
+
     private final Path WARPS_DIRECTORY = this.getDataPath().resolve("warps");
     private WarpWatcher watcher;
+    private Boolean isDebugEnabled;
+
+    public static WarpPaper getInstance() {
+        return instance;
+    }
 
     @Override
     public void onEnable() {
+        instance = this;
+
         var listener = new MessageListener(this);
         getServer().getMessenger().registerIncomingPluginChannel(this, Channels.WARP, listener);
         getServer().getMessenger().registerIncomingPluginChannel(this, Channels.PLAYER_LOCATION, listener);
@@ -36,6 +46,9 @@ public final class WarpPaper extends JavaPlugin {
                 getComponentLogger().error("Something went wrong whilst creating the data directory ({}) - {}", dataPath, e.getMessage());
             }
         }
+
+        saveDefaultConfig();
+        isDebugEnabled = getConfig().getBoolean("debug");
 
         Plugin dynmapPlugin = getServer().getPluginManager().getPlugin("dynmap");
 
@@ -56,6 +69,12 @@ public final class WarpPaper extends JavaPlugin {
     @Override
     public void onDisable() {
         if (watcher != null) watcher.stop();
+    }
+
+    public void debug(Object message) {
+        if (isDebugEnabled) {
+            getComponentLogger().info("[DEBUG]: {}", message);
+        }
     }
 
     private void loadMarkers(MapAPI mapAPI) {
