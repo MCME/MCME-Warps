@@ -132,4 +132,10 @@ public class Warp extends BaseWarp {
 
         return player.getUniqueId().equals(creator);
     }
+
+    @Override
+    public String toString() {
+        return "Warp [name=%s, type=%s, world=%s, server=%s]"
+            .formatted(name, type, getLocation().world(), server);
+    }
 }

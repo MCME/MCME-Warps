@@ -59,7 +59,7 @@ public class WarpManager {
         String warpName = normaliseWarpName(warp.getName());
 
         if (warps.containsKey(warpName)) {
-            throw new Exception("A warp already exists with name '" + warpName + "'");
+            throw new Exception("A warp already exists with name '" + warpName + "' - " + warp);
         }
         warps.put(warpName, warp);
     }
@@ -207,8 +207,8 @@ public class WarpManager {
             }
 
             int counter = 0;
-            var warps = DB.getWarps();
-            for (Warp w : warps) {
+            var dbWarps = DB.getWarps();
+            for (Warp w : dbWarps) {
                 try {
                     putWarp(w);
                     counter++;
@@ -217,7 +217,13 @@ public class WarpManager {
                 }
             }
             DB.disconnect();
-            WarpVelocity.getInstance().getLogger().info("Loaded {}/{} warps", counter, warps.size());
+
+            var publicCount = warps.values().stream().filter(w -> w.isOfType(Warp.Type.PUBLIC)).count();
+            WarpVelocity.getInstance().getLogger().info("""
+                \nLoaded public warps: {}
+                Loaded private warps: {}
+                Total loaded: {}/{}
+                """, publicCount, warps.size() - publicCount, counter, dbWarps.size());
             return;
         }
 
@@ -237,7 +243,12 @@ public class WarpManager {
                 }
             }
 
-            WarpVelocity.getInstance().getLogger().info("Loaded {}/{} warps", counter, yamlFiles.size());
+            var publicCount = warps.values().stream().filter(w -> w.isOfType(Warp.Type.PUBLIC)).count();
+            WarpVelocity.getInstance().getLogger().info("""
+                \nLoaded public warps: {}
+                Loaded private warps: {}
+                Total loaded: {}/{}
+                """, publicCount, warps.size() - publicCount, counter, yamlFiles.size());
         } catch (IOException e) {
             throw new RuntimeException("Failed to scan warp directory: " + WARPS_DIRECTORY, e);
         }
