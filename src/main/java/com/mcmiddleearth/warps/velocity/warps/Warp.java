@@ -34,7 +34,7 @@ public class Warp extends BaseWarp {
     // Can't be final, otherwise Configurate can't set members on load
     private Set<UUID> members = new HashSet<>();
     private int visits = 0;
-    private String welcomeMessage;
+    private String welcomeMessage = null;
 
     public Warp(UUID creator, String name, String server, SimpleLocation location, Warp.Type type) {
         this.creator = creator;

@@ -36,6 +36,8 @@ public class Welcome {
             );
     }
 
+    private static final String DEFAULT = "default";
+
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
         CommandSource source = context.getSource();
         if (!(source instanceof Player sender)) {
@@ -50,7 +52,9 @@ public class Welcome {
         ).value();
         final String welcomeMessage = context.getArgument("welcome-message", String.class);
 
-        warp.setWelcomeMessage(welcomeMessage);
+        if (welcomeMessage.equals(DEFAULT)) warp.setWelcomeMessage(null);
+        else warp.setWelcomeMessage(welcomeMessage);
+
         sender.sendRichMessage("<green>Welcome message updated for warp " + warp.getName());
         return Command.SINGLE_SUCCESS;
     }
@@ -77,6 +81,7 @@ public class Welcome {
             return Suggestions.empty();
         }
 
+        builder.suggest(DEFAULT);
         Warp warp = CommandUtils.getWarp( context, "warp-name").value();
         builder.suggest(warp.getWelcomeMessage());
         return builder.buildFuture();
