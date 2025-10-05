@@ -148,7 +148,10 @@ public class MyWarpDBConnector {
             loc,
             type
         );
-        tempWarp.setWelcomeMessage(rs.getString("w.welcome_message"));
+        String welcomeMsg = rs.getString("w.welcome_message");
+        if (!welcomeMsg.equals("Welcome to '%warp%', %player%.")) {
+            tempWarp.setWelcomeMessage(welcomeMsg);
+        }
         tempWarp.setVisits(rs.getInt("w.visits"));
 
         return tempWarp;
