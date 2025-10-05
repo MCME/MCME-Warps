@@ -3,7 +3,6 @@ package com.mcmiddleearth.warps.velocity.commands;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.core.messageprotocols.TeleportMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
-import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.ServerConnectUtils;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -21,6 +20,7 @@ import net.kyori.adventure.text.Component;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.random.RandomGenerator;
 
 public class RandomCommand {
     private static final SimpleCommandExceptionType WARP_NOT_FOUND =
@@ -28,6 +28,8 @@ public class RandomCommand {
 
     private static final SimpleCommandExceptionType NO_WARPS =
         new SimpleCommandExceptionType(() -> "There are no warps to teleport to");
+
+    private static final Set<String> PUBLIC_SERVERS = Set.of("world", "moria");
 
     public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("random")
@@ -43,13 +45,17 @@ public class RandomCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        ArrayList<String> warps = new ArrayList<>(WarpManager.getAllUsableWarpNames(player).values());
-        if (warps.isEmpty()) {
+        Collection<String> warps = WarpManager.getWarpNames(
+            w -> w.isOfType(Warp.Type.PUBLIC) && PUBLIC_SERVERS.contains(w.getServer())
+        ).values();
+        ArrayList<String> warpsList = new ArrayList<>(warps);
+
+        if (warpsList.isEmpty()) {
             throw NO_WARPS.create();
         }
 
-        Random rand = new Random();
-        String warpName = warps.get(rand.nextInt(warps.size()));
+        int randomIndex = RandomGenerator.getDefault().nextInt(warps.size());
+        String warpName = warpsList.get(randomIndex);
 
         Warp warp = WarpManager.getWarp(warpName);
         if (warp == null) {
