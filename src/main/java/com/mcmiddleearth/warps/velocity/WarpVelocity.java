@@ -2,6 +2,7 @@ package com.mcmiddleearth.warps.velocity;
 
 import com.google.inject.Inject;
 import com.mcmiddleearth.warps.velocity.commands.*;
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.listener.MessageListener;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -121,7 +122,7 @@ public class WarpVelocity {
         public static Predicate<CommandSource> hasModifiableWarp() {
             return sender -> {
                 if (sender instanceof Player player) {
-                    return WarpManager.getAllModifiableWarpNames(player).size() > 0;
+                    return WarpManager.getWarps(WarpPredicates.modifiableBy(player)).size() > 0;
                 }
                 return true;
             };

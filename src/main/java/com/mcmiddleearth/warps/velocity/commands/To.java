@@ -34,7 +34,7 @@ public final class To {
         "Dol Amroth",
         "Lond Daer Enedh"
     );
-    private static final Collection<String> ValidatedSuggestWarpNames = WarpManager.getWarpNames(w -> SuggestedWarpNames.contains(w.getName())).values();
+    private static final Collection<String> ValidatedSuggestedWarpNames = WarpManager.getWarpNames(w -> SuggestedWarpNames.contains(w.getName())).values();
 
     public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("to")
@@ -106,16 +106,12 @@ public final class To {
         String input = builder.getRemainingLowerCase();
         boolean isSearchEmpty = input.isEmpty();
         if (isSearchEmpty) {
-            // Suggest a few recommended warps - otherwise subcommands like pcreate & random would be lost
-            ValidatedSuggestWarpNames.forEach(builder::suggest);
+            // Suggest a few recommended warps
+            ValidatedSuggestedWarpNames.forEach(builder::suggest);
             return builder.buildFuture();
         }
 
-        Map<String, String> warpNames = WarpManager.getAllUsableWarpNames(sender);
-        var warpSuggester = new WarpSuggester(warpNames, input);
-        Collection<String> suggestions = warpSuggester.getSuggestions();
-
-        suggestions.forEach(builder::suggest);
+        WarpSuggester.suggest(builder, WarpPredicates.usableBy(sender));
         return builder.buildFuture();
     }
 }

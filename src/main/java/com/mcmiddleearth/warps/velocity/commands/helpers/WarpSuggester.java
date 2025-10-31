@@ -1,30 +1,32 @@
 package com.mcmiddleearth.warps.velocity.commands.helpers;
 
 import com.mcmiddleearth.warps.core.Utils;
+import com.mcmiddleearth.warps.velocity.warps.Warp;
+import com.mcmiddleearth.warps.velocity.warps.WarpManager;
+import com.mojang.brigadier.Message;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.velocitypowered.api.command.VelocityBrigadierMessage;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.similarity.JaroWinklerDistance;
 
+import java.text.NumberFormat;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class WarpSuggester {
     private static final Double DISTANCE_THRESHOLD = 0.4;
     private static final int FUZZY_SUGGESTIONS_LIMIT = 3;
     private static final JaroWinklerDistance distance = new JaroWinklerDistance();
+    private static final NumberFormat compact = NumberFormat.getCompactNumberInstance();
 
-    private final String rawInput;
-    private final String cleanedInput;
-    private final Map<String, String> warpNames;
-
-    public WarpSuggester(Map<String, String> warpNames, String rawInput) {
-        this.rawInput = rawInput;
-        this.cleanedInput = normaliseInput(rawInput);
-
-        this.warpNames = warpNames;
-    }
+    private static boolean shouldAddQuotes;
 
     private static String normaliseInput(String input) {
-        // Can't use trim, since trailing whitespace is used by startsWith
-        // to determine when the user has started to enter a new word
+        // Can't use trim, since trailing whitespace is used to determine
+        // when the user has started to enter a new word
         String temp = Utils.normaliseString(input).stripLeading();
 
         // Some commands use StringArgument.Word, which requires quotes for typing >1 word
@@ -33,111 +35,115 @@ public class WarpSuggester {
         return unquoted;
     }
 
-    public Collection<String> getSuggestions() {
-        if (rawInput.isEmpty()) { return warpNames.values(); }
+    private static void buildSuggestions(SuggestionsBuilder builder, Map<String, Warp> warps) {
+        for (Warp w : warps.values()) {
+            String name = shouldAddQuotes ? "\""+w.getName()+"\"" : w.getName();
+            Message tooltip = VelocityBrigadierMessage.tooltip(
+                MiniMessage.miniMessage().deserialize(
+                    "<gray>Visits: <white>%s <blue>|</blue> <gray>World: <white>%s"
+                    .formatted(compact.format(w.getVisits()), w.getLocation().world())
+                )
+            );
 
-        List<String> startsWithSuggestions = getStartsWithSuggestions();
-
-        // Tab completion only replaces a single word,
-        // therefore if the user has entered >1 word the
-        // suggestions must not include *words* that the user has already typed
-        // TODO: Suggestions v3 - fuzzy matching on the current word
-        if (cleanedInput.contains(" ")) {
-            // Even if startsWithSuggestions is empty we must return here
-            return getPartialSuggestions(cleanedInput, startsWithSuggestions);
+            builder.suggest(name, tooltip);
         }
-
-        if (!startsWithSuggestions.isEmpty()) {
-            // There's at least 1 exact match - no need to attempt looser matching
-            return startsWithSuggestions;
-        }
-
-        // Q: Would it be better just to use fuzzy? Or replace this with a startsWith split by space?
-        List<String> containsSuggestions = getContainsSuggestions();
-        if (!containsSuggestions.isEmpty()) {
-            return containsSuggestions;
-        }
-
-        // TODO: Explore other fuzzy matchers, like fzf
-        return getFuzzySuggestions();
     }
 
-    private List<String> getStartsWithSuggestions() {
-        List<String> suggestions = new ArrayList<>();
-        for (var entry : warpNames.entrySet()) {
-            // Using the normalised warp name for the comparison
-            if (entry.getKey().startsWith(cleanedInput)) {
-                // Suggesting the un-normalised warp name
-                suggestions.add(entry.getValue());
-            }
+    public static void suggest(SuggestionsBuilder builder, Predicate<Warp> filter) {
+        suggest(builder, filter, false);
+    }
+    public static void suggest(SuggestionsBuilder builder, Predicate<Warp> filter, boolean shouldAddQuotes) {
+        WarpSuggester.shouldAddQuotes = shouldAddQuotes;
+        var warps = WarpManager.getWarps(filter);
+
+        String rawInput = builder.getRemainingLowerCase();
+        if (rawInput.isEmpty()) {
+            // empty input -> suggest all warps
+            buildSuggestions(builder, warps);
+            return;
         }
-        return suggestions;
+        String cleansedInput = normaliseInput(rawInput);
+
+        // "hello"       -> ""      & "hello"
+        // "hello world" -> "hello" & "world"
+        int idx = cleansedInput.lastIndexOf(' ');
+        String completedWords = (idx == -1) ? ""            : cleansedInput.substring(0, idx);
+        String currentWord    = (idx == -1) ? cleansedInput : cleansedInput.substring(idx + 1);
+
+        // Narrow the search to warps starting with completedWords
+        Integer wordIndex = StringUtils.countMatches(cleansedInput, " ");
+        var warpsSubset = warps.entrySet()
+            .stream()
+            .filter(warpEntry -> warpEntry.getKey().startsWith(completedWords))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        // * Is 'contains' helpful? Replace with startsWith split by space? Or remove entirely?
+        // * Explore other fuzzy matchers, like fzf
+        List<Supplier<Map<String, Warp>>> strategies = List.of(
+            () -> getStartsWithSuggestions(currentWord, wordIndex, warpsSubset),
+            () -> getContainsSuggestions(currentWord, wordIndex, warpsSubset),
+            () -> getFuzzySuggestions(cleansedInput, warpsSubset)
+        );
+
+        // Perform the matching strategies in order, exiting early if we get any suggestions
+        Map<String, Warp> suggestions = strategies.stream()
+            .map(Supplier::get)
+            .filter(m -> !m.isEmpty())
+            .findFirst()
+            .orElse(Map.of());
+
+        buildSuggestions(builder, suggestions);
     }
 
-    private List<String> getPartialSuggestions(String input, List<String> startsWithSuggestions) {
-        List<String> updatedSuggestions = new ArrayList<>();
-
-        String[] inputWords = input.split(" ");
-        int inputWordsCount = inputWords.length;
-        if (input.endsWith(" ")) {
-            // split() doesn't include trailing empty strings, so account for that here
-            // e.g. /warp amon ^
-            inputWordsCount += 1;
-        }
-
-        for (String suggestion : startsWithSuggestions) {
-            String[] suggestionWords = suggestion.split(" ");
-
-            int currWordIndex = inputWordsCount - 1;
-            if (currWordIndex < suggestionWords.length) {
-                String remaining = String.join(" ", Arrays.copyOfRange(suggestionWords, currWordIndex, suggestionWords.length));
-                updatedSuggestions.add(remaining);
-            }
-        }
-
-        // warp amon h^ -> hen
-        // warp amon ^ -> hen
-        return updatedSuggestions;
+    private static Map<String, Warp> getStartsWithSuggestions(String currentWord, Integer wordIdx,  Map<String, Warp> warps) {
+        return warps.entrySet()
+            .stream()
+            .filter(entry -> {
+                String normalisedWarpName = entry.getKey();
+                var split = normalisedWarpName.split(" ", wordIdx + 1);
+                if (wordIdx > split.length - 1) {
+                    return false;
+                }
+                return split[wordIdx].startsWith(currentWord);
+            })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private List<String> getContainsSuggestions() {
-        List<String> suggestions = new ArrayList<>();
-        for (var entry : warpNames.entrySet()) {
-            // Using the normalised warp name for the comparison
-            if (entry.getKey().contains(cleanedInput)) {
-                // Suggesting the un-normalised warp name
-                suggestions.add(entry.getValue());
-            }
-        }
-        return suggestions;
+    private static Map<String, Warp> getContainsSuggestions(String currentWord, Integer wordIdx, Map<String, Warp> warps) {
+        return warps.entrySet()
+            .stream()
+            .filter(entry -> {
+                String normalisedWarpName = entry.getKey();
+                var split = normalisedWarpName.split(" ", wordIdx + 1);
+                if (wordIdx > split.length - 1) {
+                    return false;
+                }
+                return split[wordIdx].contains(currentWord);
+            })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private record ScoredWarp(String name, double score) {}
-    private List<String> getFuzzySuggestions() {
-        List<String> suggestions = new ArrayList<>();
-
+    private record ScoredWarp(String name, double score, Warp warp) {}
+    private static Map<String, Warp> getFuzzySuggestions(String input, Map<String, Warp> warps) {
         PriorityQueue<ScoredWarp> topSuggestions = new PriorityQueue<>(
             Comparator.comparingDouble(ScoredWarp::score).reversed()
         );
 
-        for (var entry : warpNames.entrySet()) {
+        for (var entry : warps.entrySet()) {
             String normalizedWarpName = entry.getKey();
-            double score = distance.apply(normalizedWarpName, cleanedInput);
+            double score = distance.apply(normalizedWarpName,input);
 
             // No point suggesting poor matches (lower is better)
             if (score > DISTANCE_THRESHOLD) continue;
 
-            topSuggestions.offer(new ScoredWarp(entry.getValue(), score));
+            topSuggestions.offer(new ScoredWarp(entry.getKey(), score, entry.getValue()));
             if (topSuggestions.size() > FUZZY_SUGGESTIONS_LIMIT) {
                 topSuggestions.poll(); // Remove the lowest score
             }
         }
 
-        // Return the warp names - order doesn't matter (sorted alphabetically client side)
-        for (ScoredWarp scoredWarp: topSuggestions) {
-            suggestions.add(scoredWarp.name());
-        }
-
-        return suggestions;
+        return topSuggestions
+            .stream()
+            .collect(Collectors.toMap(ScoredWarp::name, ScoredWarp::warp));
     }
 }

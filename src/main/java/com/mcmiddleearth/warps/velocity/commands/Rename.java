@@ -1,6 +1,5 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
-import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
@@ -20,8 +19,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
-import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
@@ -76,13 +73,7 @@ public class Rename {
             return Suggestions.empty();
         }
 
-        String input = builder.getRemainingLowerCase();
-        Map<String, String> warpNames = WarpManager.getAllModifiableWarpNames(sender);
-        var warpSuggester = new WarpSuggester(warpNames, input);
-        Collection<String> suggestions = warpSuggester.getSuggestions();
-
-        // curr_name can't be a greedy arg, so wrap suggestions in quotes
-        suggestions.forEach(suggestion -> builder.suggest("\"" + suggestion + "\""));
+        WarpSuggester.suggest(builder, WarpPredicates.modifiableBy(sender), true);
         return builder.buildFuture();
     }
 

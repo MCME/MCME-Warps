@@ -4,6 +4,7 @@ import com.mcmiddleearth.warps.core.messageprotocols.*;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -80,11 +81,11 @@ public class MessageListener {
 
         if (warpType.equals(Warp.Type.PRIVATE)) {
             final int privateLimit = ConfigManager.getConfig().privateWarpLimit();
-            final int creatorPrivateWarpCount = WarpManager.getWarpNames(w -> w.isCreator(creator) && w.isOfType(Warp.Type.PRIVATE)).size();
+            final int creatorPrivateWarpCount = WarpManager.getWarps(w -> w.isCreator(creator) && w.isOfType(Warp.Type.PRIVATE)).size();
             creator.sendRichMessage("<gray>You have " + (privateLimit - creatorPrivateWarpCount) + " private warps remaining");
         }
 
-        boolean isFirstModifiableWarp = WarpManager.getAllModifiableWarpNames(creator).size() == 1;
+        boolean isFirstModifiableWarp = WarpManager.getWarps(WarpPredicates.modifiableBy(creator)).size() == 1;
         if (isFirstModifiableWarp) {
             creator.getCurrentServer().ifPresent(serverConnection -> {
                 serverConnection.sendPluginMessage(

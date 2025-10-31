@@ -1,6 +1,5 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
-import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -17,8 +16,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
-import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
@@ -59,12 +56,7 @@ public class SetPublic {
             return Suggestions.empty();
         }
 
-        String input = builder.getRemainingLowerCase();
-        Map<String, String> warpNames = WarpManager.getWarpNames(warp -> warp.isOfType(Warp.Type.PRIVATE));
-        var warpSuggester = new WarpSuggester(warpNames, input);
-        Collection<String> suggestions = warpSuggester.getSuggestions();
-
-        suggestions.forEach(builder::suggest);
+        WarpSuggester.suggest(builder, warp -> warp.isOfType(Warp.Type.PRIVATE));
         return builder.buildFuture();
     }
 }

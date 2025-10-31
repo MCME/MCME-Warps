@@ -53,7 +53,7 @@ public class PrivateCreate {
         // Ensure the player hasn't hit their limit of private warps
         if (!sender.hasPermission(Permission.IGNORE_PRIVATE_WARPS_LIMIT.getNode())) {
             final int privateLimit = ConfigManager.getConfig().privateWarpLimit();
-            final int senderPrivateWarpCount = WarpManager.getWarpNames(w -> w.isCreator(sender) && w.isOfType(Warp.Type.PRIVATE)).size();
+            final int senderPrivateWarpCount = WarpManager.getWarps(w -> w.isCreator(sender) && w.isOfType(Warp.Type.PRIVATE)).size();
 
             if (senderPrivateWarpCount >= privateLimit) {
                 throw PRIVATE_WARP_LIMIT_REACHED.create();

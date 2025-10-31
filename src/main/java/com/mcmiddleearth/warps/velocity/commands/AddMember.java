@@ -81,13 +81,7 @@ public class AddMember {
             return Suggestions.empty();
         }
 
-        String input = builder.getRemainingLowerCase();
-        Map<String, String> warpNames = WarpManager.getWarpNames(warp -> warp.isOfType(Warp.Type.PRIVATE) && warp.isCreator(sender));
-        var warpSuggester = new WarpSuggester(warpNames, input);
-        Collection<String> suggestions = warpSuggester.getSuggestions();
-
-        // warp can't be a greedy arg, so wrap suggestions in quotes
-        suggestions.forEach(suggestion -> builder.suggest("\"" + suggestion + "\""));
+        WarpSuggester.suggest(builder, warp -> warp.isOfType(Warp.Type.PRIVATE) && warp.isCreator(sender), true);
         return builder.buildFuture();
     }
 

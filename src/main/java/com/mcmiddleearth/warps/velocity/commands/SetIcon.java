@@ -1,7 +1,6 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
 import com.mcmiddleearth.warps.core.WarpIcon;
-import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
@@ -21,7 +20,6 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
 import java.util.EnumSet;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
@@ -81,11 +79,7 @@ public class SetIcon {
             return Suggestions.empty();
         }
 
-        String input = builder.getRemainingLowerCase();
-        Map<String, String> warpNames = WarpManager.getWarpNames(w -> w.isOfType(Warp.Type.PUBLIC));
-        var warpSuggester = new WarpSuggester(warpNames, input);
-        warpSuggester.getSuggestions().forEach(suggestion -> builder.suggest("\"" + suggestion + "\""));
-
+        WarpSuggester.suggest(builder, warp -> warp.isOfType(Warp.Type.PUBLIC));
         return builder.buildFuture();
     }
 

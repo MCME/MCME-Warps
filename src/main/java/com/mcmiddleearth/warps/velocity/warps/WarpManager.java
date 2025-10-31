@@ -48,11 +48,13 @@ public class WarpManager {
                 entry -> entry.getValue().getName()
             ));
     }
-    public static Map<String, String> getAllModifiableWarpNames(Player player) {
-        return getWarpNames(warp -> warp.isModifiable(player));
-    }
-    public static Map<String, String> getAllUsableWarpNames(Player player) {
-        return getWarpNames(warp -> warp.isUsable(player));
+
+    public static Map<String, Warp> getWarps(Predicate<Warp> filter) {
+        // Return a subset of the warps hashmap
+        return warps.entrySet()
+            .stream()
+            .filter(warpEntry -> filter.test(warpEntry.getValue()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private static void putWarp(Warp warp) throws Exception {

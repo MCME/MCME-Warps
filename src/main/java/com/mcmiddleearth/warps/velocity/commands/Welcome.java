@@ -1,11 +1,9 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
-import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
-import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -18,7 +16,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
@@ -64,11 +61,7 @@ public class Welcome {
             return Suggestions.empty();
         }
 
-        String input = builder.getRemainingLowerCase();
-        Map<String, String> warpNames = WarpManager.getWarpNames(warp -> warp.isModifiable(sender));
-        var warpSuggester = new WarpSuggester(warpNames, input);
-        warpSuggester.getSuggestions().forEach(suggestion -> builder.suggest("\"" + suggestion + "\""));
-
+        WarpSuggester.suggest(builder, WarpPredicates.modifiableBy(sender), true);
         return builder.buildFuture();
     }
 

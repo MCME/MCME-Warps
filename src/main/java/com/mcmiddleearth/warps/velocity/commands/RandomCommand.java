@@ -27,7 +27,7 @@ public class RandomCommand {
         new SimpleCommandExceptionType(() -> "No warp found with that name");
 
     private static final SimpleCommandExceptionType NO_WARPS =
-        new SimpleCommandExceptionType(() -> "There are no warps to teleport to");
+        new SimpleCommandExceptionType(() -> "Sorry! You do not have access to any warps.");
 
     private static final Set<String> PUBLIC_SERVERS = Set.of("world", "moria");
 
@@ -45,19 +45,19 @@ public class RandomCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        Collection<String> warps = WarpManager.getWarpNames(
+        ArrayList<Warp> warpsList = new ArrayList<>(
+            WarpManager.getWarps(
             w -> w.isOfType(Warp.Type.PUBLIC) && PUBLIC_SERVERS.contains(w.getServer())
-        ).values();
-        ArrayList<String> warpsList = new ArrayList<>(warps);
+            ).values()
+        );
 
         if (warpsList.isEmpty()) {
             throw NO_WARPS.create();
         }
 
-        int randomIndex = RandomGenerator.getDefault().nextInt(warps.size());
-        String warpName = warpsList.get(randomIndex);
+        int randomIndex = RandomGenerator.getDefault().nextInt(warpsList.size());
+        Warp warp = warpsList.get(randomIndex);
 
-        Warp warp = WarpManager.getWarp(warpName);
         if (warp == null) {
             throw WARP_NOT_FOUND.create();
         }

@@ -2,7 +2,6 @@ package com.mcmiddleearth.warps.velocity.commands;
 
 import com.mcmiddleearth.warps.core.messageprotocols.MiscMessage;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
-import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
@@ -21,8 +20,6 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
@@ -58,7 +55,7 @@ public class Delete {
 
         sender.sendRichMessage("<green>Warp '%s' deleted".formatted(warp.getName()));
 
-        boolean hasNoModifiableWarps = WarpManager.getAllModifiableWarpNames(sender).isEmpty();
+        boolean hasNoModifiableWarps = WarpManager.getWarps(WarpPredicates.modifiableBy(sender)).isEmpty();
         if (hasNoModifiableWarps) {
             sender.getCurrentServer().ifPresent(serverConnection -> {
                 serverConnection.sendPluginMessage(
@@ -76,12 +73,7 @@ public class Delete {
             return Suggestions.empty();
         }
 
-        String input = builder.getRemainingLowerCase();
-        Map<String, String> warpNames = WarpManager.getAllModifiableWarpNames(sender);
-        var warpSuggester = new WarpSuggester(warpNames, input);
-        Collection<String> suggestions = warpSuggester.getSuggestions();
-
-        suggestions.forEach(builder::suggest);
+        WarpSuggester.suggest(builder, WarpPredicates.modifiableBy(sender));
         return builder.buildFuture();
     }
 }
