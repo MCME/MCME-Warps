@@ -28,7 +28,7 @@ public class SetIcon {
         new SimpleCommandExceptionType(() -> "Invalid warp icon");
 
     public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
-        return BrigadierCommand.literalArgumentBuilder("setIcon")
+        return BrigadierCommand.literalArgumentBuilder("set-icon")
             .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("warp", StringArgumentType.string())
                 .suggests(SetIcon::suggestWarpName)

@@ -19,16 +19,16 @@ import net.kyori.adventure.text.Component;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
-public class Welcome {
+public class SetWelcome {
     // /warp welcome <warp> <message>
     public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("set-welcome")
             .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("warp-name", StringArgumentType.string())
-                .suggests(Welcome::suggestWarp)
+                .suggests(SetWelcome::suggestWarp)
                 .then(BrigadierCommand.requiredArgumentBuilder("welcome-message", StringArgumentType.greedyString())
-                    .suggests(Welcome::suggestWelcome)
-                    .executes(Welcome::execute)
+                    .suggests(SetWelcome::suggestWelcome)
+                    .executes(SetWelcome::execute)
                 )
             );
     }

@@ -50,6 +50,7 @@ public class WarpVelocity {
     public static WarpVelocity getInstance() { return instance; }
 
     // Q: Why getInstance().getDataFolder and not just getDataFolder() directly???
+    // Q: Inject the logger???
     public Path getDataFolder() { return dataFolder; }
     public Logger getLogger() { return logger; }
     public ProxyServer getProxy() { return proxy; }
@@ -83,7 +84,7 @@ public class WarpVelocity {
             .then(Rename.register( WarpRequirements.hasPermAndWarps(Permission.RENAME) ))
             .then(Move.register( WarpRequirements.hasPermAndWarps(Permission.MOVE) ))
             .then(Members.register( WarpRequirements.hasPermAndWarps(Permission.MANAGE_MEMBERS)) )
-            .then(Welcome.register( WarpRequirements.hasPermAndWarps(Permission.WELCOME) ))
+            .then(SetWelcome.register( WarpRequirements.hasPermAndWarps(Permission.WELCOME) ))
             .build();
 
         commandManager.register(warpCommandMeta, new BrigadierCommand(warpCommandNode));
