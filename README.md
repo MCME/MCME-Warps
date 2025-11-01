@@ -16,8 +16,7 @@ mcmewarps.cmd.create-public
 mcmewarps.cmd.delete
 mcmewarps.cmd.rename
 mcmewarps.cmd.move
-mcmewarps.cmd.add-member
-mcmewarps.cmd.remove-member
+mcmewarps.cmd.manage-members
 mcmewarps.cmd.set-public
 mcmewarps.cmd.set-private
 mcmewarps.cmd.reload

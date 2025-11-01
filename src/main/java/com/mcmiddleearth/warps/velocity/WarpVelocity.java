@@ -82,8 +82,7 @@ public class WarpVelocity {
             .then(Delete.register( WarpRequirements.hasPermAndWarps(Permission.DELETE) ))
             .then(Rename.register( WarpRequirements.hasPermAndWarps(Permission.RENAME) ))
             .then(Move.register( WarpRequirements.hasPermAndWarps(Permission.MOVE) ))
-            .then(AddMember.register( WarpRequirements.hasPermAndWarps(Permission.ADD_MEMBER) ))
-            .then(RemoveMember.register( WarpRequirements.hasPermAndWarps(Permission.REMOVE_MEMBER) ))
+            .then(Members.register( WarpRequirements.hasPermAndWarps(Permission.MANAGE_MEMBERS)) )
             .then(Welcome.register( WarpRequirements.hasPermAndWarps(Permission.WELCOME) ))
             .build();
 

@@ -22,7 +22,7 @@ import java.util.function.Predicate;
 public class Welcome {
     // /warp welcome <warp> <message>
     public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
-        return BrigadierCommand.literalArgumentBuilder("welcome")
+        return BrigadierCommand.literalArgumentBuilder("set-welcome")
             .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("warp-name", StringArgumentType.string())
                 .suggests(Welcome::suggestWarp)
