@@ -4,8 +4,7 @@
 * Should a warp's name change when its type changes
 
 # TODO
-* addMember/removeMember -> members add/remove
-* Simplify the update warp logic?
+* Geoguesser & WarpBook fixes
 
 ## Commands
 * private warps
@@ -15,9 +14,9 @@
     * What happens when 'rename' is used!!!
 
 # Post launch
+* Simplify the update warp logic? -> weird rollback messages atm
 * Suggestions
-  * BUG: Quoted suggestions are invalid if the warp name has >1 word
-  * Fuzzy suggestions for word 2+
+  * Add the creator to the onHover (requires a UUID lookup)
   * Hide suggestions if it matches the user's search term?
   * Consistent use of greedy & word args for warp names
 * Server prefixes
@@ -31,7 +30,7 @@
 * Warp region
   * Only for moria & mainworld warps?
   * Upon create, default to that of the nearest warp
-  * Will be used by the new warp book
+  * Will be used by the new warp book UI
   * /warp region command
 * Favourite warps
   * Display favourites in the /warp suggestions?
@@ -65,9 +64,6 @@
     * Implementation -> .requires( player has >= 1 modifiable warp )
       * Or - player is staff || player is creator of >=1 warp
       * if (warpType.equals(Warp.Type.PRIVATE) && WarpManager.getWarpNames(warp -> warp.isCreator(creator)).size() == 1)
-* Add an onHover tooltip to warp name suggestions? Server/word?, creator?, region?
-* Automatically set warp region based on nearest warp?
-    * or average of the 3/5 nearest?
 * Warp autocomplete - if there's only 1 suggestion then no need to tab complete
   * If <destination> doesn't exist, then re-build suggestions and if there's only 1 - use it
 * Warp name aliases?
