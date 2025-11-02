@@ -29,7 +29,7 @@ public class WarpSuggester {
         // when the user has started to enter a new word
         String temp = Utils.normaliseString(input).stripLeading();
 
-        // Some commands use StringArgument.Word, which requires quotes for typing >1 word
+        // Some commands use StringArgument.String, which requires quotes for typing >1 word
         // So stripping quotes allows the suggestions to still correctly match
         String unquoted = StringUtils.strip(temp, "\"'");
         return unquoted;

@@ -79,7 +79,7 @@ public class SetIcon {
             return Suggestions.empty();
         }
 
-        WarpSuggester.suggest(builder, warp -> warp.isOfType(Warp.Type.PUBLIC));
+        WarpSuggester.suggest(builder, warp -> warp.isOfType(Warp.Type.PUBLIC), true);
         return builder.buildFuture();
     }
 
