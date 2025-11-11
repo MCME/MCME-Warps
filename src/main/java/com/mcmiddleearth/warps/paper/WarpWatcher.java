@@ -39,8 +39,7 @@ public class WarpWatcher {
                             var key = worldPath.register(
                                 watchService,
                                 StandardWatchEventKinds.ENTRY_CREATE,
-                                StandardWatchEventKinds.ENTRY_DELETE,
-                                StandardWatchEventKinds.ENTRY_MODIFY
+                                StandardWatchEventKinds.ENTRY_DELETE
                             );
                             registeredDirectoryKeyToWorldPath.put(key, worldPath);
                         } catch (IOException e) {
@@ -72,26 +71,24 @@ public class WarpWatcher {
                     WarpPaper.getInstance().debug(worldRelativePath);
                     WarpPaper.getInstance().debug(warpPath);
 
+                    if (!worldRelativePath.getFileName().endsWith(".yml")) {
+                        continue;
+                    }
+
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
                         try {
+                            String warpName = com.google.common.io.Files.getNameWithoutExtension(warpPath.getFileName().toString());
+
                             if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-                                ConfigurationNode root = WarpLoader.build(warpPath).load();
-                                BaseWarp baseWarp = root.get(BaseWarp.class);
-                                if (baseWarp == null) return;
-                                mapAPI.addMarker(baseWarp);
-                            }
-                            else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
-                                String warpName = com.google.common.io.Files.getNameWithoutExtension(warpPath.getFileName().toString());
-                                mapAPI.removeMarker(warpName);
-                            }
-                            else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
-                                String warpName = com.google.common.io.Files.getNameWithoutExtension(warpPath.getFileName().toString());
                                 mapAPI.removeMarker(warpName);
 
                                 ConfigurationNode root = WarpLoader.build(warpPath).load();
                                 BaseWarp baseWarp = root.get(BaseWarp.class);
                                 if (baseWarp == null) return;
                                 mapAPI.addMarker(baseWarp);
+                            }
+                            else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
+                                mapAPI.removeMarker(warpName);
                             }
                         } catch (ConfigurateException e) {
                             plugin.getComponentLogger().error(Component.text("Failed to handle warp marker update - " + e.getMessage()));
