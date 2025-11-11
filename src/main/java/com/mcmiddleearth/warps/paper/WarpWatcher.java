@@ -71,7 +71,7 @@ public class WarpWatcher {
                     WarpPaper.getInstance().debug(worldRelativePath);
                     WarpPaper.getInstance().debug(warpPath);
 
-                    if (!worldRelativePath.getFileName().endsWith(".yml")) {
+                    if (!worldRelativePath.getFileName().toString().endsWith(".yml")) {
                         continue;
                     }
 
