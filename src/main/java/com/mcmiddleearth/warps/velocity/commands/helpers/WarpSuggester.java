@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class WarpSuggester {
-    private static final Double DISTANCE_THRESHOLD = 0.4;
+    private static final Double DISTANCE_THRESHOLD = 0.2;
     private static final int FUZZY_SUGGESTIONS_LIMIT = 3;
     private static final JaroWinklerDistance distance = new JaroWinklerDistance();
     private static final NumberFormat compact = NumberFormat.getCompactNumberInstance();
@@ -82,7 +82,8 @@ public class WarpSuggester {
         List<Supplier<Map<String, Warp>>> strategies = List.of(
             () -> getStartsWithSuggestions(currentWord, wordIndex, warpsSubset),
             () -> getContainsSuggestions(currentWord, wordIndex, warpsSubset),
-            () -> getFuzzySuggestions(cleansedInput, warpsSubset)
+            () -> getFuzzySuggestions(cleansedInput, warpsSubset),
+            () -> getFuzzySuggestions(cleansedInput, warps)
         );
 
         // Perform the matching strategies in order, exiting early if we get any suggestions

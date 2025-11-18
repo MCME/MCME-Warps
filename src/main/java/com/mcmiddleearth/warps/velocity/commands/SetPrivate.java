@@ -27,7 +27,7 @@ public class SetPrivate {
         new SimpleCommandExceptionType(() -> "This warp is already private");
 
     public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
-        return BrigadierCommand.literalArgumentBuilder("set-private")
+        return BrigadierCommand.literalArgumentBuilder("setPrivate")
             .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("warp-name", StringArgumentType.greedyString())
                 .suggests(SetPrivate::suggest)

@@ -27,7 +27,7 @@ public class SetPublic {
         new SimpleCommandExceptionType(() -> "This warp is already public");
 
     public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
-        return BrigadierCommand.literalArgumentBuilder("set-public")
+        return BrigadierCommand.literalArgumentBuilder("setPublic")
             .requires(requirement)
             .then(BrigadierCommand.requiredArgumentBuilder("warp-name", StringArgumentType.greedyString())
                 .suggests(SetPublic::suggest)
