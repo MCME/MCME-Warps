@@ -4,7 +4,10 @@
 * Should a warp's name change when its type changes
 
 # TODO
-* Geoguesser & WarpBook fixes
+* Server Prefixes
+* Warp Icons
+  * Just use the file-names instead of enum mappings?
+  * How to make it easier for admins to select custom icons?
 
 ## Commands
 * private warps
@@ -33,7 +36,7 @@
   * Will be used by the new warp book UI
   * /warp region command
 * Favourite warps
-  * Display favourites in the /warp suggestions?
+  * Display favourites in the "/warp" suggestions?
 ## Maybe?
 * More warp tags
   * INCOMPLETE (purple flag), CAPITAL? FARM? TOWER?
