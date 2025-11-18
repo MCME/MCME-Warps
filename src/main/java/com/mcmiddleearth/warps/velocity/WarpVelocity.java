@@ -68,11 +68,22 @@ public class WarpVelocity {
         CommandManager commandManager = proxy.getCommandManager();
 
         CommandMeta warpCommandMeta = commandManager.metaBuilder("warp")
+            .aliases("to")
             .plugin(this)
             .build();
         LiteralCommandNode<CommandSource> warpCommandNode = BrigadierCommand.literalArgumentBuilder("warp")
-            .then(To.register( WarpRequirements.hasPerm(Permission.WARP) ))
             .then(RandomCommand.register( WarpRequirements.hasPerm(Permission.RANDOM) ))
+            .then(PrivateCreate.register( WarpRequirements.hasPerm(Permission.CREATE_PRIVATE) ))
+            // Greedy required arg goes at the bottom
+            .then(To.register( WarpRequirements.hasPerm(Permission.WARP) ))
+            .build();
+        commandManager.register(warpCommandMeta, new BrigadierCommand(warpCommandNode));
+
+        CommandMeta managerCommandMeta = commandManager.metaBuilder("warpmanager")
+            .aliases("wmanage")
+            .plugin(this)
+            .build();
+        LiteralCommandNode<CommandSource> managerCommandNode = BrigadierCommand.literalArgumentBuilder("warpmanager")
             .then(Create.register( WarpRequirements.hasPerm(Permission.CREATE_PUBLIC) ))
             .then(PrivateCreate.register( WarpRequirements.hasPerm(Permission.CREATE_PRIVATE) ))
             .then(SetPublic.register( WarpRequirements.hasPerm(Permission.SET_PUBLIC) ))
@@ -86,15 +97,7 @@ public class WarpVelocity {
             .then(Members.register( WarpRequirements.hasPermAndWarps(Permission.MANAGE_MEMBERS)) )
             .then(SetWelcome.register( WarpRequirements.hasPermAndWarps(Permission.WELCOME) ))
             .build();
-
-        commandManager.register(warpCommandMeta, new BrigadierCommand(warpCommandNode));
-
-        CommandMeta toCommandMeta = commandManager.metaBuilder("to")
-            .plugin(this)
-            .build();
-        commandManager.register(toCommandMeta, new BrigadierCommand(
-            To.register( WarpRequirements.hasPerm(Permission.WARP) )
-        ));
+        commandManager.register(managerCommandMeta, new BrigadierCommand(managerCommandNode));
     }
 
     @Subscribe
