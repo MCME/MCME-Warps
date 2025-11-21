@@ -61,18 +61,10 @@ public class MessageListener implements PluginMessageListener {
             return;
         }
 
-        Location baseWarpLocation = new Location(world, data.x(), data.y(), data.z(), data.yaw(), data.pitch());
-        Optional<Location> safeLocationOpt = getSafeWarpLocation(baseWarpLocation);
-
-        if (safeLocationOpt.isEmpty()) {
-            player.sendRichMessage("<red>\"%s\" is not safe. Please notify a member of staff.".formatted(warpName));
-            return;
-        }
-
-        Location finalWarpLocation = safeLocationOpt.get();
+        Location warpLocation = new Location(world, data.x(), data.y(), data.z(), data.yaw(), data.pitch());
 
         // Avoid redundant teleport and avoid a success message (which increments the warp counter)
-        if (player.getLocation().equals(finalWarpLocation)) {
+        if (player.getLocation().equals(warpLocation)) {
             // Only notify the player if the warp is on the same server as them
             // (since their previous position on the newly connected server could be the same as warpLocation)
             if (result.subchannel().equals(TeleportMessage.Subchannel.TELEPORT_SAME_SERVER)) {
@@ -81,67 +73,16 @@ public class MessageListener implements PluginMessageListener {
             return;
         }
 
-        player.teleportAsync(finalWarpLocation).thenAccept(success -> {
+        player.teleportAsync(warpLocation).thenAccept(success -> {
             if (success) {
+                // Report a successful warp
                 player.sendPluginMessage(
                     plugin,
                     Channels.WARP,
                     TeleportResult.serialise(warpName, TeleportResult.ResultType.SUCCESS)
                 );
-
-                boolean wasBaseUnsafe = !baseWarpLocation.equals(finalWarpLocation);
-                if (wasBaseUnsafe) {
-                    player.sendRichMessage("<gray>\"%s\" is not safe. You were placed nearby".formatted(warpName));
-                }
             }
         });
-    }
-
-    private Optional<Location> getSafeWarpLocation(Location base) {
-        Material feet = base.getBlock().getType();
-        Material head = base.clone().add(0, 1, 0).getBlock().getType();
-
-        if (feet == Material.AIR && head == Material.AIR) {
-            return Optional.of(base);
-        }
-
-        World world = base.getWorld();
-        int baseX = base.getBlockX();
-        int baseY = base.getBlockY();
-        int baseZ = base.getBlockZ();
-
-        for (int radius = 1; radius <= MAX_RADIUS; radius++) {
-            for (int dy = -radius; dy <= radius; dy++) {
-                for (int dx = -radius; dx <= radius; dx++) {
-                    for (int dz = -radius; dz <= radius; dz++) {
-
-                        // Only check the outer shell of the cube
-                        if (Math.abs(dx) != radius && Math.abs(dy) != radius && Math.abs(dz) != radius) {
-                            continue;
-                        }
-
-                        int x = baseX + dx;
-                        int y = baseY + dy;
-                        int z = baseZ + dz;
-
-                        // Skip positions outside world height limits
-                        if (y < world.getMinHeight() || y + 1 >= world.getMaxHeight()) {
-                            continue;
-                        }
-
-                        Block candidateFeet = world.getBlockAt(x, y, z);
-                        Block candidateHead = world.getBlockAt(x, y + 1, z);
-
-                        if (candidateFeet.getType() == Material.AIR && candidateHead.getType() == Material.AIR) {
-                            return Optional.of(new Location(world, x + 0.5, y, z + 0.5));
-                        }
-                    }
-                }
-            }
-        }
-
-        // No safe block found
-        return Optional.empty();
     }
 
     private void handleMisc(Player player, byte[] bytes) {
