@@ -146,7 +146,8 @@ public class MyWarpDBConnector {
             rs.getString("w.name"),
             world,
             loc,
-            type
+            type,
+            rs.getTimestamp("w.creation_date").toInstant()
         );
         String welcomeMsg = rs.getString("w.welcome_message");
         if (!welcomeMsg.equals("Welcome to '%warp%', %player%.")) {

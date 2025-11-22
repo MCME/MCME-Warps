@@ -16,6 +16,8 @@ import com.velocitypowered.api.proxy.messages.ChannelIdentifier;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.time.Instant;
+
 public class MessageListener {
     @Subscribe
     public void onPluginMessageFromBackend(PluginMessageEvent event) {
@@ -67,7 +69,8 @@ public class MessageListener {
             result.warpName(),
             serverName,
             result.warpLocation(),
-            warpType
+            warpType,
+            Instant.now()
         );
 
         try {

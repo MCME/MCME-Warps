@@ -9,6 +9,7 @@ import com.velocitypowered.api.proxy.Player;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Required;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -35,13 +36,15 @@ public class Warp extends BaseWarp {
     private Set<UUID> members = new HashSet<>();
     private int visits = 0;
     private String welcomeMessage = null;
+    private String createdAt = Instant.now().toString();
 
-    public Warp(UUID creator, String name, String server, SimpleLocation location, Warp.Type type) {
+    public Warp(UUID creator, String name, String server, SimpleLocation location, Warp.Type type, Instant createdAt) {
         this.creator = creator;
         this.name = name;
         this.server = server;
         this.location = location;
         this.type = type;
+        this.createdAt = createdAt.toString();
     }
 
     // Copy Constructor
@@ -54,6 +57,7 @@ public class Warp extends BaseWarp {
         this.members = otherWarp.members;
         this.visits = otherWarp.visits;
         this.welcomeMessage = otherWarp.welcomeMessage;
+        this.createdAt = otherWarp.createdAt;
     }
 
     public String getServer() { return server; }
