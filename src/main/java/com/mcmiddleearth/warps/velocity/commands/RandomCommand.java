@@ -94,8 +94,8 @@ public class RandomCommand {
             ChannelIdentifiers.MAIN_ID,
             TeleportMessage.serialise(
                 isSameServer
-                    ? TeleportMessage.Subchannel.TELEPORT_SAME_SERVER
-                    : TeleportMessage.Subchannel.TELEPORT_NEW_SERVER,
+                    ? TeleportMessage.Subchannel.SAME_SERVER
+                    : TeleportMessage.Subchannel.DIFF_SERVER,
                 warp.getName(),
                 data
             ));

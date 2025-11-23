@@ -8,8 +8,9 @@ import com.mcmiddleearth.warps.core.SimpleLocation;
 public class TeleportMessage {
 
     public enum Subchannel {
-        TELEPORT_SAME_SERVER,
-        TELEPORT_NEW_SERVER
+        SAME_SERVER,
+        DIFF_SERVER,
+        LOCAL_WARP
     }
 
     public record Result(Subchannel subchannel, String warpName, SimpleLocation data) {}

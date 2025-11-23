@@ -2,6 +2,7 @@ package com.mcmiddleearth.warps.velocity;
 
 public enum Permission {
     WARP("mcmewarps.cmd.warp"),
+    LOCAL_WARP("mcmewarps.cmd.local-warp"),
     RANDOM("mcmewarps.cmd.random"),
     CREATE_PRIVATE("mcmewarps.cmd.create-private"),
     CREATE_PUBLIC("mcmewarps.cmd.create-public"),

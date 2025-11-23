@@ -78,6 +78,15 @@ public class WarpVelocity {
             .build();
         commandManager.register(warpCommandMeta, new BrigadierCommand(warpCommandNode));
 
+        CommandMeta localwarpCommandMeta = commandManager.metaBuilder("localwarp")
+            .aliases("lwarp")
+            .plugin(this)
+            .build();
+        LiteralCommandNode<CommandSource> localWarpCommandNode = BrigadierCommand.literalArgumentBuilder("localwarp")
+            .then(LocalWarp.register( WarpRequirements.hasPerm(Permission.LOCAL_WARP) ))
+            .build();
+        commandManager.register(localwarpCommandMeta, new BrigadierCommand(localWarpCommandNode));
+
         CommandMeta managerCommandMeta = commandManager.metaBuilder("warpmanager")
             .aliases("wmanage")
             .plugin(this)

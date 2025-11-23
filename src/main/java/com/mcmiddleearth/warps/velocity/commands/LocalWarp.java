@@ -4,11 +4,9 @@ import com.mcmiddleearth.warps.core.messageprotocols.TeleportMessage;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
-import com.mcmiddleearth.warps.velocity.commands.helpers.ServerConnectUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
-import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -27,20 +25,13 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
-public final class To {
-    private static final Set<String> SuggestedWarpNames = Set.of(
-        "Minas Tirith",
-        "Cair Andros",
-        "Dol Amroth",
-        "Lond Daer Enedh"
-    );
-    private static final Collection<String> ValidatedSuggestedWarpNames = WarpManager.getWarpNames(w -> SuggestedWarpNames.contains(w.getName())).values();
+public final class LocalWarp {
 
     public static RequiredArgumentBuilder<CommandSource, String> register(Predicate<CommandSource> requirement) {
-            return BrigadierCommand.requiredArgumentBuilder("destination", StringArgumentType.greedyString())
-                .requires(requirement)
-                .suggests(To::suggest)
-                .executes(To::execute);
+        return BrigadierCommand.requiredArgumentBuilder("destination", StringArgumentType.greedyString())
+            .requires(requirement)
+            .suggests(LocalWarp::suggest)
+            .executes(LocalWarp::execute);
     }
 
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
@@ -63,33 +54,18 @@ public final class To {
         }
 
         ServerConnection currServer = optCurrServer.get();
-        final String currServerName = currServer.getServer().getServerInfo().getName();
-        final String targetServerName = warp.getServer();
-
-        if (currServerName.equalsIgnoreCase(targetServerName)) {
-            sendTeleportMessage(currServer, warp, true);
-            return Command.SINGLE_SUCCESS;
-        }
-
-        ServerConnectUtils.connectPlayerToServer(
-            sender,
-            targetServerName,
-            targetServer -> sendTeleportMessage(targetServer, warp, false)
-        );
-
+        sendTeleportMessage(currServer, warp);
         return Command.SINGLE_SUCCESS;
     }
 
-    private static void sendTeleportMessage(ChannelMessageSink serverConnection, Warp warp, Boolean isSameServer) {
+    private static void sendTeleportMessage(ChannelMessageSink serverConnection, Warp warp) {
         SimpleLocation data = warp.getLocation();
 
         // Messaging the backend server, using the sender's connection
         serverConnection.sendPluginMessage(
             ChannelIdentifiers.MAIN_ID,
             TeleportMessage.serialise(
-                isSameServer
-                    ? TeleportMessage.Subchannel.SAME_SERVER
-                    : TeleportMessage.Subchannel.DIFF_SERVER,
+                TeleportMessage.Subchannel.LOCAL_WARP,
                 warp.getName(),
                 data
             ));
@@ -98,14 +74,6 @@ public final class To {
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         if (!(context.getSource() instanceof Player sender)) {
             return Suggestions.empty();
-        }
-
-        String input = builder.getRemainingLowerCase();
-        boolean isSearchEmpty = input.isEmpty();
-        if (isSearchEmpty) {
-            // Suggest a few recommended warps
-            ValidatedSuggestedWarpNames.forEach(builder::suggest);
-            return builder.buildFuture();
         }
 
         WarpSuggester.suggest(builder, WarpPredicates.usableBy(sender));
