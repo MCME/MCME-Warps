@@ -72,6 +72,7 @@ public class WarpVelocity {
             .plugin(this)
             .build();
         LiteralCommandNode<CommandSource> warpCommandNode = BrigadierCommand.literalArgumentBuilder("warp")
+            .executes(WarpHelper::execute)
             .then(RandomCommand.register( WarpRequirements.hasPerm(Permission.RANDOM) ))
             // Greedy required arg goes at the bottom
             .then(To.register( WarpRequirements.hasPerm(Permission.WARP) ))
