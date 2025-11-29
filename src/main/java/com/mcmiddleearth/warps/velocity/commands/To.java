@@ -103,8 +103,8 @@ public final class To {
         String input = builder.getRemainingLowerCase();
         boolean isSearchEmpty = input.isEmpty();
         if (isSearchEmpty) {
-            // Suggest a few recommended warps
-            ValidatedSuggestedWarpNames.forEach(builder::suggest);
+            // Suggest a few recommended warps - using the WarpSuggester to get the tooltip
+            WarpSuggester.suggest(builder, w -> ValidatedSuggestedWarpNames.contains(w.getName()));
             return builder.buildFuture();
         }
 
