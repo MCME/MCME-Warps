@@ -3,7 +3,6 @@ package com.mcmiddleearth.warps.velocity.warps;
 import com.mcmiddleearth.warps.core.WarpLoader;
 import com.mcmiddleearth.warps.core.Utils;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
-import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mojang.brigadier.Command;
 import com.velocitypowered.api.proxy.Player;
 import org.jetbrains.annotations.Nullable;
@@ -278,7 +277,7 @@ public class WarpManager {
 
         return WARPS_DIRECTORY
             .resolve("private-warps")
-            .resolve(warp.getCreator().toString())
+            .resolve(warp.getCreatorId().toString())
             .resolve(warpName + ".yml");
     }
 }

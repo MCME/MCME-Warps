@@ -2,9 +2,11 @@ package com.mcmiddleearth.warps.velocity;
 
 import com.google.inject.Inject;
 import com.mcmiddleearth.warps.velocity.commands.*;
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpHelper;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.listener.MessageListener;
+import com.mcmiddleearth.warps.velocity.warps.PlayerNameResolver;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
@@ -37,6 +39,7 @@ public class WarpVelocity {
     private final ProxyServer proxy;
     private final Logger logger;
     private final Path dataFolder;
+    private PlayerNameResolver playerNameResolver;
 
     @Inject
     public WarpVelocity(ProxyServer proxy, Logger logger, @DataDirectory Path dataDirectory) {
@@ -54,10 +57,14 @@ public class WarpVelocity {
     public Path getDataFolder() { return dataFolder; }
     public Logger getLogger() { return logger; }
     public ProxyServer getProxy() { return proxy; }
+    public static PlayerNameResolver getPlayerNameResolver() { return getInstance().playerNameResolver; }
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
         proxy.getEventManager().register(this, new MessageListener());
+
+        this.playerNameResolver = new PlayerNameResolver(dataFolder.resolve("profiles.db"));
+        proxy.getEventManager().register(this, playerNameResolver);
 
         proxy.getChannelRegistrar().register(ChannelIdentifiers.MAIN_ID);
         proxy.getChannelRegistrar().register(ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID);

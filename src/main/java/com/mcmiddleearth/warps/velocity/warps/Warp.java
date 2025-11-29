@@ -29,7 +29,8 @@ public class Warp extends BaseWarp {
     }
 
     // If a @Required field is missing when loading a warp.yml file, configurate errors and doesn't load that warp
-    @Required private UUID creator;
+    @Required private UUID creatorId;
+    @Required private String creatorName;
     @Required private String server;
     @Required private Warp.Type type;
     // Can't be final, otherwise Configurate can't set members on load
@@ -38,8 +39,9 @@ public class Warp extends BaseWarp {
     private String welcomeMessage = null;
     private String createdAt = Instant.now().toString();
 
-    public Warp(UUID creator, String name, String server, SimpleLocation location, Warp.Type type, Instant createdAt) {
-        this.creator = creator;
+    public Warp(UUID creatorId, String creatorName, String name, String server, SimpleLocation location, Warp.Type type, Instant createdAt) {
+        this.creatorId = creatorId;
+        this.creatorName = creatorName;
         this.name = name;
         this.server = server;
         this.location = location;
@@ -49,7 +51,8 @@ public class Warp extends BaseWarp {
 
     // Copy Constructor
     public Warp(Warp otherWarp) {
-        this.creator = otherWarp.creator;
+        this.creatorId = otherWarp.creatorId;
+        this.creatorName = otherWarp.creatorName;
         this.name = otherWarp.name;
         this.server = otherWarp.server;
         this.location = otherWarp.location;
@@ -61,14 +64,15 @@ public class Warp extends BaseWarp {
     }
 
     public String getServer() { return server; }
-    public UUID getCreator() { return creator; }
+    public UUID getCreatorId() { return creatorId; }
+    public String getCreatorName() { return creatorName; }
     public Set<UUID> getMembers() { return members; }
 
     public boolean isOfType(Warp.Type type) {
         return this.type.equals(type);
     }
     public boolean isCreator(Player player) {
-        return creator.equals(player.getUniqueId());
+        return creatorId.equals(player.getUniqueId());
     }
 
     public void setName(String name) { this.name = name; }
@@ -76,6 +80,7 @@ public class Warp extends BaseWarp {
     public void setLocation(SimpleLocation location) { this.location = location; }
     public void setIcon(WarpIcon icon) { this.icon = icon; }
     public void setType(Type type) { this.type = type; }
+    public void setCreatorName(String name) { this.creatorName = name; }
 
     public void addMember(UUID playerId) {
         this.members.add(playerId);
@@ -121,7 +126,7 @@ public class Warp extends BaseWarp {
         final boolean isMember = members.contains(player.getUniqueId());
         if (isMember) return true;
 
-        return player.getUniqueId().equals(creator);
+        return player.getUniqueId().equals(creatorId);
     }
 
     /**
@@ -134,7 +139,7 @@ public class Warp extends BaseWarp {
             return false;
         }
 
-        return player.getUniqueId().equals(creator);
+        return player.getUniqueId().equals(creatorId);
     }
 
     @Override

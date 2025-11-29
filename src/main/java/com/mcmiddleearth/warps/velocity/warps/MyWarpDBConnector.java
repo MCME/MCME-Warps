@@ -4,6 +4,7 @@ import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.config.Config;
 import com.mcmiddleearth.warps.velocity.config.ConfigManager;
+import org.enginehub.squirrelid.Profile;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -141,14 +142,20 @@ public class MyWarpDBConnector {
 
         Warp.Type type = rs.getInt("w.type") == 1 ? Warp.Type.PUBLIC : Warp.Type.PRIVATE;
 
+        UUID creatorUUID = rs.getObject("owner.uuid", UUID.class);
+        Profile creatorProfile = WarpVelocity.getPlayerNameResolver().getByUniqueId(creatorUUID);
+        String creatorName = creatorProfile == null ? "unknown" : creatorProfile.getName();
+
         Warp tempWarp = new Warp(
-            rs.getObject("owner.uuid", UUID.class),
+            creatorUUID,
+            creatorName,
             rs.getString("w.name"),
             world,
             loc,
             type,
             rs.getTimestamp("w.creation_date").toInstant()
         );
+
         String welcomeMsg = rs.getString("w.welcome_message");
         if (!welcomeMsg.equals("Welcome to '%warp%', %player%.")) {
             tempWarp.setWelcomeMessage(welcomeMsg);

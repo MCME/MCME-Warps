@@ -66,6 +66,7 @@ public class MessageListener {
 
         Warp newWarp = new Warp(
             creator.getUniqueId(),
+            creator.getUsername(),
             result.warpName(),
             serverName,
             result.warpLocation(),
