@@ -59,7 +59,7 @@ public class Create {
             );
 
              if (!status) {
-                 WarpVelocity.getInstance().getLogger().error("Failed to send plugin message to paper backend {}", serverConnection.getServerInfo().getName());
+                 WarpVelocity.getLogger().error("Failed to send plugin message to paper backend {}", serverConnection.getServerInfo().getName());
              }
         }, () -> {
             player.sendRichMessage("<red>You are not connected to a server");

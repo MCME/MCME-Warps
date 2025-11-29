@@ -56,7 +56,7 @@ public class Move {
             );
 
             if (!status) {
-                WarpVelocity.getInstance().getLogger().error("Failed to send plugin message to paper backend {}", serverConnection.getServerInfo().getName());
+                WarpVelocity.getLogger().error("Failed to send plugin message to paper backend {}", serverConnection.getServerInfo().getName());
             }
         }, () -> {
             sender.sendRichMessage("<red>You are not connected to a server");

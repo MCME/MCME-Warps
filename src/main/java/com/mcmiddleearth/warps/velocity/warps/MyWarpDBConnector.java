@@ -20,7 +20,7 @@ public class MyWarpDBConnector {
     private final String dbIp;
     private final int port;
 
-    private final Path worldFile =  WarpVelocity.getInstance().getDataFolder().resolve("world.uuid");
+    private final Path worldFile =  WarpVelocity.getDataFolder().resolve("world.uuid");
     private final Map<String, String> worldUUID = new HashMap<>();
 
     private Connection dbConnection;
@@ -46,7 +46,7 @@ public class MyWarpDBConnector {
         try {
             dbConnection.close();
         } catch (SQLException ex) {
-            WarpVelocity.getInstance().getLogger().error("Failed to close the db connection", ex);
+            WarpVelocity.getLogger().error("Failed to close the db connection", ex);
         }
     }
 
@@ -81,10 +81,10 @@ public class MyWarpDBConnector {
             connected = true;
 
         } catch (SQLException ex) {
-            WarpVelocity.getInstance().getLogger().error("Failed to connect to MySQL DB", ex);
+            WarpVelocity.getLogger().error("Failed to connect to MySQL DB", ex);
             connected = false;
         } catch (Exception e) {
-            WarpVelocity.getInstance().getLogger().error("Error occurred whilst registering the jdbc driver", e);
+            WarpVelocity.getLogger().error("Error occurred whilst registering the jdbc driver", e);
         }
     }
 
@@ -102,7 +102,7 @@ public class MyWarpDBConnector {
                         try {
                             return rowToWarp(rs);
                         } catch (SQLException e) {
-                            WarpVelocity.getInstance().getLogger().error("Failed to create warp from row", e);
+                            WarpVelocity.getLogger().error("Failed to create warp from row", e);
                             return null; // Skip broken row
                         }
                     });
@@ -114,11 +114,11 @@ public class MyWarpDBConnector {
                         }
                     }
                 } catch (SQLException e) {
-                    WarpVelocity.getInstance().getLogger().error("Error while reading warp result row", e);
+                    WarpVelocity.getLogger().error("Error while reading warp result row", e);
                 }
             }
         } catch (SQLException e) {
-            WarpVelocity.getInstance().getLogger().error("Database error during getWarps()", e);
+            WarpVelocity.getLogger().error("Database error during getWarps()", e);
             connected = false;
             return Collections.emptyList();
         }
@@ -177,7 +177,7 @@ public class MyWarpDBConnector {
                 worldUUID.put(line[0], line[1]);
             }
         } catch (IOException ex) {
-            WarpVelocity.getInstance().getLogger().error("Failed to load world UUIDs", ex);
+            WarpVelocity.getLogger().error("Failed to load world UUIDs", ex);
         }
     }
 

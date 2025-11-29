@@ -28,7 +28,7 @@ public class PlayerNameResolver {
         try {
             cache = new SQLiteCache(cachePath.toFile());
         } catch (IOException e) {
-            WarpVelocity.getInstance().getLogger().error("Failed to access SQLite profile cache. Player names will be resolved from memory.", e);
+            WarpVelocity.getLogger().error("Failed to access SQLite profile cache. Player names will be resolved from memory.", e);
             cache = new HashMapCache();
         }
     }

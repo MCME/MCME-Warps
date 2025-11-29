@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class WarpManager {
-    private static final Path WARPS_DIRECTORY =  WarpVelocity.getInstance().getDataFolder().resolve("warps");
+    private static final Path WARPS_DIRECTORY =  WarpVelocity.getDataFolder().resolve("warps");
 
     /** A map of normalised warp names to Warps */
     private static final HashMap<String, Warp> warps = new HashMap<>();
@@ -70,7 +70,7 @@ public class WarpManager {
             putWarp(newWarp);
             saveWarp(newWarp);
         } catch (Exception e) {
-            WarpVelocity.getInstance().getLogger().error("Failed to add warp {} - {}", newWarp.getName(), e.getMessage());
+            WarpVelocity.getLogger().error("Failed to add warp {} - {}", newWarp.getName(), e.getMessage());
             throw new IllegalStateException(e.getMessage());
         }
     }
@@ -128,7 +128,7 @@ public class WarpManager {
                 throw new Exception("File does not exist");
             }
         } catch (Exception e) {
-            WarpVelocity.getInstance().getLogger()
+            WarpVelocity.getLogger()
                 .error("An error occurred whilst deleting the warp file at {} - {}",
                     warpPath, e.getMessage()
                 );
@@ -141,7 +141,7 @@ public class WarpManager {
             try {
                 saveWarp(w);
             } catch (Exception e) {
-                WarpVelocity.getInstance().getLogger().error(
+                WarpVelocity.getLogger().error(
                     "Failed to save warp {} - {}", w.getName(), e.getMessage()
                 );
             }
@@ -159,7 +159,7 @@ public class WarpManager {
             root.set(Warp.class, warp);
             loader.save(root);
         } catch (IOException e) {
-            WarpVelocity.getInstance().getLogger()
+            WarpVelocity.getLogger()
                 .error("An error occurred whilst saving warp {} - {}",
                     warp.getName(), e.getMessage()
                 );
@@ -175,7 +175,7 @@ public class WarpManager {
             if (!Files.exists(path)) {
                 // This is only saving the visits field, so if the warp no longer exists
                 // don't save to it
-                WarpVelocity.getInstance().getLogger().error(
+                WarpVelocity.getLogger().error(
                     "Failed to update the warp count for warp {} - there exists no warp file at {}",
                     w.getName(), path
                 );
@@ -187,7 +187,7 @@ public class WarpManager {
                 root.node("visits").set(w.getVisits());
                 loader.save(root);
             } catch (IOException e) {
-                WarpVelocity.getInstance().getLogger().error(
+                WarpVelocity.getLogger().error(
                     "An error occurred whilst saving warp {} - {}",
                     w.getName(), e.getMessage()
                 );
@@ -199,11 +199,11 @@ public class WarpManager {
         warps.clear();
 
         if (!Files.exists(WARPS_DIRECTORY)) {
-            WarpVelocity.getInstance().getLogger().warn("The warps directory does not exist ({}), attempting to load from the warps DB", WARPS_DIRECTORY);
+            WarpVelocity.getLogger().warn("The warps directory does not exist ({}), attempting to load from the warps DB", WARPS_DIRECTORY);
 
             var DB = new MyWarpDBConnector();
             if (!DB.isConnected()) {
-                WarpVelocity.getInstance().getLogger().error("Unable to connect to the warps DB, skipping warp loading");
+                WarpVelocity.getLogger().error("Unable to connect to the warps DB, skipping warp loading");
                 return;
             }
 
@@ -214,13 +214,13 @@ public class WarpManager {
                     putWarp(w);
                     counter++;
                 } catch (Exception e) {
-                    WarpVelocity.getInstance().getLogger().error("Failed to load warp, {}", e.getMessage());
+                    WarpVelocity.getLogger().error("Failed to load warp, {}", e.getMessage());
                 }
             }
             DB.disconnect();
 
             var publicCount = warps.values().stream().filter(w -> w.isOfType(Warp.Type.PUBLIC)).count();
-            WarpVelocity.getInstance().getLogger().info("""
+            WarpVelocity.getLogger().info("""
                 \nLoaded public warps: {}
                 Loaded private warps: {}
                 Total loaded: {}/{}
@@ -240,12 +240,12 @@ public class WarpManager {
                     putWarp(warp);
                     counter++;
                 } catch (Exception e) {
-                    WarpVelocity.getInstance().getLogger().error("Failed to load warp at {} - {}", file, e.getMessage());
+                    WarpVelocity.getLogger().error("Failed to load warp at {} - {}", file, e.getMessage());
                 }
             }
 
             var publicCount = warps.values().stream().filter(w -> w.isOfType(Warp.Type.PUBLIC)).count();
-            WarpVelocity.getInstance().getLogger().info("""
+            WarpVelocity.getLogger().info("""
                 \nLoaded public warps: {}
                 Loaded private warps: {}
                 Total loaded: {}/{}

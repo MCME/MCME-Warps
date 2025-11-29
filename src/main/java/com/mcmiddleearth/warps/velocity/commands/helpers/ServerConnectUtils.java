@@ -27,7 +27,7 @@ public final class ServerConnectUtils {
         String targetServerName,
         Consumer<RegisteredServer> teleportCallback // callback on success
     ) {
-        ProxyServer proxy = WarpVelocity.getInstance().getProxy();
+        ProxyServer proxy = WarpVelocity.getProxy();
         Optional<RegisteredServer> optTargetServer = proxy.getServer(targetServerName);
 
         if (optTargetServer.isEmpty()) {
@@ -46,7 +46,7 @@ public final class ServerConnectUtils {
                         "<red>Unable to connect to server '<server>' - server may be offline!",
                         Placeholder.unparsed("server", targetServerName)
                     );
-                    WarpVelocity.getInstance().getLogger().error(
+                    WarpVelocity.getLogger().error(
                         "Server '{}' may be offline! '{}' was unable to connect.",
                         targetServerName,
                         sender.getUsername()

@@ -50,13 +50,11 @@ public class WarpVelocity {
         this.dataFolder = dataDirectory;
     }
 
-    public static WarpVelocity getInstance() { return instance; }
+    private static WarpVelocity getInstance() { return instance; }
 
-    // Q: Why getInstance().getDataFolder and not just getDataFolder() directly???
-    // Q: Inject the logger???
-    public Path getDataFolder() { return dataFolder; }
-    public Logger getLogger() { return logger; }
-    public ProxyServer getProxy() { return proxy; }
+    public static Path getDataFolder() { return getInstance().dataFolder; }
+    public static Logger getLogger() { return getInstance().logger; }
+    public static ProxyServer getProxy() { return getInstance().proxy; }
     public static PlayerNameResolver getPlayerNameResolver() { return getInstance().playerNameResolver; }
 
     @Subscribe

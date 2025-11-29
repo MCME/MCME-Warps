@@ -65,7 +65,7 @@ public class Members {
         if (!warp.isCreator(sender)) throw NOT_ALLOWED.create();
 
         // Currently targetPlayer has to be an online player!
-        Player targetPlayer = WarpVelocity.getInstance().getProxy()
+        Player targetPlayer = WarpVelocity.getProxy()
             .getPlayer(playerName)
             .orElseThrow(() -> INVALID_PLAYER.create(playerName));
 
@@ -126,7 +126,7 @@ public class Members {
 
         // Suggest online players
         String input = builder.getRemainingLowerCase();
-        WarpVelocity.getInstance().getProxy().getAllPlayers().forEach(player -> {
+        WarpVelocity.getProxy().getAllPlayers().forEach(player -> {
             String username = player.getUsername().toLowerCase();
             if (username.startsWith(input)) {
                 builder.suggest(player.getUsername());
@@ -147,7 +147,7 @@ public class Members {
         String input = builder.getRemainingLowerCase();
 
         Set<UUID> memberIDs = warp.getMembers();
-        memberIDs.forEach(id -> WarpVelocity.getInstance().getProxy().getPlayer(id).ifPresent(onlineMember -> {
+        memberIDs.forEach(id -> WarpVelocity.getProxy().getPlayer(id).ifPresent(onlineMember -> {
             String name = onlineMember.getUsername();
 
             if (name.toLowerCase().startsWith(input)) {
