@@ -4,7 +4,38 @@
 * Should a warp's name change when its type changes
 
 # TODO
-* Server Prefixes
+* Convert geoguesser to use symlinked warps instead of the MySQL
+* Limit /localwarp to world warps???
+* 
+* Add aliases
+  * /warp setAlias "<warp>" alias (only public warps)
+  * When loading a warp.yml if it has aliases create a warp for every alias
+  * In the backend server instead of creating a new warp add the aliases to the warp name?
+* list & plist
+  * > By default, filter out personal warps, add a flag/option to view only personal warps for Moderators. (Eg -m)
+  * paginated
+  * Clickable (for what??)
+  * multi-line tooltip
+  * filters (creator, world, server, name, order?, radius?)
+    * How to generate optional filter suggestions? CommandAPI?
+    * Creator search
+    * /warp list w:<> c:<> (look at what dynmap does!)
+  * plist -> Remove zzz-<name> prefix? (do the same for renames? So people never need know about zzz?)
+* Info? (lists everything about a warp)
+  * Is this needed if the tooltip is good enough???
+  * Non relative date
+  * Average visits per day
+*
+* Add multiple members at once to a warp (greedy string)
+* Remove offline members
+  * Async suggestions using PlayerNameResolver - use the Map to link selected name to UUID
+* Prevent public warps at the same location
+  * Velocity message listener (ignore yaw and pitch)
+* Smart search - If a capital is used (or just at the start?) then case-sensitive search
+* Only show `random` if no input has been entered?
+* Put `random` white list in the config???
+*
+* Server Prefixes (no longer needed because of localwarp?)
 * Warp Icons
   * Just use the file-names instead of enum mappings?
   * How to make it easier for admins to select custom icons?
@@ -19,17 +50,9 @@
 # Post launch
 * Simplify the update warp logic? -> weird rollback messages atm
 * Suggestions
-  * Add the creator to the onHover (requires a UUID lookup)
   * Hide suggestions if it matches the user's search term?
   * Consistent use of greedy & word args for warp names
 * Server prefixes
-* Add/Remove offline members
-  * Cache player names and UUIDs on PlayerJoin
-    * Use these to allow adding & removing offline players to private warps
-  * Luckperms
-    * Remove any offline player from a warp (not just those who logged within the last 24hrs)
-      * On plugin load lookup the player names OR do it as an async suggestion
-  * Or store the UUIDs of all players that have been invited in a yaml??? And load into memory???
 * Warp region
   * Only for moria & mainworld warps?
   * Upon create, default to that of the nearest warp
@@ -46,7 +69,7 @@
 * warp permissions??? (e.g. public warp only for staff/commoners etc.)
   * Add the permissions check to Warp.isUsable() 
   * OR add permissions to private warps -> /warp invite asdf g:group-name
-* priority(?), info, stats, list, plist???
+* priority???
 
 # Ideas
 * Suggested warps
@@ -60,13 +83,6 @@
 * Prevent (public) warps at the exact same location?
 * Add multiple players to a private warp at once
 * /warp leave to leave a warp you were added to
-* Hide delete/rename/update commands until a player has made a private warp
-    * After pcreate() in MessageListener, send a updateCommand plugin message to paper
-      * iff modifiableWarps.size() === 1
-    * Also invite/uninvite/makePublic
-    * Implementation -> .requires( player has >= 1 modifiable warp )
-      * Or - player is staff || player is creator of >=1 warp
-      * if (warpType.equals(Warp.Type.PRIVATE) && WarpManager.getWarpNames(warp -> warp.isCreator(creator)).size() == 1)
 * Warp autocomplete - if there's only 1 suggestion then no need to tab complete
   * If <destination> doesn't exist, then re-build suggestions and if there's only 1 - use it
 * Warp name aliases?
@@ -74,6 +90,7 @@
 * /warp player - for clicking on a sign???
 
 # Code cleanup
+* executesPlayer helper OR look into the CommandAPI
 * Do away with WarpManager.update?
 * How to simplify saveWarp()? - RuntimeException?
 * consistent command arg names
