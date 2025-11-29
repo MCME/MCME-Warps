@@ -55,8 +55,8 @@ public class Rename {
 
         final String newName = context.getArgument("new_name", String.class);
 
-        if (currWarp.isOfType(Warp.Type.PRIVATE) && !newName.startsWith("zzz-" + sender.getUsername() + "-")) {
-            throw INVALID_PRIVATE_PREFIX.create(sender.getUsername());
+        if (currWarp.isOfType(Warp.Type.PRIVATE) && !newName.startsWith("zzz-" + currWarp.getCreatorName() + "-")) {
+            throw INVALID_PRIVATE_PREFIX.create(currWarp.getCreatorName());
         }
 
         CommandUtils.validateWarpName(newName);
@@ -92,7 +92,7 @@ public class Rename {
 
         Warp warp = WarpManager.getWarp(currName);
         if (warp != null && warp.isOfType(Warp.Type.PRIVATE)) {
-            final String privatePrefix = "zzz-" + sender.getUsername() + "-";
+            final String privatePrefix = "zzz-" + warp.getCreatorName() + "-";
             builder.suggest(privatePrefix);
         }
 
