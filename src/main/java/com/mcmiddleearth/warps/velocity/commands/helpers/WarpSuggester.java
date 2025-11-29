@@ -6,11 +6,16 @@ import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Message;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.velocitypowered.api.command.VelocityBrigadierMessage;
-import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentBuilder;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.similarity.JaroWinklerDistance;
 
 import java.text.NumberFormat;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -35,16 +40,61 @@ public class WarpSuggester {
         return unquoted;
     }
 
+    private static String formatRelative(String createdAt) {
+        Duration d = Duration.between(Instant.parse(createdAt), Instant.now());
+
+        long years = d.toDays() / 365;
+        if (years > 0) return years + "y ago";
+
+        long months = d.toDays() / 30;
+        if (months > 0) return months + "mo ago";
+
+        long days = d.toDays();
+        if (days > 0) return days + "d ago";
+
+        long hours = d.toHours();
+        if (hours > 0) return hours + "h ago";
+
+        long minutes = d.toMinutes();
+        if (minutes > 0) return minutes + "m ago";
+
+        return "just now";
+    }
+
+    public static Component buildWarpTooltip(Warp warp) {
+        Component divider = Component.text(" | ", NamedTextColor.BLUE);
+        ComponentBuilder<TextComponent, TextComponent.Builder> tooltip = Component.text().content("");
+
+        int visits = warp.getVisits();
+        tooltip.append(Component.text(compact.format(visits) + " visits"));
+        tooltip.append(divider);
+
+        String warpWorld = warp.getLocation().world();
+        tooltip.append(Component.text(warpWorld));
+
+        // Only show the server if it is different to the world
+        String warpServer = warp.getServer();
+        boolean showServer = !warpServer.equalsIgnoreCase(warpWorld);
+        if (showServer) tooltip.append(Component.text(" (" + warpServer + ")"));
+        tooltip.append(divider);
+
+        tooltip.append(Component.text(warp.getCreatorName()));
+
+        String relative = formatRelative(warp.getCreatedAt());
+        tooltip.append(Component.text(" " + relative));
+
+        if (warp.isOfType(Warp.Type.PRIVATE)) {
+            tooltip.append(Component.text(" 🔒", NamedTextColor.RED));
+        }
+
+        return tooltip.build();
+    }
+
+
     private static void buildSuggestions(SuggestionsBuilder builder, Map<String, Warp> warps) {
         for (Warp w : warps.values()) {
             String name = shouldAddQuotes ? "\""+w.getName()+"\"" : w.getName();
-            Message tooltip = VelocityBrigadierMessage.tooltip(
-                MiniMessage.miniMessage().deserialize(
-                    "<gray>Visits: <white>%s <blue>|</blue> <gray>World: <white>%s"
-                    .formatted(compact.format(w.getVisits()), w.getLocation().world())
-                )
-            );
-
+            Message tooltip = VelocityBrigadierMessage.tooltip(buildWarpTooltip(w));
             builder.suggest(name, tooltip);
         }
     }

@@ -67,6 +67,7 @@ public class Warp extends BaseWarp {
     public UUID getCreatorId() { return creatorId; }
     public String getCreatorName() { return creatorName; }
     public Set<UUID> getMembers() { return members; }
+    public String getCreatedAt() { return createdAt; }
 
     public boolean isOfType(Warp.Type type) {
         return this.type.equals(type);
