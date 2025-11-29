@@ -14,6 +14,8 @@ import java.util.*;
 
 public class MyWarpDBConnector {
 
+    private static final String UNKNOWN_CREATOR = "Unknown";
+
     private final String dbUser;
     private final String dbPassword;
     private final String dbName;
@@ -140,16 +142,17 @@ public class MyWarpDBConnector {
             rs.getFloat("w.pitch")
         );
 
-        Warp.Type type = rs.getInt("w.type") == 1 ? Warp.Type.PUBLIC : Warp.Type.PRIVATE;
-
         UUID creatorUUID = rs.getObject("owner.uuid", UUID.class);
         Profile creatorProfile = WarpVelocity.getPlayerNameResolver().getByUniqueId(creatorUUID);
-        String creatorName = creatorProfile == null ? "unknown" : creatorProfile.getName();
+        String creatorName = creatorProfile == null ? UNKNOWN_CREATOR : creatorProfile.getName();
+
+        Warp.Type type = rs.getInt("w.type") == 1 ? Warp.Type.PUBLIC : Warp.Type.PRIVATE;
+        String warpName = createWarpName(rs.getString("w.name"), creatorName, type);
 
         Warp tempWarp = new Warp(
             creatorUUID,
             creatorName,
-            rs.getString("w.name"),
+            warpName,
             world,
             loc,
             type,
@@ -163,6 +166,13 @@ public class MyWarpDBConnector {
         tempWarp.setVisits(rs.getInt("w.visits"));
 
         return tempWarp;
+    }
+
+    private String createWarpName(String warpName, String creatorName, Warp.Type type) {
+        if (type == Warp.Type.PRIVATE && !warpName.startsWith("zzz") && !creatorName.equals(UNKNOWN_CREATOR)) {
+            return "zzz-" + creatorName + "-" + warpName;
+        }
+        return warpName;
     }
 
     private void loadWorldUUIDs() {
