@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class WarpSuggester {
     private static final Double DISTANCE_THRESHOLD = 0.2;
     private static final int FUZZY_SUGGESTIONS_LIMIT = 3;
-    private static final int MAX_SUGGESTION = 50;
+    private static final int MAX_SUGGESTIONS = 50;
     private static final JaroWinklerDistance distance = new JaroWinklerDistance();
     private static final NumberFormat compact = NumberFormat.getCompactNumberInstance();
 
@@ -91,8 +91,8 @@ public class WarpSuggester {
         return tooltip.build();
     }
 
-    private static void buildSuggestions(SuggestionsBuilder builder, Map<String, Warp> warps) {
-        for (Warp w : warps.values()) {
+    private static void buildSuggestions(SuggestionsBuilder builder, Collection<Warp> warps) {
+        for (Warp w : warps) {
             String name = shouldAddQuotes ? "\""+w.getName()+"\"" : w.getName();
             Message tooltip = VelocityBrigadierMessage.tooltip(buildWarpTooltip(w));
             builder.suggest(name, tooltip);
@@ -109,7 +109,8 @@ public class WarpSuggester {
         String rawInput = builder.getRemainingLowerCase();
         if (rawInput.isEmpty()) {
             // empty input -> suggest all warps
-            buildSuggestions(builder, warps);
+            List<Warp> suggestions = warps.values().stream().limit(MAX_SUGGESTIONS).toList();
+            buildSuggestions(builder, suggestions);
             return;
         }
         String cleansedInput = normaliseInput(rawInput);
@@ -137,11 +138,12 @@ public class WarpSuggester {
         );
 
         // Perform the matching strategies in order, exiting early if we get any suggestions
-        Map<String, Warp> suggestions = strategies.stream()
+        Collection<Warp> suggestions = strategies.stream()
             .map(Supplier::get)
             .filter(m -> !m.isEmpty())
             .findFirst()
-            .orElse(Map.of());
+            .orElse(Map.of())
+            .values();
 
         buildSuggestions(builder, suggestions);
     }
@@ -157,7 +159,7 @@ public class WarpSuggester {
                 }
                 return split[wordIdx].startsWith(currentWord);
             })
-            .limit(MAX_SUGGESTION)
+            .limit(MAX_SUGGESTIONS)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
@@ -172,7 +174,7 @@ public class WarpSuggester {
                 }
                 return split[wordIdx].contains(currentWord);
             })
-            .limit(MAX_SUGGESTION)
+            .limit(MAX_SUGGESTIONS)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
