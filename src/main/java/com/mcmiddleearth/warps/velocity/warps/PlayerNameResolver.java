@@ -53,7 +53,7 @@ public class PlayerNameResolver {
                 cache.put(new Profile(uuid, username));
                 // Update any warps owned by this player
                 WarpManager
-                    .getWarps(w -> w.getCreatorName().equals(username))
+                    .getWarps(w -> w.getCreatorId().equals(uuid))
                     .forEach((s, warp) -> warp.setCreatorName(username));
             }
         });
