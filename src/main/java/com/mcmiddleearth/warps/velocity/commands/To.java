@@ -74,13 +74,13 @@ public final class To {
         ServerConnectUtils.connectPlayerToServer(
             sender,
             targetServerName,
-            targetServer -> sendTeleportMessage(targetServer, warp, false)
+            newConnection -> sendTeleportMessage(newConnection, warp, false)
         );
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static void sendTeleportMessage(ChannelMessageSink serverConnection, Warp warp, Boolean isSameServer) {
+    private static void sendTeleportMessage(ServerConnection serverConnection, Warp warp, Boolean isSameServer) {
         SimpleLocation data = warp.getLocation();
 
         // Messaging the backend server, using the sender's connection
