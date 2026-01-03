@@ -58,14 +58,13 @@ public class MessageListener implements PluginMessageListener {
         String warpName = result.warpName();
         SimpleLocation data = result.data();
 
-        World warpWorld = Bukkit.getWorld(data.world());
-        if (warpWorld == null) {
+        boolean isLocalWarp = result.subchannel() == TeleportMessage.Subchannel.LOCAL_WARP;
+
+        World world = isLocalWarp ? player.getWorld() : Bukkit.getWorld(data.world());
+        if (world == null) {
             player.sendRichMessage("<red>Unable to perform the teleport, no world exists with name " + data.world());
             return;
         }
-
-        boolean isLocalWarp = result.subchannel() == TeleportMessage.Subchannel.LOCAL_WARP;
-        World world = isLocalWarp ? player.getWorld() : warpWorld;
 
         Location teleportLocation = new Location(world, data.x(), data.y(), data.z(), data.yaw(), data.pitch());
 
