@@ -271,10 +271,11 @@ public class ListCommand {
         String lastFlag = null;
 
         for (int i = 0; i < parts.length; i++) {
-            // Current part is a completed flag e.g. "-c"
-            if (parts[i].startsWith("-") && parts[i].length() == 2) {
-                String flag = parts[i].substring(1);
-                usedFlags.add("-" + flag);
+            String part = parts[i];
+            boolean isPartAFlag = flagInfos.containsKey(part);
+
+            if (isPartAFlag) {
+                usedFlags.add(part);
 
                 // list -c
                 // list -c dra
@@ -283,7 +284,7 @@ public class ListCommand {
                 // If the next part is the final part or there is no next part
                 if (i + 1 >= parts.length - 1) {
                     expectingValue = true;
-                    lastFlag = flag;
+                    lastFlag = part;
                     break;
                 } else {
                     i++; // skip value
@@ -303,16 +304,21 @@ public class ListCommand {
         if (expectingValue) {
             Predicate<Warp> usable = WarpPredicates.usableBy(sender);
 
+            if (currentArg.equals(lastFlag)) {
+                return builder.buildFuture();
+            }
+
             // suggest value for lastFlag
             switch (lastFlag) {
-                case "s" -> {
+                case "-s" -> {
                     WarpManager.getWarps(usable).values().stream()
                         .map(Warp::getServer)
+                        .filter(s -> s.toLowerCase().startsWith(currentArg))
                         .limit(MAX_SUGGESTIONS)
                         .collect(Collectors.toSet())
                         .forEach(builder::suggest);
                 }
-                case "w" -> {
+                case "-w" -> {
                     WarpManager.getWarps(usable).values().stream()
                         .map(warp -> warp.getLocation().world() + "/" + warp.getServer())
                         .filter(pair -> pair.toLowerCase().startsWith(currentArg))
@@ -320,7 +326,7 @@ public class ListCommand {
                         .collect(Collectors.toSet())
                         .forEach(builder::suggest);
                 }
-                case "c" -> {
+                case "-c" -> {
                     WarpManager.getWarps(usable).values().stream()
                         .map(Warp::getCreatorName)
                         .filter(c -> c.toLowerCase().startsWith(currentArg))
@@ -328,19 +334,19 @@ public class ListCommand {
                         .collect(Collectors.toSet())
                         .forEach(builder::suggest);
                 }
-                case "n" -> {
+                case "-n" -> {
                     WarpManager.getWarpNames(usable).values().stream()
                         .filter(n -> n.toLowerCase().contains(currentArg))
                         .limit(MAX_SUGGESTIONS)
                         .toList()
                         .forEach(builder::suggest);
                 }
-                case "v" -> {
+                case "-v" -> {
                     visibilities.stream()
                         .filter(v -> v.startsWith(currentArg))
                         .forEach(builder::suggest);
                 }
-                case "o" -> {
+                case "-o" -> {
                     orderings.stream()
                         .filter(o -> o.toLowerCase().startsWith(currentArg))
                         .forEach(builder::suggest);
@@ -354,9 +360,9 @@ public class ListCommand {
 
                 boolean isUnused = !usedFlags.contains(flag);
                 if (isUnused && flag.contains(currentArg)) {
-                    if (flag.equals("w") && usedFlags.contains("s")) {
+                    if (flag.equals("-w") && usedFlags.contains("-s")) {
                         continue;
-                    } else if (flag.equals("s") && usedFlags.contains("w")) {
+                    } else if (flag.equals("-s") && usedFlags.contains("-w")) {
                         continue;
                     }
 
