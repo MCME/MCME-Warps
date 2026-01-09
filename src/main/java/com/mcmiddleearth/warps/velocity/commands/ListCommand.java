@@ -13,6 +13,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.velocitypowered.api.command.BrigadierCommand;
@@ -63,11 +64,11 @@ public class ListCommand {
                 .requires(requirement)
                 .executes(ListCommand::execute)
                 .then(BrigadierCommand.requiredArgumentBuilder("query", StringArgumentType.greedyString())
-                        .suggests(ListCommand::suggest)
+                        .suggests(ListCommand.suggestWithFlags(flagInfos))
                         .executes(ListCommand::execute));
     }
 
-    private static Map<String, String> parseFilters(String input) {
+    public static Map<String, String> parseFilters(String input) {
         Map<String, String> filters = new HashMap<>();
         String[] parts = input.trim().split("\\s+");
 
@@ -125,6 +126,14 @@ public class ListCommand {
         }
 
         Map<String, String> filters = parseFilters(input);
+
+        // Either a non-player, or the player can use the warp
+        Predicate<Warp> customFilter = w -> !(source instanceof Player sender) || w.isUsable(sender);
+
+        return createList(input, filters, pageNumber, source, customFilter);
+    }
+
+    public static int createList(String input, Map<String, String>filters, int pageNumber, CommandSource source, Predicate<Warp> customFilter) throws CommandSyntaxException {
         if (filters.containsKey("w") && filters.containsKey("s")) {
             throw WORLD_SERVER_ERROR.create();
         }
@@ -141,9 +150,7 @@ public class ListCommand {
 
         Comparator<Warp> comparator = getComparator(filters.get("o"));
         Predicate<Warp> predicate = warp -> {
-            if (source instanceof Player sender && !warp.isUsable(sender)) {
-                return false;
-            }
+            if (!customFilter.test(warp)) return false;
 
             if (filters.containsKey("c") && !warp.getCreatorName().equalsIgnoreCase(filters.get("c"))) {
                 return false;
@@ -258,7 +265,11 @@ public class ListCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    public static SuggestionProvider<CommandSource> suggestWithFlags(Map<String, FlagInfo> flagInfos) {
+        return (context, builder) -> suggest(context, builder, flagInfos);
+    }
+
+    private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder, Map<String, FlagInfo> flagInfos) {
         if (!(context.getSource() instanceof Player sender)) {
             return Suggestions.empty();
         }
@@ -381,7 +392,7 @@ public class ListCommand {
         return builder.buildFuture();
     }
 
-    private record FlagInfo(String description, String defaultValue) {
+    public record FlagInfo(String description, String defaultValue) {
         // Overloaded constructor for when there's no defaultValue
         public FlagInfo(String description) {
             this(description, null);
