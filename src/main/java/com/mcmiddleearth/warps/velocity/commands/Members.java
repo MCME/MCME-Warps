@@ -86,8 +86,8 @@ public class Members {
         warp.addMember(targetPlayer.getUniqueId());
         try {
             WarpManager.saveWarp(warp);
-            sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been added to warp " + warp.getName());
-            targetPlayer.sendRichMessage("<green>You have been added to warp " + warp.getName());
+            sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been added to warp '%s'".formatted(warp.getName()));
+            targetPlayer.sendRichMessage("<green>You have been added to warp '%s'".formatted(warp.getName()));
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
             sender.sendRichMessage("<red>" + e.getMessage());
@@ -102,7 +102,7 @@ public class Members {
         warp.removeMember(targetPlayer.getUniqueId());
         try {
             WarpManager.saveWarp(warp);
-            sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been removed from warp " + warp.getName());
+            sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been removed from '%s'".formatted(warp.getName()));
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
             sender.sendRichMessage("<red>" + e.getMessage());

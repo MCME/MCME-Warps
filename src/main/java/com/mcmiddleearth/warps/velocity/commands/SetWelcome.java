@@ -52,7 +52,7 @@ public class SetWelcome {
         if (welcomeMessage.equals(DEFAULT)) warp.setWelcomeMessage(null);
         else warp.setWelcomeMessage(welcomeMessage);
 
-        sender.sendRichMessage("<green>Welcome message updated for warp " + warp.getName());
+        sender.sendRichMessage("<green>Welcome message updated for '%s' <gray>--></gray> %s".formatted(warp.getName(), welcomeMessage));
         return Command.SINGLE_SUCCESS;
     }
 

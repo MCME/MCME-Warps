@@ -62,7 +62,7 @@ public class MessageListener implements PluginMessageListener {
 
         World world = isLocalWarp ? player.getWorld() : Bukkit.getWorld(data.world());
         if (world == null) {
-            player.sendRichMessage("<red>Unable to perform the teleport, no world exists with name " + data.world());
+            player.sendRichMessage("<red>Unable to perform the teleport, no world exists with name '%s'".formatted(data.world()));
             return;
         }
 
@@ -73,7 +73,7 @@ public class MessageListener implements PluginMessageListener {
             // Only notify the player if the warp is on the same server as them
             // (since their previous position on the newly connected server could be the same as teleportLocation)
             if (SAME_SERVER_TYPES.contains(result.subchannel())) {
-                    player.sendRichMessage("<gray>You are already at warp " + warpName);
+                    player.sendRichMessage("<gray>You are already at warp '%s'".formatted(warpName));
             }
             return;
         }

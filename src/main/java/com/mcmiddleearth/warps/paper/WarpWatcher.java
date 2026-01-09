@@ -26,6 +26,9 @@ public class WarpWatcher {
         this.mapAPI = mapAPI;
     }
 
+    // NOTE: The modified file never has a MODIFY event on the MCME server
+    // Instead .tmp files are created and modified before the modified file is re-created
+    // Therefore the code doesn't listen for StandardWatchEventKinds.ENTRY_MODIFY
     public void start() {
         try {
             watchService = FileSystems.getDefault().newWatchService();
@@ -71,6 +74,7 @@ public class WarpWatcher {
                     WarpPaper.getInstance().debug(worldRelativePath);
                     WarpPaper.getInstance().debug(warpPath);
 
+                    // Ignore tmp files
                     if (!worldRelativePath.getFileName().toString().endsWith(".yml")) {
                         continue;
                     }
