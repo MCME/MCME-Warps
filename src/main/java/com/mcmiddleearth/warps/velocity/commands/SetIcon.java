@@ -88,7 +88,7 @@ public class SetIcon {
             return Suggestions.empty();
         }
 
-        String input = builder.getRemainingLowerCase();
+        String input = builder.getRemaining().toUpperCase();
         EnumSet.allOf(WarpIcon.class).forEach(icon -> {
             String iconName = icon.name();
             if (iconName.startsWith(input)) {
