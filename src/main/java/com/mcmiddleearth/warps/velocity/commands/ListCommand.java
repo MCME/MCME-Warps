@@ -130,10 +130,10 @@ public class ListCommand {
         // Either a non-player, or the player can use the warp
         Predicate<Warp> customFilter = w -> !(source instanceof Player sender) || w.isUsable(sender);
 
-        return createList(input, filters, pageNumber, source, customFilter);
+        return createList("list", input, filters, pageNumber, source, customFilter);
     }
 
-    public static int createList(String input, Map<String, String>filters, int pageNumber, CommandSource source, Predicate<Warp> customFilter) throws CommandSyntaxException {
+    public static int createList(String cmdName, String input, Map<String, String>filters, int pageNumber, CommandSource source, Predicate<Warp> customFilter) throws CommandSyntaxException {
         if (filters.containsKey("w") && filters.containsKey("s")) {
             throw WORLD_SERVER_ERROR.create();
         }
@@ -242,7 +242,7 @@ public class ListCommand {
         prevButton = pageNumber > 1
             ? prevButton
                 .color(NamedTextColor.GOLD)
-                .clickEvent(ClickEvent.runCommand("/warpmanager list %s %s".formatted(input, pageNumber - 1)))
+                .clickEvent(ClickEvent.runCommand("/warpmanager %s %s %s".formatted(cmdName, input, pageNumber - 1)))
             : prevButton
                 .color(TextColor.color(0x5c5c5c))
                 .decorate(TextDecoration.ITALIC);
@@ -251,7 +251,7 @@ public class ListCommand {
         nextButton = pageNumber < totalPages
             ? nextButton
                 .color(NamedTextColor.GOLD)
-                .clickEvent(ClickEvent.runCommand("/warpmanager list %s %s".formatted(input, pageNumber + 1)))
+                .clickEvent(ClickEvent.runCommand("/warpmanager %s %s %s".formatted(cmdName, input, pageNumber + 1)))
             : nextButton
                 .color(TextColor.color(0x5c5c5c))
                 .decorate(TextDecoration.ITALIC);

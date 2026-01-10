@@ -86,7 +86,7 @@ public class MessageListener {
         if (warpType.equals(Warp.Type.PRIVATE)) {
             final int privateLimit = ConfigManager.getConfig().privateWarpLimit();
             final int creatorPrivateWarpCount = WarpManager.getWarps(w -> w.isCreator(creator) && w.isOfType(Warp.Type.PRIVATE)).size();
-            creator.sendRichMessage("<gray>You have " + (privateLimit - creatorPrivateWarpCount) + " private warps remaining");
+            creator.sendRichMessage("<gray>You have <aqua>" + (privateLimit - creatorPrivateWarpCount) + "</aqua> private warps remaining");
         }
 
         boolean isFirstModifiableWarp = WarpManager.getWarps(WarpPredicates.modifiableBy(creator)).size() == 1;

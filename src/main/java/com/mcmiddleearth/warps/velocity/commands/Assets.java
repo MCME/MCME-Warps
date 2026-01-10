@@ -80,6 +80,6 @@ public class Assets {
         filters.put("c", player.getUsername());
         filters.put("s", connection.get().getServerInfo().getName());
 
-        return ListCommand.createList(input, filters, pageNumber, source, w -> true);
+        return ListCommand.createList("assets", input, filters, pageNumber, source, w -> true);
     }
 }

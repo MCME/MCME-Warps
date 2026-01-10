@@ -86,6 +86,6 @@ public class PrivateListCommand {
             return w.isCreator(player) || w.getMembers().contains(player.getUniqueId());
         };
 
-        return ListCommand.createList(input, filters, pageNumber, source, customFilter);
+        return ListCommand.createList("plist", input, filters, pageNumber, source, customFilter);
     }
 }
