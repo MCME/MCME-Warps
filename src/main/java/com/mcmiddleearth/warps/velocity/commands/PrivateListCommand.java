@@ -18,7 +18,6 @@ import java.util.function.Predicate;
 public class PrivateListCommand {
     private static final Map<String, ListCommand.FlagInfo> flagInfos = ImmutableMap.of(
         "-n", new ListCommand.FlagInfo("warp name"),
-        "-c", new ListCommand.FlagInfo("creator"),
         "-w", new ListCommand.FlagInfo("A specific world on a server"),
         "-s", new ListCommand.FlagInfo("server"),
         "-o", new ListCommand.FlagInfo("ordering", "alphabetical")
@@ -26,6 +25,9 @@ public class PrivateListCommand {
 
     private static final SimpleCommandExceptionType V_FLAG_ERROR =
         new SimpleCommandExceptionType(() -> "You can't use the -v visibility filter, plist always uses 'private'. Use the 'list' command instead.");
+
+    private static final SimpleCommandExceptionType C_FLAG_ERROR =
+        new SimpleCommandExceptionType(() -> "You can't use the -c creator filter, plist only shows private warps created by you (or warps you are a member of). Use the 'list' command instead.");
 
     public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("plist")
@@ -71,6 +73,9 @@ public class PrivateListCommand {
         Map<String, String> filters = ListCommand.parseFilters(input);
         if (filters.containsKey("v")) {
             throw V_FLAG_ERROR.create();
+        }
+        if (filters.containsKey("c")) {
+            throw C_FLAG_ERROR.create();
         }
 
         // This has to be added to filters (instead of being in the custom filter) otherwise ListCommand adds a default!
