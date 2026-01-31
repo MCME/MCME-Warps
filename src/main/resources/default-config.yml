@@ -1,7 +1,12 @@
 # Restrict the number of private warps each player can have
 # - If a player has the `mcmewarps.limits.ignore.private` permission the limit is ignored
-private-warp-limit: 25
 warp-name-max-length: 64
+
+private-warp-limits:
+  default-limit: 2
+  configured:
+#    adventurer: 10
+#    commoner: 50
 
 #sql:
 #  user:

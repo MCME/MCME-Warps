@@ -1,6 +1,7 @@
 package com.mcmiddleearth.warps.velocity.config;
 
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.velocitypowered.api.proxy.Player;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
@@ -50,5 +51,23 @@ public class ConfigManager {
 
     public static Config getConfig() {
         return config;
+    }
+
+    public record WarpLimit(String name, int limit) {}
+    public static WarpLimit resolvePrivateWarpLimit(Player sender) {
+        var privateWarpLimits = ConfigManager.getConfig().privateWarpLimits();
+
+        int limit = privateWarpLimits.defaultLimit();
+        String name = "default";
+
+        for (var entry : privateWarpLimits.configured().entrySet()) {
+            if (sender.hasPermission("mcmewarps.limits." + entry.getKey())) {
+                limit = entry.getValue();
+                name = entry.getKey();
+                break;
+            }
+        }
+
+        return new WarpLimit(name, limit);
     }
 }
