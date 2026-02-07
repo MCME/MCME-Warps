@@ -10,12 +10,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 public class ConfigManager {
     private static final String DEFAULT_CONFIG_NAME = "default-config.yml";
     private static final Path CONFIG_FILE_PATH =  WarpVelocity.getDataFolder().resolve("config.yml");
 
     public static Config config;
+    private static List<Map.Entry<String, Integer>> sortedWarpLimits;
 
     public static void loadConfig() {
         if (!Files.exists(CONFIG_FILE_PATH)) {
@@ -43,6 +47,11 @@ public class ConfigManager {
         try {
             ConfigurationNode root = loader.load();
             config = root.get(Config.class);
+
+            // Cache the sorted limits, largest firsts
+            sortedWarpLimits = config.privateWarpLimits().configured().entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .toList();
         } catch (ConfigurateException e) {
             WarpVelocity.getLogger().error("Failed to load the config from {}, with error {}", CONFIG_FILE_PATH, e.getMessage());
             throw new RuntimeException();
@@ -55,19 +64,14 @@ public class ConfigManager {
 
     public record WarpLimit(String name, int limit) {}
     public static WarpLimit resolvePrivateWarpLimit(Player sender) {
-        var privateWarpLimits = ConfigManager.getConfig().privateWarpLimits();
+        var defaultLimit = ConfigManager.getConfig().privateWarpLimits().defaultLimit();
 
-        int limit = privateWarpLimits.defaultLimit();
-        String name = "default";
-
-        for (var entry : privateWarpLimits.configured().entrySet()) {
+        for (var entry : sortedWarpLimits) {
             if (sender.hasPermission("mcmewarps.limits." + entry.getKey())) {
-                limit = entry.getValue();
-                name = entry.getKey();
-                break;
+                return new WarpLimit(entry.getKey(), entry.getValue());
             }
         }
 
-        return new WarpLimit(name, limit);
+        return new WarpLimit("default", defaultLimit);
     }
 }
