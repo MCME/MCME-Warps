@@ -48,8 +48,7 @@ public class SetIcon {
 
         Warp warp = CommandUtils.getWarp(
             context,
-            "warp",
-            WarpPredicates.modifiableBy(sender)
+            "warp"
         ).value();
 
         final String strWarpIcon = context.getArgument("icon", String.class);
