@@ -16,7 +16,6 @@ import java.util.EnumSet;
 
 public class MessageListener implements PluginMessageListener {
 
-    private static final int MAX_RADIUS = 15;
     private static final EnumSet<TeleportMessage.Subchannel> SAME_SERVER_TYPES = EnumSet.of(
         TeleportMessage.Subchannel.SAME_SERVER,
         TeleportMessage.Subchannel.LOCAL_WARP
