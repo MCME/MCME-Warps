@@ -50,8 +50,7 @@ public class SetLayer {
 
         Warp warp = CommandUtils.getWarp(
             context,
-            "warp",
-            WarpPredicates.modifiableBy(sender)
+            "warp"
         ).value();
 
         List<String> layerKeys = ConfigManager.getConfig().layerKeys();
