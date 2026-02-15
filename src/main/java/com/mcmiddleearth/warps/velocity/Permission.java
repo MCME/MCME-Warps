@@ -15,6 +15,7 @@ public enum Permission {
     RELOAD("mcmewarps.cmd.reload"),
     WELCOME("mcmewarps.cmd.welcome-message"),
     SET_ICON("mcmewarps.cmd.set-icon"),
+    SET_LAYER("mcmewarps.cmd.set-layer"),
     LIST("mcmewarps.cmd.list"),
 
     OVERRIDE_USE("mcmewarps.override.use"),

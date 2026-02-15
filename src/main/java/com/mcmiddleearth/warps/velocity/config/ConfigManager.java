@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ConfigManager {
-    private static final String DEFAULT_CONFIG_NAME = "default-config.yml";
+    private static final String DEFAULT_CONFIG_NAME = "default-velocity-config.yml";
     private static final Path CONFIG_FILE_PATH =  WarpVelocity.getDataFolder().resolve("config.yml");
 
     public static Config config;

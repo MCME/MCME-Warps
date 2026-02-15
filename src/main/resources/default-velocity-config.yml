@@ -8,6 +8,11 @@ private-warp-limits:
 #    adventurer: 10
 #    commoner: 50
 
+# This list is used for the setLayer command and it should align with the
+# layers configured in the paper config.yml
+layer-keys:
+  - major
+
 #sql:
 #  user:
 #  password:
