@@ -18,8 +18,10 @@ public class BaseWarp {
     @Required protected String name;
     @Required protected SimpleLocation location;
     protected WarpIcon icon = WarpIcon.DEFAULT;
+    protected String layer = "default";
 
     public String getName() { return name; }
     public SimpleLocation getLocation() { return location; }
     public WarpIcon getIcon() { return icon; }
+    public String getLayer() { return layer; }
 }

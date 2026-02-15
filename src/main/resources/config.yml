@@ -1,1 +1,15 @@
 debug: false
+
+layers:
+  # label - The displayed name of the layer/markerSet
+  # minZoom - The layer is hidden when zoom is below this value (0: fully zoomed out)
+  # priority - Higher priority appears lower in the layer control list (layers default to 0)
+  default:
+    label: "Other warps"
+    min-zoom: 2
+    priority: 9
+  custom:
+    major:
+      label: "Major warps"
+      min-zoom: -1
+      priority: 8
