@@ -3,12 +3,17 @@ package com.mcmiddleearth.warps.velocity.config;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Required;
 
+import java.util.Map;
+
 @ConfigSerializable
 public record Config(
-    @Required int privateWarpLimit,
     @Required int warpNameMaxLength,
+    @Required Limits privateWarpLimits,
     Sql sql
 ) {
     @ConfigSerializable
-    public record Sql(String user, String password, String dbName, String ip, Integer port) {}
+    public record Limits(@Required Integer defaultLimit, @Required  Map<String, Integer> configured) {}
+
+    @ConfigSerializable
+    public record Sql(@Required String user, @Required String password, @Required String dbName, @Required String ip, @Required Integer port) {}
 }

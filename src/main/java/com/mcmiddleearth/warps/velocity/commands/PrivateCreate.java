@@ -14,6 +14,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.Dynamic2CommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
@@ -31,8 +32,8 @@ public class PrivateCreate {
     private static final SimpleCommandExceptionType MANUAL_PREFIX =
         new SimpleCommandExceptionType(() -> "Private warps are automatically given the 'zzz' prefix, please just provide the warp name");
 
-    private static final SimpleCommandExceptionType PRIVATE_WARP_LIMIT_REACHED =
-        new SimpleCommandExceptionType(() -> "Unable to create another private warp - you have reached the maximum (" + ConfigManager.getConfig().privateWarpLimit() + ")");
+    private static final Dynamic2CommandExceptionType PRIVATE_WARP_LIMIT_REACHED =
+        new Dynamic2CommandExceptionType((limitName, limit) -> () -> "Unable to create another private warp - you have reached the maximum (%s: %s). ".formatted(limitName, limit));
 
     public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("pcreate")
@@ -50,13 +51,13 @@ public class PrivateCreate {
             return Command.SINGLE_SUCCESS;
         }
 
-        // Ensure the player hasn't hit their limit of private warps
+        // Ensure the player hasn't hit their private warp limit
         if (!sender.hasPermission(Permission.IGNORE_PRIVATE_WARPS_LIMIT.getNode())) {
-            final int privateLimit = ConfigManager.getConfig().privateWarpLimit();
+            ConfigManager.WarpLimit warpLimit = ConfigManager.resolvePrivateWarpLimit(sender);
             final int senderPrivateWarpCount = WarpManager.getWarps(w -> w.isCreator(sender) && w.isOfType(Warp.Type.PRIVATE)).size();
 
-            if (senderPrivateWarpCount >= privateLimit) {
-                throw PRIVATE_WARP_LIMIT_REACHED.create();
+            if (senderPrivateWarpCount >= warpLimit.limit()) {
+                throw PRIVATE_WARP_LIMIT_REACHED.create(warpLimit.name(), warpLimit.limit());
             }
         }
 
@@ -83,9 +84,7 @@ public class PrivateCreate {
             if (!status) {
                 WarpVelocity.getLogger().error("Failed to send plugin message to paper backend {}", serverConnection.getServerInfo().getName());
             }
-        }, () -> {
-            sender.sendRichMessage("<red>You are not connected to a server");
-        });
+        }, () -> sender.sendRichMessage("<red>You are not connected to a server"));
 
         return Command.SINGLE_SUCCESS;
     }

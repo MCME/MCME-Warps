@@ -3,8 +3,10 @@ package com.mcmiddleearth.warps.velocity.listener;
 import com.mcmiddleearth.warps.core.messageprotocols.*;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
+import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
+import com.mcmiddleearth.warps.velocity.config.Config;
 import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
@@ -83,10 +85,11 @@ public class MessageListener {
 
         creator.sendRichMessage("<green>Warp \"%s\" has been created!".formatted(newWarp.getName()));
 
-        if (warpType.equals(Warp.Type.PRIVATE)) {
-            final int privateLimit = ConfigManager.getConfig().privateWarpLimit();
+        if (warpType.equals(Warp.Type.PRIVATE) && !creator.hasPermission(Permission.IGNORE_PRIVATE_WARPS_LIMIT.getNode())) {
+            final int privateLimit = ConfigManager.resolvePrivateWarpLimit(creator).limit();
             final int creatorPrivateWarpCount = WarpManager.getWarps(w -> w.isCreator(creator) && w.isOfType(Warp.Type.PRIVATE)).size();
-            creator.sendRichMessage("<gray>You have " + (privateLimit - creatorPrivateWarpCount) + " private warps remaining");
+
+            creator.sendRichMessage("<gray>You have <aqua>" + (privateLimit - creatorPrivateWarpCount) + "</aqua> private warps remaining");
         }
 
         boolean isFirstModifiableWarp = WarpManager.getWarps(WarpPredicates.modifiableBy(creator)).size() == 1;

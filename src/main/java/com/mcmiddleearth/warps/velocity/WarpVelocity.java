@@ -104,6 +104,9 @@ public class WarpVelocity {
             .then(SetPrivate.register( WarpRequirements.hasPerm(Permission.SET_PRIVATE) ))
             .then(Reload.register( WarpRequirements.hasPerm(Permission.RELOAD) ))
             .then(SetIcon.register( WarpRequirements.hasPerm(Permission.SET_ICON) ))
+            .then(ListCommand.register( WarpRequirements.hasPerm(Permission.LIST) ))
+            .then(PrivateListCommand.register( WarpRequirements.hasPerm(Permission.LIST) ))
+            .then(Assets.register( WarpRequirements.hasPerm(Permission.LIST) ))
             // Commands that require modifiable warps
             .then(Delete.register( WarpRequirements.hasPermAndWarps(Permission.DELETE) ))
             .then(Rename.register( WarpRequirements.hasPermAndWarps(Permission.RENAME) ))
