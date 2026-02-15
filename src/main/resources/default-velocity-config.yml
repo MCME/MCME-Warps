@@ -8,6 +8,9 @@ private-warp-limits:
 #    adventurer: 10
 #    commoner: 50
 
+layers:
+  - major
+
 #sql:
 #  user:
 #  password:

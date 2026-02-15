@@ -80,6 +80,7 @@ public class Warp extends BaseWarp {
     public void setServer(String server) { this.server = server; }
     public void setLocation(SimpleLocation location) { this.location = location; }
     public void setIcon(WarpIcon icon) { this.icon = icon; }
+    public void setLayer(String layer) { this.layer = layer; }
     public void setType(Type type) { this.type = type; }
     public void setCreatorName(String name) { this.creatorName = name; }
 
