@@ -10,7 +10,7 @@ private-warp-limits:
 
 # This list is used for the setLayer command and it should align with the
 # layers configured in the paper config.yml
-layers:
+layer-keys:
   - major
 
 #sql:
