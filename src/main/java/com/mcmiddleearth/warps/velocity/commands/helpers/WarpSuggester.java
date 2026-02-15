@@ -64,7 +64,7 @@ public class WarpSuggester {
 
     public static Component buildWarpTooltip(Warp warp) {
         Component divider = Component.text(" | ", NamedTextColor.BLUE);
-        ComponentBuilder<TextComponent, TextComponent.Builder> tooltip = Component.text().content("");
+        TextComponent.Builder tooltip = Component.text().content("");
 
         int visits = warp.getVisits();
         tooltip.append(Component.text(compact.format(visits) + " visits"));
