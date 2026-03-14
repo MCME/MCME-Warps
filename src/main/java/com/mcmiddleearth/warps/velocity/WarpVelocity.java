@@ -120,12 +120,11 @@ public class WarpVelocity {
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
-        WarpManager.saveAllWarps();
+        WarpManager.saveWarpVisits();
     }
 
     @Subscribe
     public void onProxyReload(ProxyReloadEvent event) {
-        // Visits are only saved on shutdown, so this is needed
         WarpManager.saveWarpVisits();
 
         // Reload the config & warps

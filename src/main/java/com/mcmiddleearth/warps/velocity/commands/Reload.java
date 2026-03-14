@@ -19,12 +19,14 @@ public class Reload {
     }
 
     private static int execute(CommandContext<CommandSource> context) {
-        // Visits are only saved on shutdown, so this is needed
+        // Visits are only saved systematically on shutdown, so this is needed
         WarpManager.saveWarpVisits();
 
         // Reload the config & warps
         ConfigManager.loadConfig();
         WarpManager.loadAllWarps();
+
+        context.getSource().sendRichMessage("<green>Reload successful!");
 
         return Command.SINGLE_SUCCESS;
     }
