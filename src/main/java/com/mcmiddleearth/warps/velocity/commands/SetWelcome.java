@@ -4,6 +4,7 @@ import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
+import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -52,8 +53,14 @@ public class SetWelcome {
         if (welcomeMessage.equals(DEFAULT)) warp.setWelcomeMessage(null);
         else warp.setWelcomeMessage(welcomeMessage);
 
-        sender.sendRichMessage("<green>Welcome message updated for '%s' <gray>--></gray> %s".formatted(warp.getName(), welcomeMessage));
-        return Command.SINGLE_SUCCESS;
+        try {
+            WarpManager.saveWarp(warp);
+            sender.sendRichMessage("<green>Welcome message updated for '%s' <gray>--></gray> %s".formatted(warp.getName(), welcomeMessage));
+            return Command.SINGLE_SUCCESS;
+        } catch (Exception e) {
+            sender.sendRichMessage("<red>" + e.getMessage());
+            return 0;
+        }
     }
 
     private static CompletableFuture<Suggestions> suggestWarp(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
