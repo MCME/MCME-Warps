@@ -12,162 +12,90 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Static facade over a single {@link WarpStore}. The map, its thread safety (CONC-1) and the
+ * crash-safe persistence (CORR-A / CORR-B) all live in the store; this class keeps the existing
+ * static API the commands and listeners call, and owns the proxy-coupled concerns: the data folder,
+ * logging, the file-walk load and the legacy MyWarp DB import.
+ */
 public class WarpManager {
-    private static final Path WARPS_DIRECTORY =  WarpVelocity.getDataFolder().resolve("warps");
-
-    /** A map of normalised warp names to Warps */
-    private static final HashMap<String, Warp> warps = new HashMap<>();
+    private static final Path WARPS_DIRECTORY = WarpVelocity.getDataFolder().resolve("warps");
+    private static final WarpStore store = new WarpStore(WARPS_DIRECTORY, new ConfigurateWarpIo());
 
     public static boolean warpExists(String warpName) {
-        return warps.containsKey(normaliseWarpName(warpName));
+        return store.exists(warpName);
     }
 
     public static @Nullable Warp getWarp(String warpName) {
-        String normalisedWarpName = normaliseWarpName(warpName);
-
-        if (warpExists(warpName)) {
-            return warps.get(normalisedWarpName);
-        }
-
-        return null;
+        return store.get(warpName);
     }
 
     public static Map<String, String> getWarpNames(Predicate<Warp> filter) {
-        return warps.entrySet().stream()
-            .filter(entry -> filter.test(entry.getValue()))
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> entry.getValue().getName()
-            ));
+        return store.getWarpNames(filter);
     }
 
     public static Map<String, Warp> getWarps(Predicate<Warp> filter) {
-        // Return a subset of the warps hashmap
-        return warps.entrySet()
-            .stream()
-            .filter(warpEntry -> filter.test(warpEntry.getValue()))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    private static void putWarp(Warp warp) throws Exception {
-        String warpName = normaliseWarpName(warp.getName());
-
-        if (warps.containsKey(warpName)) {
-            throw new Exception("A warp already exists with name '" + warpName + "' - " + warp);
-        }
-        warps.put(warpName, warp);
+        return store.getWarps(filter);
     }
 
     public static void addWarp(Warp newWarp) throws IllegalStateException {
         try {
-            putWarp(newWarp);
-            saveWarp(newWarp);
-        } catch (Exception e) {
+            store.add(newWarp);
+        } catch (WarpStore.WarpStoreException | IllegalArgumentException e) {
             WarpVelocity.getLogger().error("Failed to add warp {} - {}", newWarp.getName(), e.getMessage());
             throw new IllegalStateException(e.getMessage());
         }
     }
 
     public static int updateWarp(String warpName, Consumer<Warp> updater, Player player, String successMsg) {
-        Warp warp = getWarp(warpName);
-
-        if (warp == null) {
-            player.sendRichMessage("<red>Warp '%s' does not exist, unable to perform the update".formatted(warpName));
-            return 0;
-        }
-
-        Warp preUpdateWarp = new Warp(warp);
-
         try {
-            deleteWarp(warp);
-        } catch (Exception e) {
-            player.sendRichMessage("<red>" + e.getMessage());
-            return 0;
-        }
-
-        updater.accept(warp);
-
-        try {
-            addWarp(warp);
+            store.update(warpName, updater);
             player.sendRichMessage("<green>" + successMsg);
             return Command.SINGLE_SUCCESS;
-        } catch (IllegalStateException e) {
+        } catch (WarpStore.WarpStoreException | IllegalArgumentException e) {
             player.sendRichMessage("<red>" + e.getMessage());
-            player.sendRichMessage("<red>Failed to perform the update, rolling back...");
-
-            // If the put succeeded but the save failed this rollback won't
-            // remove the erroneous new Warp, but this shouldn't be common
-
-            try {
-                addWarp(preUpdateWarp);
-            } catch (Exception addOldWarpException) {
-                player.sendRichMessage("<red>Rollback failed - " + e.getMessage());
-                return 0;
-            }
-
-            player.sendRichMessage("<red>Rollback successful");
             return 0;
         }
     }
 
     public static void deleteWarp(Warp warp) throws Exception {
-        String warpName = normaliseWarpName(warp.getName());
-        warps.remove(warpName);
-
-        Path warpPath = getWarpPath(warp);
         try {
-            boolean result = Files.deleteIfExists(warpPath);
-            if (!result) {
-                throw new Exception("File does not exist");
-            }
-        } catch (Exception e) {
+            store.delete(warp);
+        } catch (WarpStore.WarpStoreException e) {
             WarpVelocity.getLogger()
-                .error("An error occurred whilst deleting the warp file at {} - {}",
-                    warpPath, e.getMessage()
-                );
-            throw new Exception("An error occurred whilst deleting the warp file for " + warpName);
+                .error("An error occurred whilst deleting the warp file for {} - {}", warp.getName(), e.getMessage());
+            throw new Exception(e.getMessage());
         }
-    };
+    }
 
     public static void saveAllWarps() {
-        for (Warp w: warps.values()) {
+        for (Warp w : store.all()) {
             try {
-                saveWarp(w);
-            } catch (Exception e) {
-                WarpVelocity.getLogger().error(
-                    "Failed to save warp {} - {}", w.getName(), e.getMessage()
-                );
+                store.save(w);
+            } catch (WarpStore.WarpStoreException e) {
+                WarpVelocity.getLogger().error("Failed to save warp {} - {}", w.getName(), e.getMessage());
             }
         }
     }
 
     public static void saveWarp(Warp warp) throws Exception {
-        Path warpPath = getWarpPath(warp);
-        YamlConfigurationLoader loader = WarpLoader.build(warpPath);
-
         try {
-            Files.createDirectories(warpPath.getParent());
-
-            ConfigurationNode root = loader.load();
-            root.set(Warp.class, warp);
-            loader.save(root);
-        } catch (IOException e) {
+            store.save(warp);
+        } catch (WarpStore.WarpStoreException e) {
             WarpVelocity.getLogger()
-                .error("An error occurred whilst saving warp {} - {}",
-                    warp.getName(), e.getMessage()
-                );
-            throw new Exception("Failed to save warp '%s' to disk".formatted(warp.getName()));
+                .error("An error occurred whilst saving warp {} - {}", warp.getName(), e.getMessage());
+            throw new Exception(e.getMessage());
         }
     }
 
     public static void saveWarpVisits() {
-        for (Warp w: warps.values()) {
+        for (Warp w : store.all()) {
             Path path = getWarpPath(w);
             YamlConfigurationLoader loader = YamlConfigurationLoader.builder().path(path).build();
 
@@ -195,7 +123,7 @@ public class WarpManager {
     }
 
     public static void loadAllWarps() {
-        warps.clear();
+        store.clear();
 
         if (!Files.exists(WARPS_DIRECTORY)) {
             WarpVelocity.getLogger().warn("The warps directory does not exist ({}), attempting to load from the warps DB", WARPS_DIRECTORY);
@@ -210,7 +138,7 @@ public class WarpManager {
             var dbWarps = DB.getWarps();
             for (Warp w : dbWarps) {
                 try {
-                    putWarp(w);
+                    store.registerLoaded(w);
                     counter++;
                 } catch (Exception e) {
                     WarpVelocity.getLogger().error("Failed to load warp, {}", e.getMessage());
@@ -218,12 +146,7 @@ public class WarpManager {
             }
             DB.disconnect();
 
-            var publicCount = warps.values().stream().filter(w -> w.isOfType(Warp.Type.PUBLIC)).count();
-            WarpVelocity.getLogger().info("""
-                \nLoaded public warps: {}
-                Loaded private warps: {}
-                Total loaded: {}/{}
-                """, publicCount, warps.size() - publicCount, counter, dbWarps.size());
+            logLoadSummary(counter, dbWarps.size());
             return;
         }
 
@@ -235,23 +158,26 @@ public class WarpManager {
 
             for (Path file : yamlFiles) {
                 try {
-                    Warp warp = loadWarp(file);
-                    putWarp(warp);
+                    store.registerLoaded(loadWarp(file));
                     counter++;
                 } catch (Exception e) {
                     WarpVelocity.getLogger().error("Failed to load warp at {} - {}", file, e.getMessage());
                 }
             }
 
-            var publicCount = warps.values().stream().filter(w -> w.isOfType(Warp.Type.PUBLIC)).count();
-            WarpVelocity.getLogger().info("""
-                \nLoaded public warps: {}
-                Loaded private warps: {}
-                Total loaded: {}/{}
-                """, publicCount, warps.size() - publicCount, counter, yamlFiles.size());
+            logLoadSummary(counter, yamlFiles.size());
         } catch (IOException e) {
             throw new RuntimeException("Failed to scan warp directory: " + WARPS_DIRECTORY, e);
         }
+    }
+
+    private static void logLoadSummary(int counter, int total) {
+        long publicCount = store.all().stream().filter(w -> w.isOfType(Warp.Type.PUBLIC)).count();
+        WarpVelocity.getLogger().info("""
+            \nLoaded public warps: {}
+            Loaded private warps: {}
+            Total loaded: {}/{}
+            """, publicCount, store.size() - publicCount, counter, total);
     }
 
     public static Warp loadWarp(Path filePath) throws ConfigurateException {
