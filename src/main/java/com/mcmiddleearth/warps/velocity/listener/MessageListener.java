@@ -66,6 +66,15 @@ public class MessageListener {
     private void createWarp(PlayerLocationMessage.Result result, String serverName, Player creator) {
         Warp.Type warpType = result.subchannel().equals(LocationActionSubchannel.CREATE_PUBLIC) ? Warp.Type.PUBLIC : Warp.Type.PRIVATE;
 
+        // SEC-3: re-check the create permission at the message boundary. A forged plugin message
+        // reaches this handler having bypassed the command-layer permission gate; the create path
+        // must not trust that the send was authorised.
+        Permission requiredPerm = warpType == Warp.Type.PUBLIC ? Permission.CREATE_PUBLIC : Permission.CREATE_PRIVATE;
+        if (!creator.hasPermission(requiredPerm.getNode())) {
+            creator.sendRichMessage("<red>You do not have permission to create this warp");
+            return;
+        }
+
         Warp newWarp = new Warp(
             creator.getUniqueId(),
             creator.getUsername(),
@@ -104,10 +113,23 @@ public class MessageListener {
     }
 
     private void moveWarp(PlayerLocationMessage.Result result, String serverName, Player creator) {
+        // SEC-3: re-check modifiability at the message boundary. Without this a forged MOVE message
+        // lets any player relocate ANY warp (drag a public landmark to the void), because updateWarp
+        // performs no ownership check of its own and the command-layer check is bypassed.
+        Warp warp = WarpManager.getWarp(result.warpName());
+        if (warp == null) {
+            creator.sendRichMessage("<red>Warp '%s' does not exist".formatted(result.warpName()));
+            return;
+        }
+        if (!warp.isModifiable(creator)) {
+            creator.sendRichMessage("<red>You do not have access to modify that warp");
+            return;
+        }
+
         SimpleLocation newLocation = result.warpLocation();
-        WarpManager.updateWarp(result.warpName(), warp -> {
-            warp.setLocation(newLocation);
-            warp.setServer(serverName);
+        WarpManager.updateWarp(result.warpName(), w -> {
+            w.setLocation(newLocation);
+            w.setServer(serverName);
         }, creator, "Warp successfully moved");
     }
 }

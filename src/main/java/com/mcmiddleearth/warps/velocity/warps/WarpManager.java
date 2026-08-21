@@ -1,7 +1,6 @@
 package com.mcmiddleearth.warps.velocity.warps;
 
 import com.mcmiddleearth.warps.core.WarpLoader;
-import com.mcmiddleearth.warps.core.Utils;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mojang.brigadier.Command;
 import com.velocitypowered.api.proxy.Player;
@@ -262,22 +261,10 @@ public class WarpManager {
 
     // Utils
     public static String normaliseWarpName(String warpName) {
-        return Utils.normaliseString(warpName).trim();
+        return WarpPaths.normaliseWarpName(warpName);
     }
 
     private static Path getWarpPath(Warp warp) {
-        String warpName = normaliseWarpName(warp.getName());
-
-        if (warp.isOfType(Warp.Type.PUBLIC)) {
-            return WARPS_DIRECTORY
-                .resolve(warp.getServer())
-                .resolve(warp.getLocation().world())
-                .resolve(warpName + ".yml");
-        }
-
-        return WARPS_DIRECTORY
-            .resolve("private-warps")
-            .resolve(warp.getCreatorId().toString())
-            .resolve(warpName + ".yml");
+        return WarpPaths.resolveWarpPath(WARPS_DIRECTORY, warp);
     }
 }

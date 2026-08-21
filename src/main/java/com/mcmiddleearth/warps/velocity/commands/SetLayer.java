@@ -21,6 +21,7 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
 import java.util.EnumSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
@@ -50,10 +51,15 @@ public class SetLayer {
 
         Warp warp = CommandUtils.getWarp(
             context,
-            "warp"
+            "warp",
+            WarpPredicates.modifiableBy(sender)
         ).value();
 
-        List<String> layerKeys = ConfigManager.getConfig().layerKeys();
+        // Build the candidate list locally - never mutate the shared config list (CORR-D):
+        // the previous `ConfigManager.getConfig().layerKeys().add("default")` grew the singleton
+        // config's list on every invocation and raced the async suggester.
+        List<String> configuredLayers = ConfigManager.getConfig().layerKeys();
+        List<String> layerKeys = new ArrayList<>(configuredLayers == null ? List.of() : configuredLayers);
         layerKeys.add("default");
 
         final String layerKey = context.getArgument("layer", String.class);
@@ -90,7 +96,8 @@ public class SetLayer {
         }
 
         String input = builder.getRemaining().toUpperCase();
-        List<String> layerKeys = ConfigManager.getConfig().layerKeys();
+        List<String> configuredLayers = ConfigManager.getConfig().layerKeys();
+        List<String> layerKeys = new ArrayList<>(configuredLayers == null ? List.of() : configuredLayers);
         layerKeys.add("default");
 
         layerKeys.forEach(layerKey -> {

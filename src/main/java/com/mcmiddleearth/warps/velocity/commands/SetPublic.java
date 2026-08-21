@@ -1,6 +1,8 @@
 package com.mcmiddleearth.warps.velocity.commands;
 
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
+import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
@@ -43,8 +45,9 @@ public class SetPublic {
         }
 
         final String warpName = context.getArgument("warp-name", String.class);
-        Warp warp = WarpManager.getWarp(warpName);
-        if (warp == null) throw WARP_NOT_FOUND.create();
+        // SEC-4: require modifiability, not just the flat set-public permission - otherwise any
+        // holder could publicise another player's private warp (disclosing its world/coords).
+        Warp warp = CommandUtils.getWarp(context, "warp-name", WarpPredicates.modifiableBy(sender)).value();
         if (warp.isOfType(Warp.Type.PUBLIC)) throw ALREADY_PUBLIC.create();
 
         // Q: Strip the zzz-<playerName> prefix???
