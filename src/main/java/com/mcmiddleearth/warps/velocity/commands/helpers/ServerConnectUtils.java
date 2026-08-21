@@ -36,6 +36,14 @@ public final class ServerConnectUtils {
                 "<red>Server '<server>' not found!",
                 Placeholder.unparsed("server", targetServerName)
             );
+            // Logged as well as messaged: a warp naming a server that isn't in velocity.toml is a
+            // permanent data defect, not a transient outage. Without this it is invisible to
+            // operators and only ever surfaces as one player's confusion.
+            WarpVelocity.getLogger().warn(
+                "Warp destination server '{}' is not registered on this proxy - '{}' could not be connected.",
+                targetServerName,
+                sender.getUsername()
+            );
             return;
         }
 

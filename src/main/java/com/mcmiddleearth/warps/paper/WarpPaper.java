@@ -2,7 +2,6 @@ package com.mcmiddleearth.warps.paper;
 
 import com.mcmiddleearth.warps.core.*;
 import com.mcmiddleearth.warps.paper.listener.MessageListener;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapCommonAPI;
@@ -11,7 +10,6 @@ import org.spongepowered.configurate.ConfigurationNode;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -108,27 +106,6 @@ public final class WarpPaper extends JavaPlugin {
     }
 
     private List<Layer> loadLayers() {
-        List<Layer> layers = new ArrayList<>();
-
-        String defaultLabel = getConfig().getString("layers.default.label", "warps");
-        int defaultMinZoom = getConfig().getInt("layers.default.min-zoom", -1);
-        int defaultPriority = getConfig().getInt("layers.default.priority", 0);
-        layers.add(new Layer("default", defaultLabel, defaultMinZoom, defaultPriority));
-
-        ConfigurationSection section =
-            getConfig().getConfigurationSection("layers.custom");
-        if (section == null) return layers;
-
-        for (String key : section.getKeys(false)) {
-            ConfigurationSection layerSection = section.getConfigurationSection(key);
-
-            String name = layerSection.getString("label", "UNKNOWN");
-            int minZoom = layerSection.getInt("minZoom", -1);
-            int priority = layerSection.getInt("priority", 0);
-
-            layers.add(new Layer(key, name, minZoom, priority));
-        }
-
-        return layers;
+        return LayerParser.parse(getConfig());
     }
 };

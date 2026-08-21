@@ -43,6 +43,17 @@ dependencies {
     implementation('org.enginehub:squirrelid:0.3.2')
     implementation('de.gesundkrank.fzf4j:fzf4j:0.2.0')
 
+    // Tests
+    testImplementation(platform("org.junit:junit-bom:6.1.3"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    // Bukkit's YamlConfiguration is plain SnakeYAML - usable in unit tests with no running server
+    testImplementation("io.papermc.paper:paper-api:26.1.2.build.72-stable")
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    testLogging { events "passed", "skipped", "failed" }
 }
 
 tasks {
