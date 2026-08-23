@@ -23,18 +23,32 @@ import java.time.Instant;
 public class MessageListener {
     @Subscribe
     public void onPluginMessageFromBackend(PluginMessageEvent event) {
+        final ChannelIdentifier eventChannel = event.getIdentifier();
+
+        // Only concern ourselves with the warp plugin channels.
+        boolean isWarpChannel = eventChannel.equals(ChannelIdentifiers.MAIN_ID)
+            || eventChannel.equals(ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID)
+            || eventChannel.equals(ChannelIdentifiers.MISC_ID);
+        if (!isWarpChannel) {
+            return;
+        }
+
+        // These channels are strictly proxy<->backend. Consume EVERY message on them, unconditionally
+        // and BEFORE the source check, so a client-sent message is never forwarded on to a backend -
+        // Velocity forwards any message a listener leaves un-handled. Without this a modified client
+        // could impersonate the proxy to the backend and forge teleports / warp creates / moves
+        // (SEC-2, and the client-reachable half of SEC-1/SEC-3). Setting it before reading the payload
+        // also prevents a malformed message from being leaked onward if parsing throws.
+        event.setResult(PluginMessageEvent.ForwardResult.handled());
+
+        // Only a backend server may drive these; a client-sourced message is now dropped.
         if (!(event.getSource() instanceof ServerConnection backend)) {
             return;
         }
 
-        final ChannelIdentifier eventChannel = event.getIdentifier();
         Player player = backend.getPlayer();
 
         if (eventChannel.equals(ChannelIdentifiers.MAIN_ID)) {
-            // Mark PluginMessage as handled, indicating that the contents
-            // should not be forwarding to their original destination.
-            event.setResult(PluginMessageEvent.ForwardResult.handled());
-
             TeleportResult.Response response = TeleportResult.read(event.getData());
 
             Warp warp = WarpManager.getWarp(response.warpName());
@@ -46,10 +60,6 @@ public class MessageListener {
             }
         }
         else if (eventChannel.equals(ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID)) {
-            // Mark PluginMessage as handled, indicating that the contents
-            // should not be forwarding to their original destination.
-            event.setResult(PluginMessageEvent.ForwardResult.handled());
-
             String serverName = backend.getServerInfo().getName();
 
             PlayerLocationMessage.Result result = PlayerLocationMessage.read(event.getData());
@@ -61,6 +71,7 @@ public class MessageListener {
                 default -> player.sendMessage(Component.text("Unknown subchannel: " + subchannel, NamedTextColor.RED));
             }
         }
+        // MISC_ID: consumed above so a client cannot forward it on; the proxy has no incoming MISC handler.
     }
 
     private void createWarp(PlayerLocationMessage.Result result, String serverName, Player creator) {

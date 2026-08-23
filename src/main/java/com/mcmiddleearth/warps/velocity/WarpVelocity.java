@@ -64,8 +64,11 @@ public class WarpVelocity {
         this.playerNameResolver = new PlayerNameResolver(dataFolder.resolve("profiles.db"));
         proxy.getEventManager().register(this, playerNameResolver);
 
+        // Register every warp channel so the proxy receives (and its listener can consume) messages
+        // on them - including MISC - so none are transparently forwarded between client and backend.
         proxy.getChannelRegistrar().register(ChannelIdentifiers.MAIN_ID);
         proxy.getChannelRegistrar().register(ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID);
+        proxy.getChannelRegistrar().register(ChannelIdentifiers.MISC_ID);
 
         ConfigManager.loadConfig();
         WarpManager.loadAllWarps();
