@@ -1,95 +1,109 @@
 # MCME-Warps
-A velocity & paper plugin using yaml storage with dynmap integration.
 
-* The velocity plugin provides a config.yml file - see the default [here](src/main/resources/default-config.yml)
-* The paper plugin loads all `*.yml` files from the `plugins/MCME-Warps-Paper/warps` directory into dynmap
+A warp system for a **Velocity + Paper** Minecraft network, with YAML storage and optional
+[Dynmap](https://github.com/webbukkit/dynmap) markers. Built for [MC Middle Earth](https://www.mcmiddleearth.com).
 
-## Deployment
-To share warp data between the velocity proxy and a paper backend without duplicating files, symlink
-the backend's warp directory to the corresponding server folder inside the proxy's warp storage:
+Players teleport to named locations (`/warp rivendell`); staff curate public landmarks and players keep
+their own private warps. Warps can span servers — a warp on one backend can be reached from anywhere on
+the network, with the proxy handling the server switch.
+
+---
+
+## How it works
+
+MCME-Warps ships as **one jar that contains two plugins**:
+
+| Plugin | Runs on | Responsibility |
+| --- | --- | --- |
+| `MCME-Warps-Velocity` | the Velocity **proxy** | The source of truth. Owns the warp store, all commands, permissions, teleport routing. |
+| `MCME-Warps-Paper` | each Paper **backend** | Executes teleports and renders warp markers on Dynmap. Holds no authoritative state. |
+
+The two halves talk over Minecraft plugin-message channels. The proxy stores every warp as a small YAML
+file; a backend only ever sees the warps for the world(s) it hosts (via a symlink — see
+[Installation](#installation)).
 
 ```
-plugins/mcme-warps-velocity/warps/<server-name>/  <--  plugins/MCME-Warps-Paper/warps/
+Player ──/warp rivendell──▶ Velocity proxy ──(look up warp, switch server if needed)──▶ Paper backend ──teleport──▶ Player
 ```
 
-## Warp Types
-| Type    | Who can use it                                           | Who can modify it                                   |
-|---------|----------------------------------------------------------|-----------------------------------------------------|
-| Public  | Anyone with `mcmewarps.cmd.warp`                         | Players with `mcmewarps.override.modify`            |
-| Private | Creator, members & players with `mcmewarps.override.use` | Creator or players with `mcmewarps.override.modify` |
+## Features
 
-Private warps have an enforced name prefix of `zzz-<playerName>-`, which keeps them sorted to the
-bottom of warp lists so public warps remain easy to browse.
+- **Public and private warps.** Public warps are curated, network-unique landmarks; private warps are
+  per-player (two players can each have a `home`), with an optional member list.
+- **Cross-server teleports.** A warp knows which server and world it lives on; the proxy moves the player
+  there transparently.
+- **Dynmap integration.** Warps appear as configurable markers grouped into layers, with per-warp icons.
+  Entirely optional — the plugin runs fine without Dynmap.
+- **Per-group private-warp limits**, per-world access control, and custom welcome messages.
+- **Crash-safe storage.** Every change is written to disk before it takes effect in memory, so a crash
+  mid-write can never corrupt or lose the store.
 
-## Commands
-All management commands are subcommands of `/warpmanager` (alias: `/wmanage`).
+## Requirements
 
-| Command                                           | Permission                      | Description                                                  |
-|---------------------------------------------------|---------------------------------|--------------------------------------------------------------|
-| `/warp <name>`                                    | `mcmewarps.cmd.warp`            | Teleport to a warp                                           |
-| `/warp random`                                    | `mcmewarps.cmd.random`          | Teleport to a random public warp                             |
-| `/localwarp <name>`                               | `mcmewarps.cmd.local-warp`      | Teleport to a warp without changing server or world          |
-| `/warpmanager create <name>`                      | `mcmewarps.cmd.create-public`   | Create a public warp at your location                        |
-| `/warpmanager privateCreate <name>`               | `mcmewarps.cmd.create-private`  | Create a private warp at your location                       |
-| `/warpmanager delete <warp>`                      | `mcmewarps.cmd.delete`          | Delete a warp                                                |
-| `/warpmanager rename <warp> <new-name>`           | `mcmewarps.cmd.rename`          | Rename a warp                                                |
-| `/warpmanager move <warp>`                        | `mcmewarps.cmd.move`            | Move a warp to your current location                         |
-| `/warpmanager members <warp> add/remove <player>` | `mcmewarps.cmd.manage-members`  | Add or remove a warp member                                  |
-| `/warpmanager setPublic <warp>`                   | `mcmewarps.cmd.set-public`      | Convert a private warp to public                             |
-| `/warpmanager setPrivate <warp>`                  | `mcmewarps.cmd.set-private`     | Convert a public warp to private                             |
-| `/warpmanager setIcon <warp> <icon>`              | `mcmewarps.cmd.set-icon`        | Set the dynmap icon for a warp                               |
-| `/warpmanager setLayer <warp> <layer>`            | `mcmewarps.cmd.set-layer`       | Set the dynmap layer for a warp                              |
-| `/warpmanager setWelcome <warp> <message>`        | `mcmewarps.cmd.welcome-message` | Set a welcome message shown on teleport (`default` to clear) |
-| `/warpmanager list`                               | `mcmewarps.cmd.list`            | List all public warps                                        |
-| `/warpmanager privateList`                        | `mcmewarps.cmd.list`            | List your private warps                                      |
-| `/warpmanager assets`                             | `mcmewarps.cmd.list`            | List your private warps in the current server                |
-| `/warpmanager reload`                             | `mcmewarps.cmd.reload`          | Reload config & warps from disk                              |
+- A **Velocity 3.4.x** proxy and one or more **Paper 26.x** backend servers.
+- **Java 25** (required by Paper 26.x and by this plugin's build).
+- **Dynmap** on the backends — optional, only needed for map markers.
 
-## Other Permissions
-```sh
-mcmewarps.limits.ignore.private
+## Installation
 
-# Allows using/modifying any warp, not just ones the player owns or is a member of
-mcmewarps.override.use
-mcmewarps.override.modify
+1. Drop the same `MCME-Warps-<version>.jar` into **both** `plugins/` folders: the Velocity proxy and
+   every Paper backend that should render or execute warps.
+2. Start the proxy once to generate `plugins/mcme-warps-velocity/config.yml`, then configure your
+   private-warp limits and Dynmap layers (see the [User Manual](docs/USER_MANUAL.md#configuration)).
+3. **Share each backend's warps with the proxy by symlink.** The proxy is the source of truth; a backend
+   reads its slice of the store through a link, so there is only ever one copy of the data:
 
-# Grants access to a specific paper backend world/server.
-# Since this permission covers all backend servers, give each world a unique name to configure access individually.
-mcmewarps.world-access.[WORLDNAME]
+   ```
+   plugins/MCME-Warps-Paper/warps/   ->   plugins/mcme-warps-velocity/warps/<server-name>/
+   ```
+
+   Link the **per-server** folder (`warps/<server-name>/`), **not** the whole `warps/` directory —
+   linking the whole thing would publish players' private-warp coordinates on the public map.
+4. Grant permissions (see [Permissions](docs/USER_MANUAL.md#permissions)). At minimum, players need
+   `mcmewarps.cmd.warp` and `mcmewarps.world-access.<world>` for each world they may warp into.
+
+## Commands at a glance
+
+`/warp <name>` (alias `/to`) teleports; `/localwarp <name>` (alias `/lwarp`) teleports within the current
+server; everything else lives under `/warpmanager` (alias `/wmanage`).
+
+| Command | Permission | Description |
+| --- | --- | --- |
+| `/warp <name>` | `mcmewarps.cmd.warp` | Teleport to a warp |
+| `/warp random` | `mcmewarps.cmd.random` | Teleport to a random public warp |
+| `/localwarp <name>` | `mcmewarps.cmd.local-warp` | Teleport without changing server |
+| `/wmanage create <name>` | `mcmewarps.cmd.create-public` | Create a public warp here |
+| `/wmanage pcreate <name>` | `mcmewarps.cmd.create-private` | Create a private warp here |
+| `/wmanage list [filters]` | `mcmewarps.cmd.list` | List warps |
+| `/wmanage move <warp>` | `mcmewarps.cmd.move` | Move a warp to your location |
+| `/wmanage rename <warp> <new>` | `mcmewarps.cmd.rename` | Rename a warp |
+| `/wmanage delete <warp>` | `mcmewarps.cmd.delete` | Delete a warp |
+| … | | |
+
+See the **[User Manual](docs/USER_MANUAL.md)** for the complete command, permission, and configuration
+reference.
+
+## Documentation
+
+- **[User Manual](docs/USER_MANUAL.md)** — for server operators and staff: every command, permission,
+  config option, Dynmap setup, and common workflows.
+- **[Developer Manual](docs/DEV_MANUAL.md)** — for contributors: architecture, the storage seam, the
+  plugin-message protocol, how to add a command or message, building, and testing.
+
+## Building from source
+
+```bash
+./gradlew shadowJar
 ```
 
-## Warp Names
-All public and private warps share a single namespace, so names must be unique. Names are
-normalised so players don't need to worry about case, accents, or apostrophes when searching.
+Produces the fat jar at `build/libs/MCME-Warps-<version>.jar` (both plugins, dependencies shaded in).
+Requires a **JDK 25** toolchain. Run the tests with `./gradlew test`. See the
+[Developer Manual](docs/DEV_MANUAL.md#building--testing) for local proxy/backend setup.
 
-### Normalisation rules
-* Lowercase
-* Strip accents
-* Remove apostrophes
+## License
 
-## Visit Counts
-Visit counts are **not** written to disk on every teleport — this is to avoid
-constant disk I/O. Instead, they are saved to YAML on:
-* Proxy shutdown
-* Proxy reload
-* `/warpmanager reload`
+Released under the [GNU General Public License v3.0](LICENSE).
 
-## Developing Locally
-### Setting up a velocity proxy
-1. In your IDE start a velocity server with the `run velocity` task in the gradle toolbar
-2. Inside /run, open `velocity.toml`
-   1. player-info-forwarding-mode: "modern"
-   2. Delete the forced hosts section (optional)
-3. Open `forward.secret` and copy it
+## Credits
 
-### Setting up a paper backend
-1. Open `server.properties`
-   1. Disable `online-mode`
-      > This prevents the server from authenticating players, which the proxy handles instead
-   2. Ensure the server port matches what's in `velocity.toml`
-2. Open `config/paper-global.yml`
-   1. Enable the velocity section
-   2. Set `online-mode: true`
-   3. Paste the forwarding secret
-
-Once everything is running, connect to the proxy with `localhost:<port>`
+Created and maintained by **_Drayz_** for MC Middle Earth.
