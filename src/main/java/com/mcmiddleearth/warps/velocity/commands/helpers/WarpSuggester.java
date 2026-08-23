@@ -28,8 +28,6 @@ public class WarpSuggester {
     private static final JaroWinklerDistance distance = new JaroWinklerDistance();
     private static final NumberFormat compact = NumberFormat.getCompactNumberInstance();
 
-    private static boolean shouldAddQuotes;
-
     private static String normaliseInput(String input) {
         // Can't use trim, since trailing whitespace is used to determine
         // when the user has started to enter a new word
@@ -91,7 +89,7 @@ public class WarpSuggester {
         return tooltip.build();
     }
 
-    private static void buildSuggestions(SuggestionsBuilder builder, Collection<Warp> warps) {
+    private static void buildSuggestions(SuggestionsBuilder builder, Collection<Warp> warps, boolean shouldAddQuotes) {
         for (Warp w : warps) {
             String name = shouldAddQuotes ? "\""+w.getName()+"\"" : w.getName();
             Message tooltip = VelocityBrigadierMessage.tooltip(buildWarpTooltip(w));
@@ -103,14 +101,13 @@ public class WarpSuggester {
         suggest(builder, filter, false);
     }
     public static void suggest(SuggestionsBuilder builder, Predicate<Warp> filter, boolean shouldAddQuotes) {
-        WarpSuggester.shouldAddQuotes = shouldAddQuotes;
         var warps = WarpManager.getWarps(filter);
 
         String rawInput = builder.getRemainingLowerCase();
         if (rawInput.isEmpty()) {
             // empty input -> suggest all warps
             List<Warp> suggestions = warps.values().stream().limit(MAX_SUGGESTIONS).toList();
-            buildSuggestions(builder, suggestions);
+            buildSuggestions(builder, suggestions, shouldAddQuotes);
             return;
         }
         String cleansedInput = normaliseInput(rawInput);
@@ -145,7 +142,7 @@ public class WarpSuggester {
             .orElse(Map.of())
             .values();
 
-        buildSuggestions(builder, suggestions);
+        buildSuggestions(builder, suggestions, shouldAddQuotes);
     }
 
     private static Map<String, Warp> getStartsWithSuggestions(String currentWord, Integer wordIdx,  Map<String, Warp> warps) {

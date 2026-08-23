@@ -6,12 +6,10 @@ import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.velocitypowered.api.command.BrigadierCommand;
@@ -23,8 +21,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 public class Rename {
-    private static final DynamicCommandExceptionType INVALID_PRIVATE_PREFIX =
-        new DynamicCommandExceptionType(name -> new LiteralMessage("A private warp must start with zzz-" + name + "-"));
 
     public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
         return BrigadierCommand.literalArgumentBuilder("rename")
@@ -55,13 +51,10 @@ public class Rename {
 
         final String newName = context.getArgument("new_name", String.class);
 
-        if (currWarp.isOfType(Warp.Type.PRIVATE) && !newName.startsWith("zzz-" + currWarp.getCreatorName() + "-")) {
-            throw INVALID_PRIVATE_PREFIX.create(currWarp.getCreatorName());
-        }
-
+        // Private warps are keyed per-creator now (root-fix #1), so no zzz- prefix is required.
         CommandUtils.validateWarpName(newName);
 
-        return WarpManager.updateWarp(currWarp.getName(),
+        return WarpManager.updateWarp(currWarp,
             warp -> warp.setName(newName),
             sender,
             "<green>Renamed warp '%s' to '%s'".formatted(currWarp.getName(), newName)
@@ -89,13 +82,7 @@ public class Rename {
 
         final String currName = context.getArgument("current_name", String.class);
         builder.suggest(currName);
-
-        Warp warp = WarpManager.getWarp(currName);
-        if (warp != null && warp.isOfType(Warp.Type.PRIVATE)) {
-            final String privatePrefix = "zzz-" + warp.getCreatorName() + "-";
-            builder.suggest(privatePrefix);
-        }
-
+        // (The old zzz- prefix crutch is gone - private warps are keyed per-creator now.)
         return builder.buildFuture();
     }
 }

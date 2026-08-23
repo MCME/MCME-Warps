@@ -69,16 +69,14 @@ public class SetLayer {
         }
 
         final String prevLayerKey = warp.getLayer();
-        warp.setLayer(layerKey);
 
-        try {
-            WarpManager.saveWarp(warp);
-            sender.sendRichMessage("<green> Updated the layer for '%s' from '%s' to '%s'".formatted(warp.getName(), prevLayerKey, layerKey));
-            return Command.SINGLE_SUCCESS;
-        } catch (Exception e) {
-            sender.sendRichMessage("<red>" + e.getMessage());
-            return 0;
-        }
+        // Route through the crash-safe store update (root cause #3): mutate a copy, write, then swap.
+        return WarpManager.updateWarp(
+            warp,
+            w -> w.setLayer(layerKey),
+            sender,
+            " Updated the layer for '%s' from '%s' to '%s'".formatted(warp.getName(), prevLayerKey, layerKey)
+        );
     }
 
     private static CompletableFuture<Suggestions> suggestWarpName(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
@@ -95,13 +93,15 @@ public class SetLayer {
             return Suggestions.empty();
         }
 
-        String input = builder.getRemaining().toUpperCase();
+        // Match case-insensitively: layer keys are lowercase ("major", "default"), so uppercasing
+        // the input meant typing any letter killed all suggestions.
+        String input = builder.getRemaining().toLowerCase();
         List<String> configuredLayers = ConfigManager.getConfig().layerKeys();
         List<String> layerKeys = new ArrayList<>(configuredLayers == null ? List.of() : configuredLayers);
         layerKeys.add("default");
 
         layerKeys.forEach(layerKey -> {
-           if (layerKey.startsWith(input)) {
+           if (layerKey.toLowerCase().startsWith(input)) {
                builder.suggest(layerKey);
            }
         });

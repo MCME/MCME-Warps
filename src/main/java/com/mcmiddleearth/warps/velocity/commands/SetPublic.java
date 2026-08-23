@@ -50,8 +50,7 @@ public class SetPublic {
         Warp warp = CommandUtils.getWarp(context, "warp-name", WarpPredicates.modifiableBy(sender)).value();
         if (warp.isOfType(Warp.Type.PUBLIC)) throw ALREADY_PUBLIC.create();
 
-        // Q: Strip the zzz-<playerName> prefix???
-        return WarpManager.updateWarp(warpName,w -> w.setType(Warp.Type.PUBLIC), sender, "<green>Warp '%s' is now public".formatted(warpName));
+        return WarpManager.updateWarp(warp, w -> w.setType(Warp.Type.PUBLIC), sender, "<green>Warp '%s' is now public".formatted(warpName));
     }
 
     private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
@@ -59,7 +58,9 @@ public class SetPublic {
             return Suggestions.empty();
         }
 
-        WarpSuggester.suggest(builder, warp -> warp.isOfType(Warp.Type.PRIVATE));
+        // Only suggest private warps the sender may actually modify - otherwise this discloses
+        // every player's private warp names to anyone holding the set-public permission.
+        WarpSuggester.suggest(builder, warp -> warp.isOfType(Warp.Type.PRIVATE) && warp.isModifiable(sender));
         return builder.buildFuture();
     }
 }

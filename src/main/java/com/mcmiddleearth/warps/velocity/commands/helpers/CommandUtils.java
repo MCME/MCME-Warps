@@ -9,10 +9,12 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.Dynamic2CommandExceptionType;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.proxy.Player;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 public class CommandUtils {
@@ -36,7 +38,9 @@ public class CommandUtils {
     ) throws CommandSyntaxException {
         final String warpName = context.getArgument(argumentName, String.class);
 
-        Warp warp = WarpManager.getWarp(warpName);
+        // Resolve for the sender: their own private warp shadows a public one (root-fix #1).
+        UUID sender = context.getSource() instanceof Player p ? p.getUniqueId() : null;
+        Warp warp = WarpManager.resolveWarp(warpName, sender);
         if (warp == null) {
             throw WARP_NOT_FOUND.create(warpName);
         }
@@ -70,7 +74,13 @@ public class CommandUtils {
 
         List<Character> badChars = getInvalidChars(warpName);
         if (!badChars.isEmpty()) {
-            throw INVALID_CHARS.create(badChars);
+            // Join plainly ("/ *") instead of letting List.toString show "[/, *]" to the player.
+            StringBuilder invalid = new StringBuilder();
+            for (char c : badChars) {
+                if (invalid.length() > 0) invalid.append(' ');
+                invalid.append(c);
+            }
+            throw INVALID_CHARS.create(invalid.toString());
         }
     }
 

@@ -49,20 +49,45 @@ public class MessageListener {
         Player player = backend.getPlayer();
 
         if (eventChannel.equals(ChannelIdentifiers.MAIN_ID)) {
-            TeleportResult.Response response = TeleportResult.read(event.getData());
+            final TeleportResult.Response response;
+            try {
+                response = TeleportResult.read(event.getData());
+            } catch (MalformedMessageException e) {
+                // Root cause #2: reject a skewed/corrupt message loudly instead of acting on it. The
+                // player has already been teleported by the backend; a bad result just costs the
+                // welcome message + visit count, so don't alarm them - a log line is enough.
+                WarpVelocity.getLogger().warn("Dropped a malformed teleport-result message from backend {}: {}",
+                    backend.getServerInfo().getName(), e.getMessage());
+                return;
+            }
 
-            Warp warp = WarpManager.getWarp(response.warpName());
+            Warp warp = WarpManager.resolveWarp(response.warpName(), player.getUniqueId());
             if (warp != null) {
-                warp.addVisit();
+                // Route the visit through the store so it is batched and flushed via the crash-safe
+                // seam (root cause #3), not persisted on every single teleport.
+                WarpManager.recordVisit(warp);
 
-                final String welcomeMessage = warp.getWelcomeMessage();
-                player.sendRichMessage("<blue>" + welcomeMessage);
+                // getWelcomeMessage() already carries its own formatting (the default starts with
+                // <blue>); don't prepend another <blue> or a custom-coloured message gets a dead tag.
+                player.sendRichMessage(warp.getWelcomeMessage());
             }
         }
         else if (eventChannel.equals(ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID)) {
             String serverName = backend.getServerInfo().getName();
 
-            PlayerLocationMessage.Result result = PlayerLocationMessage.read(event.getData());
+            final PlayerLocationMessage.Result result;
+            try {
+                result = PlayerLocationMessage.read(event.getData());
+            } catch (MalformedMessageException e) {
+                // Root cause #2: reject a skewed/corrupt message. Here the player is actively waiting
+                // for a create/move that now won't happen, so give them honest feedback.
+                WarpVelocity.getLogger().warn("Dropped a malformed player-location message from backend {}: {}",
+                    serverName, e.getMessage());
+                if (player != null) {
+                    player.sendRichMessage("<red>Your warp request failed - the server may be updating. Please try again shortly.");
+                }
+                return;
+            }
             LocationActionSubchannel subchannel = result.subchannel();
 
             switch (subchannel) {
@@ -127,7 +152,7 @@ public class MessageListener {
         // SEC-3: re-check modifiability at the message boundary. Without this a forged MOVE message
         // lets any player relocate ANY warp (drag a public landmark to the void), because updateWarp
         // performs no ownership check of its own and the command-layer check is bypassed.
-        Warp warp = WarpManager.getWarp(result.warpName());
+        Warp warp = WarpManager.resolveWarp(result.warpName(), creator.getUniqueId());
         if (warp == null) {
             creator.sendRichMessage("<red>Warp '%s' does not exist".formatted(result.warpName()));
             return;
@@ -138,7 +163,7 @@ public class MessageListener {
         }
 
         SimpleLocation newLocation = result.warpLocation();
-        WarpManager.updateWarp(result.warpName(), w -> {
+        WarpManager.updateWarp(warp, w -> {
             w.setLocation(newLocation);
             w.setServer(serverName);
         }, creator, "Warp successfully moved");

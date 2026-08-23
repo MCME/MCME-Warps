@@ -54,16 +54,14 @@ public class SetIcon {
 
         final String strWarpIcon = context.getArgument("icon", String.class);
         final WarpIcon warpIcon = getWarpIcon(strWarpIcon);
-        warp.setIcon(warpIcon);
 
-        try {
-            WarpManager.saveWarp(warp);
-            sender.sendRichMessage("<green> Updated the icon for \"%s\" to %s".formatted(warp.getName(), strWarpIcon));
-            return Command.SINGLE_SUCCESS;
-        } catch (Exception e) {
-            sender.sendRichMessage("<red>" + e.getMessage());
-            return 0;
-        }
+        // Route through the crash-safe store update (root cause #3): mutate a copy, write, then swap.
+        return WarpManager.updateWarp(
+            warp,
+            w -> w.setIcon(warpIcon),
+            sender,
+            " Updated the icon for \"%s\" to %s".formatted(warp.getName(), strWarpIcon)
+        );
     }
 
     private static WarpIcon getWarpIcon(String icon) throws CommandSyntaxException {

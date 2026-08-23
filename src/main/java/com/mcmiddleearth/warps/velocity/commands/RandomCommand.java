@@ -27,7 +27,7 @@ public class RandomCommand {
         new SimpleCommandExceptionType(() -> "No warp found with that name");
 
     private static final SimpleCommandExceptionType NO_WARPS =
-        new SimpleCommandExceptionType(() -> "Sorry! You do not have access to any warps.");
+        new SimpleCommandExceptionType(() -> "There are no public warps to send you to right now.");
 
     private static final Set<String> PUBLIC_SERVERS = Set.of("world", "moria");
 

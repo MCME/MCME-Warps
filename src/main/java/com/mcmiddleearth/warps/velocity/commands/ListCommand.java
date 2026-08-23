@@ -92,7 +92,8 @@ public class ListCommand {
         return switch (order.toLowerCase()) {
             case "createdat" -> Comparator.comparing(Warp::getCreatedAt);
             case "visits" -> Comparator.comparing(Warp::getVisits).reversed();
-            default -> Comparator.comparing(Warp::getName);
+            // Public warps first, private last (replaces the retired zzz- name-sort hack), then by name.
+            default -> Comparator.comparing((Warp w) -> w.isOfType(Warp.Type.PRIVATE)).thenComparing(Warp::getName);
         };
     }
 
@@ -162,11 +163,16 @@ public class ListCommand {
                 return false;
             }
             if (filters.containsKey("w")) {
-                String[] values = filters.get("w").split("/"); // world/server
+                // Accept "world" or "world/server"; a bare world (no slash) used to throw
+                // ArrayIndexOutOfBounds inside this predicate and fail the whole command.
+                String[] values = filters.get("w").split("/"); // world[/server]
                 String world = values[0];
-                String server = values[1];
+                String server = values.length > 1 ? values[1] : null;
 
-                if (!warp.getLocation().world().equalsIgnoreCase(world) || !warp.getServer().equalsIgnoreCase(server)) {
+                if (!warp.getLocation().world().equalsIgnoreCase(world)) {
+                    return false;
+                }
+                if (server != null && !warp.getServer().equalsIgnoreCase(server)) {
                     return false;
                 }
             }

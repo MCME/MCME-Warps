@@ -57,7 +57,7 @@ public class Warp extends BaseWarp {
         this.server = otherWarp.server;
         this.location = otherWarp.location;
         this.type = otherWarp.type;
-        this.members = otherWarp.members;
+        this.members = new HashSet<>(otherWarp.members); // deep-copy so the copy is isolated (CORR-A)
         this.visits = otherWarp.visits;
         this.welcomeMessage = otherWarp.welcomeMessage;
         this.createdAt = otherWarp.createdAt;

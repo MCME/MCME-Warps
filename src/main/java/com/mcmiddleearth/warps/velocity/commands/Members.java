@@ -83,31 +83,27 @@ public class Members {
             throw ALREADY_MEMBER.create();
         }
 
-        warp.addMember(targetPlayer.getUniqueId());
-        try {
-            WarpManager.saveWarp(warp);
-            sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been added to warp '%s'".formatted(warp.getName()));
-            targetPlayer.sendRichMessage("<green>You have been added to warp '%s'".formatted(warp.getName()));
-            return Command.SINGLE_SUCCESS;
-        } catch (Exception e) {
-            sender.sendRichMessage("<red>" + e.getMessage());
+        // Route through the crash-safe store update (root cause #3): mutate a copy, write, then swap.
+        if (!WarpManager.updateWarp(warp, w -> w.addMember(targetPlayer.getUniqueId()))) {
+            sender.sendRichMessage("<red>Failed to add the member - please try again.");
             return 0;
         }
+        sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been added to warp '%s'".formatted(warp.getName()));
+        targetPlayer.sendRichMessage("<green>You have been added to warp '%s'".formatted(warp.getName()));
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int removeMember(Warp warp, Player targetPlayer, Player sender) throws CommandSyntaxException {
         Set<UUID> memberIDs = warp.getMembers();
         if (!memberIDs.contains(targetPlayer.getUniqueId())) throw NOT_MEMBER_EXCEPTION.create();
 
-        warp.removeMember(targetPlayer.getUniqueId());
-        try {
-            WarpManager.saveWarp(warp);
-            sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been removed from '%s'".formatted(warp.getName()));
-            return Command.SINGLE_SUCCESS;
-        } catch (Exception e) {
-            sender.sendRichMessage("<red>" + e.getMessage());
+        // Route through the crash-safe store update (root cause #3): mutate a copy, write, then swap.
+        if (!WarpManager.updateWarp(warp, w -> w.removeMember(targetPlayer.getUniqueId()))) {
+            sender.sendRichMessage("<red>Failed to remove the member - please try again.");
             return 0;
         }
+        sender.sendRichMessage("<green>" + targetPlayer.getUsername() + " has been removed from '%s'".formatted(warp.getName()));
+        return Command.SINGLE_SUCCESS;
     }
 
     private static CompletableFuture<Suggestions> suggestPrivateWarps(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
@@ -141,7 +137,7 @@ public class Members {
         }
 
         String warpName = context.getArgument("private-warp", String.class);
-        Warp warp = WarpManager.getWarp(warpName);
+        Warp warp = WarpManager.resolveWarp(warpName, sender.getUniqueId());
         if (warp == null) return Suggestions.empty();
 
         String input = builder.getRemainingLowerCase();

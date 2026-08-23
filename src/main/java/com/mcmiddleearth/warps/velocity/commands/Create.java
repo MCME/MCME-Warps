@@ -42,7 +42,7 @@ public class Create {
         }
 
         final String warpName = context.getArgument("name", String.class);
-        if (WarpManager.warpExists(warpName)) {
+        if (WarpManager.publicWarpExists(warpName)) {
             throw WARP_EXISTS.create();
         }
 

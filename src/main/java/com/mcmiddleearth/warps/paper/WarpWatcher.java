@@ -50,8 +50,13 @@ public class WarpWatcher {
                         }
                     });
             }
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
+            // RuntimeException catches the wrapped register() failure from the forEach above.
+            // Close the just-created service so it isn't leaked when start() bails.
             plugin.getLogger().severe("Failed to register watch service: " + e.getMessage());
+            if (watchService != null) {
+                try { watchService.close(); } catch (IOException ignored) {}
+            }
             return;
         }
 
@@ -107,10 +112,12 @@ public class WarpWatcher {
     }
 
     public void stop() {
+        // Interrupt before closing so the blocked take() unwinds via InterruptedException (which the
+        // loop handles) rather than a ClosedWatchServiceException printed as an uncaught stack trace.
+        if (watcherThread != null) watcherThread.interrupt();
+
         try {
             if (watchService != null) watchService.close();
         } catch (IOException ignored) {}
-
-        if (watcherThread != null) watcherThread.interrupt();
     }
 }

@@ -50,17 +50,13 @@ public class SetWelcome {
         ).value();
         final String welcomeMessage = context.getArgument("welcome-message", String.class);
 
-        if (welcomeMessage.equals(DEFAULT)) warp.setWelcomeMessage(null);
-        else warp.setWelcomeMessage(welcomeMessage);
-
-        try {
-            WarpManager.saveWarp(warp);
-            sender.sendRichMessage("<green>Welcome message updated for '%s' <gray>--></gray> %s".formatted(warp.getName(), welcomeMessage));
-            return Command.SINGLE_SUCCESS;
-        } catch (Exception e) {
-            sender.sendRichMessage("<red>" + e.getMessage());
-            return 0;
-        }
+        // Route through the crash-safe store update (root cause #3): mutate a copy, write, then swap.
+        return WarpManager.updateWarp(
+            warp,
+            w -> w.setWelcomeMessage(welcomeMessage.equals(DEFAULT) ? null : welcomeMessage),
+            sender,
+            "Welcome message updated for '%s' <gray>--></gray> %s".formatted(warp.getName(), welcomeMessage)
+        );
     }
 
     private static CompletableFuture<Suggestions> suggestWarp(CommandContext<CommandSource> context, SuggestionsBuilder builder) {

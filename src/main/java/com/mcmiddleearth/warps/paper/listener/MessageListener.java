@@ -38,7 +38,13 @@ public class MessageListener implements PluginMessageListener {
     }
 
     private void handleLocationRequest(Player player, byte[] bytes) {
-        RequestLocationMessage.Result data = RequestLocationMessage.read(bytes);
+        final RequestLocationMessage.Result data;
+        try {
+            data = RequestLocationMessage.read(bytes);
+        } catch (MalformedMessageException e) {
+            rejectMalformed(player, "location-request", e);
+            return;
+        }
         SimpleLocation location = new SimpleLocation(
             player.getWorld().getName(),
             player.getX(), player.getY(), player.getZ(),
@@ -53,7 +59,13 @@ public class MessageListener implements PluginMessageListener {
     }
 
     private void handleWarpRequest(Player player, byte[] bytes) {
-        var result = TeleportMessage.read(bytes);
+        final TeleportMessage.Result result;
+        try {
+            result = TeleportMessage.read(bytes);
+        } catch (MalformedMessageException e) {
+            rejectMalformed(player, "teleport", e);
+            return;
+        }
         String warpName = result.warpName();
         SimpleLocation data = result.data();
 
@@ -85,15 +97,37 @@ public class MessageListener implements PluginMessageListener {
                     Channels.WARP,
                     TeleportResult.serialise(warpName, TeleportResult.ResultType.SUCCESS)
                 );
+            } else {
+                // Never leave the player with no feedback (UX): teleportAsync can decline
+                // (chunk load failure, cancelled move, world unloaded).
+                player.sendRichMessage("<red>Couldn't warp you there right now - please try again in a moment.");
             }
         });
     }
 
     private void handleMisc(Player player, byte[] bytes) {
-        MiscMessage.Result data = MiscMessage.read(bytes);
+        final MiscMessage.Result data;
+        try {
+            data = MiscMessage.read(bytes);
+        } catch (MalformedMessageException e) {
+            // No player-facing action here, so just log and drop.
+            plugin.getComponentLogger().warn(Component.text(
+                "Dropped a malformed misc message from the proxy: " + e.getMessage()));
+            return;
+        }
 
         if (data.subchannel().equals(MiscMessage.Subchannel.UPDATE_COMMANDS)) {
             player.updateCommands();
         }
+    }
+
+    /**
+     * Root cause #2: a malformed message means the proxy and backend jars are skewed (or the payload
+     * was corrupt). Log it and give the waiting player honest feedback instead of acting on bad data.
+     */
+    private void rejectMalformed(Player player, String kind, MalformedMessageException e) {
+        plugin.getComponentLogger().warn(Component.text(
+            "Dropped a malformed " + kind + " message from the proxy: " + e.getMessage()));
+        player.sendRichMessage("<red>Your warp request failed - the server may be updating. Please try again shortly.");
     }
 }

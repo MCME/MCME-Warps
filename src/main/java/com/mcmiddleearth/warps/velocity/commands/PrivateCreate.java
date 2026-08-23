@@ -21,16 +21,12 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 
-import java.text.MessageFormat;
 import java.util.function.Predicate;
 
 public class PrivateCreate {
 
     private static final SimpleCommandExceptionType WARP_EXISTS =
         new SimpleCommandExceptionType(() -> "A warp already exists with that name");
-
-    private static final SimpleCommandExceptionType MANUAL_PREFIX =
-        new SimpleCommandExceptionType(() -> "Private warps are automatically given the 'zzz' prefix, please just provide the warp name");
 
     private static final Dynamic2CommandExceptionType PRIVATE_WARP_LIMIT_REACHED =
         new Dynamic2CommandExceptionType((limitName, limit) -> () -> "Unable to create another private warp - you have reached the maximum (%s: %s). ".formatted(limitName, limit));
@@ -61,15 +57,12 @@ public class PrivateCreate {
             }
         }
 
-        final String tempWarpName = context.getArgument("name", String.class);
-        if (tempWarpName.startsWith("zzz")) {
-            throw MANUAL_PREFIX.create();
-        }
-        final String privatisedWarpName = MessageFormat.format("zzz-{0}-{1}", sender.getUsername(), tempWarpName);
+        // Private warps are keyed per-creator now (root-fix #1): the name is stored as-is, with no
+        // zzz-<player>- prefix. Two players may each have a private "home".
+        final String warpName = context.getArgument("name", String.class);
+        CommandUtils.validateWarpName(warpName);
 
-        CommandUtils.validateWarpName(privatisedWarpName);
-
-        if (WarpManager.warpExists(privatisedWarpName)) {
+        if (WarpManager.privateWarpExists(sender.getUniqueId(), warpName)) {
             throw WARP_EXISTS.create();
         }
 
@@ -78,7 +71,7 @@ public class PrivateCreate {
         sender.getCurrentServer().ifPresentOrElse(serverConnection -> {
             boolean status = serverConnection.sendPluginMessage(
                 ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID,
-                RequestLocationMessage.serialise(LocationActionSubchannel.CREATE_PRIVATE, privatisedWarpName)
+                RequestLocationMessage.serialise(LocationActionSubchannel.CREATE_PRIVATE, warpName)
             );
 
             if (!status) {
