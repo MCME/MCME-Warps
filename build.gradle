@@ -13,7 +13,7 @@ plugins {
 }
 
 group = 'com.mcmiddleearth'
-version = '1.0.6'
+version = '1.0.7'
 
 repositories {
     mavenCentral()
@@ -32,7 +32,7 @@ repositories {
 // https://docs.gradle.org/current/userguide/dependency_configurations.html
 dependencies {
     // Paper
-    compileOnly("io.papermc.paper:paper-api:26.1.2.build.72-stable")
+    compileOnly("io.papermc.paper:paper-api:26.2.build.126-stable")
     compileOnly("us.dynmap:DynmapCoreAPI:3.7-beta-6") // Runtime comes from the .jar in /plugins
     compileOnly("org.spongepowered:configurate-yaml:4.2.0") // Runtime comes from plugin.yml > libraries
     // Velocity
@@ -48,7 +48,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     // Bukkit's YamlConfiguration is plain SnakeYAML - usable in unit tests with no running server
-    testImplementation("io.papermc.paper:paper-api:26.1.2.build.72-stable")
+    testImplementation("io.papermc.paper:paper-api:26.2.build.126-stable")
 }
 
 tasks.named('test') {
@@ -61,7 +61,7 @@ tasks {
     // Configure the Minecraft version for our task.
     // This is the only required configuration besides applying the plugin.
     // Your plugin's jar (or shadowJar if present) will be used automatically.
-    minecraftVersion("26.1.2")
+    minecraftVersion("26.2")
   }
   runVelocity {
     // Configure the Velocity version for our task.
