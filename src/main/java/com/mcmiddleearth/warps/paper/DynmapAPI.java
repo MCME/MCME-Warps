@@ -22,6 +22,10 @@ public class DynmapAPI implements MapAPI {
 
     public DynmapAPI(DynmapCommonAPI dynmap, List<Layer> layers) {
         this.markerAPI = dynmap.getMarkerAPI();
+        if (this.markerAPI == null) {
+            // Dynmap is enabled but has no marker API to hand out; let the caller degrade.
+            throw new IllegalStateException("Dynmap provided no MarkerAPI");
+        }
         this.backupIcon = markerAPI.getMarkerIcon("greenflag");
 
         for (Layer layer : layers) {

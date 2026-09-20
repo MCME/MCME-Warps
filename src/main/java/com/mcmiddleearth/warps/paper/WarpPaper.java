@@ -50,20 +50,55 @@ public final class WarpPaper extends JavaPlugin {
         saveDefaultConfig();
         isDebugEnabled = getConfig().getBoolean("debug");
 
-        Plugin dynmapPlugin = getServer().getPluginManager().getPlugin("dynmap");
+        MapAPI mapAPI = createMapAPI();
 
-        if (dynmapPlugin instanceof DynmapCommonAPI dynmap) {
-            MapAPI mapAPI = new DynmapAPI(dynmap, loadLayers());
+        if (mapAPI != null) {
             loadMarkers(mapAPI);
 
             WarpWatcher watcher;
             watcher = new WarpWatcher(this, WARPS_DIRECTORY, mapAPI);
             watcher.start();
             this.watcher = watcher;
-        } else {
-            getComponentLogger().warn("Dynmap not found, skipping warp loading");
         }
 
+    }
+
+    /**
+     * Builds the marker publisher for whichever map plugin is available, or returns
+     * {@code null} when there is none - in which case this plugin still enables and simply
+     * publishes no markers.
+     * <p>
+     * The check is {@code isPluginEnabled}, not {@code getPlugin() != null}. Dynmap has no
+     * 26.x build, so it is present on disk, gets loaded, fails to enable, and is left with a
+     * null internal core. Its class still implements {@link DynmapCommonAPI}, so an
+     * {@code instanceof} test passes and the first API call NPEs inside Dynmap - which is
+     * what previously killed {@code onEnable} and got this whole plugin disabled.
+     *
+     * @return a usable {@link MapAPI}, or {@code null} if markers cannot be published
+     */
+    private MapAPI createMapAPI() {
+        if (!getServer().getPluginManager().isPluginEnabled("dynmap")) {
+            getComponentLogger().warn("Dynmap is not enabled - warps will load but no map markers will be published");
+            return null;
+        }
+
+        Plugin dynmapPlugin = getServer().getPluginManager().getPlugin("dynmap");
+        if (!(dynmapPlugin instanceof DynmapCommonAPI dynmap)) {
+            getComponentLogger().warn("The installed dynmap plugin does not expose DynmapCommonAPI - no map markers will be published");
+            return null;
+        }
+
+        try {
+            return new DynmapAPI(dynmap, loadLayers());
+        } catch (Throwable ex) {
+            // Defence in depth: an enabled-but-incompatible Dynmap must not take this
+            // plugin down with it. Throwable, not Exception - an API that moved between
+            // major versions surfaces as NoClassDefFoundError / NoSuchMethodError.
+            getComponentLogger().warn(
+                "Dynmap is enabled but its marker API could not be used ({}: {}) - no map markers will be published",
+                ex.getClass().getSimpleName(), ex.getMessage());
+            return null;
+        }
     }
 
     @Override
