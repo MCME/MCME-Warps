@@ -84,3 +84,7 @@ nb-configuration.xml
 ## OS X
 ##############################
 .DS_Store
+
+# Python bytecode from tools/
+__pycache__/
+*.pyc
