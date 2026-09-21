@@ -2,6 +2,8 @@ package com.mcmiddleearth.warps.velocity.warps;
 
 import com.mcmiddleearth.warps.core.WarpLoader;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.velocity.config.Config;
+import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mojang.brigadier.Command;
 import com.velocitypowered.api.proxy.Player;
 import org.jetbrains.annotations.Nullable;
@@ -157,6 +159,12 @@ public class WarpManager {
 
     private static void loadAllWarpsFromDatabase() {
         WarpVelocity.getLogger().warn("The warps directory does not exist ({}), attempting to load from the warps DB", WARPS_DIRECTORY);
+
+        if (!Config.isSqlConfigured(ConfigManager.getConfig().sql())) {
+            WarpVelocity.getLogger().warn(
+                "No MyWarp database is configured (the sql block is absent or incomplete), skipping the legacy import");
+            return;
+        }
 
         var DB = new MyWarpDBConnector();
         if (!DB.isConnected()) {

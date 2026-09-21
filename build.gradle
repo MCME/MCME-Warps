@@ -49,6 +49,9 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     // Bukkit's YamlConfiguration is plain SnakeYAML - usable in unit tests with no running server
     testImplementation("io.papermc.paper:paper-api:26.2.build.126-stable")
+    // configurate is compileOnly for the plugin (supplied at runtime via plugin.yml > libraries),
+    // so the tests need it declared separately to exercise config deserialisation.
+    testImplementation("org.spongepowered:configurate-yaml:4.2.0")
 }
 
 tasks.named('test') {

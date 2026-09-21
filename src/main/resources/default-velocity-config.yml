@@ -13,6 +13,9 @@ private-warp-limits:
 layer-keys:
   - major
 
+# Optional. Only used to import warps from the legacy MyWarp database, and only when the warps
+# directory does not exist yet. Leave it out entirely unless you need that one-time import; an
+# absent, empty or partly filled block is fine and simply disables the importer.
 #sql:
 #  user:
 #  password:
