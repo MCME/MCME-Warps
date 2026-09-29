@@ -1,0 +1,141 @@
+plugins {
+    id 'java'
+    id 'eclipse'
+    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.2'
+
+    // Fat JAR - Bundles all runtime dependencies into the JAR so they are available when run on the server
+    // Relocates dependencies to avoid conflicts
+    id 'com.gradleup.shadow' version '9.6.1'
+
+    // Useful for quickly testing the plugin runs on paper/velocity
+    id 'xyz.jpenilla.run-paper'  version "3.1.0"
+    id 'xyz.jpenilla.run-velocity'  version "3.1.0"
+}
+
+group = 'com.mcmiddleearth'
+version = '1.0.7'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "papermc-repo"
+        url = "https://repo.papermc.io/repository/maven-public/"
+    }
+    maven {
+        name = "sonatype"
+        url = "https://oss.sonatype.org/content/groups/public/"
+    }
+    maven { url = "https://repo.mikeprimm.com/" } // For dynmap
+    maven { url = "https://maven.enginehub.org/repo/" } // For SquirellId
+}
+
+// https://docs.gradle.org/current/userguide/dependency_configurations.html
+dependencies {
+    // Paper
+    compileOnly("io.papermc.paper:paper-api:26.2.build.126-stable")
+    compileOnly("us.dynmap:DynmapCoreAPI:3.7-beta-6") // Runtime comes from the .jar in /plugins
+    compileOnly("org.spongepowered:configurate-yaml:4.2.0") // Runtime comes from plugin.yml > libraries
+    // Velocity
+    compileOnly("com.velocitypowered:velocity-api:3.4.0")
+    annotationProcessor("com.velocitypowered:velocity-api:3.4.0")
+    implementation("org.apache.commons:commons-text:1.13.1")
+    implementation("com.mysql:mysql-connector-j:9.4.0")
+    implementation('org.enginehub:squirrelid:0.3.2')
+    implementation('de.gesundkrank.fzf4j:fzf4j:0.2.0')
+
+    // Tests
+    testImplementation(platform("org.junit:junit-bom:6.1.3"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    // Bukkit's YamlConfiguration is plain SnakeYAML - usable in unit tests with no running server
+    testImplementation("io.papermc.paper:paper-api:26.2.build.126-stable")
+    // configurate is compileOnly for the plugin (supplied at runtime via plugin.yml > libraries),
+    // so the tests need it declared separately to exercise config deserialisation.
+    testImplementation("org.spongepowered:configurate-yaml:4.2.0")
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    testLogging { events "passed", "skipped", "failed" }
+}
+
+tasks {
+  runServer {
+    // Configure the Minecraft version for our task.
+    // This is the only required configuration besides applying the plugin.
+    // Your plugin's jar (or shadowJar if present) will be used automatically.
+    minecraftVersion("26.2")
+  }
+  runVelocity {
+    // Configure the Velocity version for our task.
+    // This is the only required configuration besides applying the plugin.
+    // Your plugin's jar (or shadowJar if present) will be used automatically.
+    velocityVersion("3.4.0")
+  }
+}
+
+def targetJavaVersion = 25
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release.set(targetJavaVersion)
+    }
+}
+
+shadowJar {
+    archiveClassifier = "" // Removes -all from the end of the generated JAR
+
+    // Prevent conflicts if other plugins use commons.text
+    relocate("org.apache.commons.text", "com.mcmiddleearth.warps.shaded.commons.text")
+    relocate("com.mysql:mysql-connector-j", "com.mcmiddleearth.warps.shaded.mysql-connector-j")
+}
+
+// Replace the normal gradle build with shadowJar
+// prevents the non fat JAR from ever being built
+jar.enabled = false;
+tasks.build {
+    dependsOn tasks.shadowJar
+}
+
+// Dynamically adding the version to the paper plugin.yml
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+// Dynamically adding the version to the velocity plugin
+// A task that copies the template to build/generated/sources/templates, whilst replacing the placeholder {version}
+def templateSource = file('src/main/templates')
+def templateDest = layout.buildDirectory.dir('generated/sources/templates')
+def generateTemplates = tasks.register('generateTemplates', Copy) { task ->
+    def props = [
+            'version': project.version
+    ]
+    task.inputs.properties props
+
+    task.from templateSource
+    task.into templateDest
+    task.expand props
+}
+
+// Instructing gradle to also compile the BuildConstants.java file
+sourceSets.main.java.srcDir(generateTemplates.map { it.outputs })
+
+// When importing the project into an IDE, generate the BuildConstant template - otherwise there would be errors when
+// building the project for the first time
+project.idea.project.settings.taskTriggers.afterSync generateTemplates
+project.eclipse.synchronizationTasks(generateTemplates)

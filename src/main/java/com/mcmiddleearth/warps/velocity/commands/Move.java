@@ -1,0 +1,76 @@
+package com.mcmiddleearth.warps.velocity.commands;
+
+import com.mcmiddleearth.warps.core.messageprotocols.LocationActionSubchannel;
+import com.mcmiddleearth.warps.core.messageprotocols.RequestLocationMessage;
+import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
+import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
+import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
+import com.mcmiddleearth.warps.velocity.warps.Warp;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.velocitypowered.api.command.BrigadierCommand;
+import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.proxy.Player;
+import net.kyori.adventure.text.Component;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
+
+public class Move {
+    public static LiteralArgumentBuilder<CommandSource> register(Predicate<CommandSource> requirement) {
+        return BrigadierCommand.literalArgumentBuilder("move")
+            .requires(requirement)
+            .then(BrigadierCommand.requiredArgumentBuilder("name", StringArgumentType.greedyString())
+                .suggests(Move::suggest)
+                .executes(Move::execute)
+            );
+    }
+
+    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+        CommandSource source = context.getSource();
+        if (!(source instanceof Player sender)) {
+            source.sendMessage(Component.text("Only players can run this command."));
+            return Command.SINGLE_SUCCESS;
+        }
+
+        Warp warp = CommandUtils.getWarp(
+            context,
+            "name",
+            WarpPredicates.modifiableBy(sender)
+        ).value();
+
+        // Send plugin message requesting player's Location
+        sender.getCurrentServer().ifPresentOrElse(serverConnection -> {
+            sender.sendMessage(Component.text("Moving warp..."));
+
+            boolean status = serverConnection.sendPluginMessage(
+                ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID,
+                RequestLocationMessage.serialise(LocationActionSubchannel.MOVE, warp.getName())
+            );
+
+            if (!status) {
+                WarpVelocity.getLogger().error("Failed to send plugin message to paper backend {}", serverConnection.getServerInfo().getName());
+            }
+        }, () -> {
+            sender.sendRichMessage("<red>You are not connected to a server");
+        });
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+        if (!(context.getSource() instanceof Player sender)) {
+            return Suggestions.empty();
+        }
+
+        WarpSuggester.suggest(builder, WarpPredicates.modifiableBy(sender));
+        return builder.buildFuture();
+    }
+}

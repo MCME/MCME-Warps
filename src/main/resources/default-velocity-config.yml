@@ -1,0 +1,24 @@
+# Restrict the number of private warps each player can have
+# - If a player has the `mcmewarps.limits.ignore.private` permission the limit is ignored
+warp-name-max-length: 64
+
+private-warp-limits:
+  default-limit: 2
+  configured:
+#    adventurer: 10
+#    commoner: 50
+
+# This list is used for the setLayer command and it should align with the
+# layers configured in the paper config.yml
+layer-keys:
+  - major
+
+# Optional. Only used to import warps from the legacy MyWarp database, and only when the warps
+# directory does not exist yet. Leave it out entirely unless you need that one-time import; an
+# absent, empty or partly filled block is fine and simply disables the importer.
+#sql:
+#  user:
+#  password:
+#  db-name:
+#  ip:
+#  port:

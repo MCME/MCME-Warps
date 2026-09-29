@@ -1,0 +1,125 @@
+name: build
+
+# Every push and pull request builds and tests the plugin and keeps the jar as
+# an artifact. A v* tag also publishes a GitHub release with the jar and its
+# SHA-256. The MCME dashboard's plugin update check (mcme-plugin-sync,
+# manifests/sources.toml) reads these releases and matches prod's jar against
+# the checksum GitHub publishes, so deploy the release's jar itself.
+#
+# Branches: main/master is the code that runs on production, development holds
+# versions being made or tested, anything else is a feature branch. So a release
+# (v1.2.3) must be on main/master; a pre-release (v1.3.0-rc1), which the update
+# check skips, may also come from development; a tag anywhere else is refused.
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # the whole history, to tell which branches hold a tagged commit
+          fetch-depth: 0
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      # Caches Gradle, and checks gradle-wrapper.jar against Gradle's published checksums
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Build and test
+        run: ./gradlew --no-daemon build
+
+      # MCME jar naming: {PluginName}-{A.B.C}-{SNAPSHOT|DEV|RELEASE}-{commit id}, so two
+      # builds that declare the same version can be told apart on the servers
+      - name: Name the jar
+        id: jar
+        run: |
+          version=$(./gradlew -q --no-daemon properties --property version | sed -n 's/^version: //p')
+          [ -n "$version" ] || { echo "::error::could not read the version from build.gradle"; exit 1; }
+          built="build/libs/MCME-Warps-$version.jar"
+          [ -f "$built" ] || { echo "::error::$built was not built"; ls build/libs; exit 1; }
+          if [[ $GITHUB_REF != refs/tags/v* ]]; then type=DEV
+          elif [[ $version == *-* ]]; then type=SNAPSHOT
+          else type=RELEASE; fi
+          name="MCME-Warps-$version-$type-$(git rev-parse --short=7 HEAD)"
+          mkdir dist
+          cp "$built" "dist/$name.jar"
+          (cd dist && sha256sum "$name.jar" > "$name.jar.sha256")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.jar.outputs.name }}
+          path: dist/${{ steps.jar.outputs.name }}.jar
+          if-no-files-found: error
+
+      - name: Check that the tag matches build.gradle's version
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          VERSION: ${{ steps.jar.outputs.version }}
+        run: |
+          if [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match build.gradle version $VERSION"
+            exit 1
+          fi
+
+      - name: Check that the tag is on the right branch
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          VERSION: ${{ steps.jar.outputs.version }}
+        run: |
+          # production is main where it exists, else master
+          if git show-ref --verify --quiet refs/remotes/origin/main; then production=main; else production=master; fi
+          allowed=("$production")
+          [[ $VERSION == *-* ]] && allowed+=(development)
+          commit=$(git rev-parse HEAD)
+          for branch in "${allowed[@]}"; do
+            if git show-ref --verify --quiet "refs/remotes/origin/$branch" \
+                && git merge-base --is-ancestor "$commit" "origin/$branch"; then
+              echo "$GITHUB_REF_NAME ($commit) is on $branch"
+              exit 0
+            fi
+          done
+          if [[ $VERSION == *-* ]]; then
+            echo "::error::pre-release $GITHUB_REF_NAME is on neither $production nor development: merge the feature branch first"
+          else
+            echo "::error::release $GITHUB_REF_NAME is not on $production, the code that runs on production: merge it into $production first, or tag a pre-release (v$VERSION-rc1) for testing"
+          fi
+          exit 1
+
+      # Notes from CHANGELOG.md's "## [x.y.z]" section when there is one, else GitHub's
+      # generated notes (the merged pull requests). A version with a "-" (1.1.0-rc1) is a
+      # pre-release, which the update check skips.
+      - name: GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.jar.outputs.version }}
+          NAME: ${{ steps.jar.outputs.name }}
+        run: |
+          notes=(--generate-notes)
+          if [ -f CHANGELOG.md ]; then
+            awk -v ver="$VERSION" '/^## \[/{p = ($2 == "[" ver "]")} p' CHANGELOG.md > release-notes.md
+            [ -s release-notes.md ] && notes=(--notes-file release-notes.md)
+          fi
+          pre=()
+          [[ $VERSION == *-* ]] && pre=(--prerelease)
+          gh release create "$GITHUB_REF_NAME" "dist/$NAME.jar" "dist/$NAME.jar.sha256" \
+            --title "version $VERSION" "${notes[@]}" "${pre[@]}"
