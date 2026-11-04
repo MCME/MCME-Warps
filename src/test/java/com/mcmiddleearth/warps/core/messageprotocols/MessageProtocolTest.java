@@ -77,10 +77,25 @@ class MessageProtocolTest {
     }
 
     @Test
-    void aWarpListIsCappedAtTheMaximum() throws MalformedMessageException {
+    void aWarpListStaysUnderTheServerboundPayloadLimit() throws MalformedMessageException {
         java.util.List<WarpListMessage.Entry> many = java.util.stream.IntStream.range(0, WarpListMessage.MAX_WARPS + 5)
             .mapToObj(i -> new WarpListMessage.Entry("w" + i, "main", LOC)).toList();
-        assertEquals(WarpListMessage.MAX_WARPS, WarpListMessage.read(WarpListMessage.list(many)).warps().size());
+        byte[] bytes = WarpListMessage.list(many);
+        assertTrue(bytes.length <= WarpListMessage.MAX_BYTES, "list message is " + bytes.length + " bytes");
+
+        java.util.List<WarpListMessage.Entry> read = WarpListMessage.read(bytes).warps();
+        assertTrue(read.size() > 0 && read.size() < many.size());
+        assertEquals(many.subList(0, read.size()), read);
+        // The next warp would not have fitted (a one-warp list is the header, the count and the warp).
+        int nextWarp = WarpListMessage.list(java.util.List.of(many.get(read.size()))).length - 4;
+        assertTrue(bytes.length + nextWarp > WarpListMessage.MAX_BYTES);
+    }
+
+    @Test
+    void rejectsAWarpListClaimingMoreThanTheMaximum() {
+        byte[] bytes = MessageFrame.write(WarpListMessage.Subchannel.LIST.code(),
+            out -> out.writeShort(WarpListMessage.MAX_WARPS + 1));
+        assertThrows(MalformedMessageException.class, () -> WarpListMessage.read(bytes));
     }
 
     @Test

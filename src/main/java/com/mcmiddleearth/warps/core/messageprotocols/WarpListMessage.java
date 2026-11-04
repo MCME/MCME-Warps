@@ -2,6 +2,9 @@ package com.mcmiddleearth.warps.core.messageprotocols;
 
 import com.mcmiddleearth.warps.core.SimpleLocation;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,15 +15,26 @@ import java.util.List;
  * <li>{@link Subchannel#REQUEST}, backend to proxy: no body. It is about the player whose connection it comes
  * through, so a backend can only ask for the warps of a player it hosts.</li>
  * <li>{@link Subchannel#LIST}, proxy to backend: the warps, each with the server it is on. At most
- * {@link #MAX_WARPS}.</li>
+ * {@link #MAX_BYTES} in all (and so never more than {@link #MAX_WARPS}).</li>
  * </ul>
  * A new channel and opcodes: no existing message's layout changes, and a backend without this channel never
  * sends a request, so {@link MessageFrame#PROTOCOL_VERSION} stays as it is.
  */
 public final class WarpListMessage {
 
-    /** The most warps one list carries, which keeps a message well under the plugin-message size limit. */
+    /** The most warps a list may claim; a reader rejects a larger count. */
     public static final int MAX_WARPS = 1000;
+
+    /**
+     * The most bytes a whole list message may take. The proxy sends it to the backend as a serverbound
+     * plugin message, and the backend (vanilla and Paper) rejects those over 32767 bytes, which would
+     * disconnect the player. An entry takes at least 46 bytes, so this cap is always reached before
+     * {@link #MAX_WARPS}.
+     */
+    public static final int MAX_BYTES = 32767;
+
+    /** The frame header (version, opcode) and the {@code u16} count. */
+    private static final int LIST_OVERHEAD = 4;
 
     private WarpListMessage() {}
 
@@ -59,23 +73,52 @@ public final class WarpListMessage {
         return MessageFrame.write(Subchannel.REQUEST.code(), out -> {});
     }
 
-    /** The list; only the first {@link #MAX_WARPS} warps go. */
+    /**
+     * The list: the warps in order, as many as fit in {@link #MAX_BYTES}. The rest are left out, as is any
+     * warp whose strings can't be encoded.
+     */
     public static byte[] list(List<Entry> warps) {
-        List<Entry> sent = warps.size() > MAX_WARPS ? warps.subList(0, MAX_WARPS) : warps;
+        List<byte[]> sent = new ArrayList<>();
+        int size = LIST_OVERHEAD;
+        for (Entry e : warps) {
+            if (sent.size() == MAX_WARPS) {
+                break;
+            }
+            byte[] encoded = encode(e);
+            if (encoded == null) {
+                continue;
+            }
+            if (size + encoded.length > MAX_BYTES) {
+                break;
+            }
+            sent.add(encoded);
+            size += encoded.length;
+        }
         return MessageFrame.write(Subchannel.LIST.code(), out -> {
             out.writeShort(sent.size());
-            for (Entry e : sent) {
-                out.writeUTF(e.name());
-                out.writeUTF(e.server());
-                SimpleLocation l = e.location();
-                out.writeUTF(l.world());
-                out.writeDouble(l.x());
-                out.writeDouble(l.y());
-                out.writeDouble(l.z());
-                out.writeFloat(l.yaw());
-                out.writeFloat(l.pitch());
+            for (byte[] encoded : sent) {
+                out.write(encoded);
             }
         });
+    }
+
+    /** One entry's bytes, or null if a string is too long for {@code writeUTF}. */
+    private static byte[] encode(Entry e) {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        try (DataOutputStream out = new DataOutputStream(buffer)) {
+            out.writeUTF(e.name());
+            out.writeUTF(e.server());
+            SimpleLocation l = e.location();
+            out.writeUTF(l.world());
+            out.writeDouble(l.x());
+            out.writeDouble(l.y());
+            out.writeDouble(l.z());
+            out.writeFloat(l.yaw());
+            out.writeFloat(l.pitch());
+        } catch (IOException ex) {
+            return null;
+        }
+        return buffer.toByteArray();
     }
 
     public static Result read(byte[] bytes) throws MalformedMessageException {
