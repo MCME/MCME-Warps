@@ -33,8 +33,25 @@ public final class PersonalWarps implements WarpListService, Listener {
     }
 
     @Override
+    public boolean available(Player player) {
+        return player.getListeningPluginChannels().contains(Channels.WARP_LIST);
+    }
+
+    @Override
+    public void warp(Player player, String name) {
+        byte[] message = WarpListMessage.warp(name);
+        if (available(player)) {
+            player.sendPluginMessage(plugin, Channels.WARP_LIST, message);
+        }
+    }
+
+    @Override
     public CompletableFuture<List<PersonalWarp>> privateWarps(Player player) {
         CompletableFuture<List<PersonalWarp>> answer = new CompletableFuture<>();
+        if (!available(player)) {
+            answer.completeExceptionally(new IllegalStateException("no proxy with MCME-Warps' warp list here"));
+            return answer;
+        }
         boolean first = waiting.compute(player.getUniqueId(), (id, list) -> {
             List<CompletableFuture<List<PersonalWarp>>> l = list == null ? new ArrayList<>() : list;
             l.add(answer);

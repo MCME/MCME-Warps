@@ -218,11 +218,13 @@ byte 2..n   the message body
 | `mcme:warp` | `TeleportMessage` (SAME_SERVER / DIFF_SERVER / LOCAL_WARP) | `TeleportResult` (SUCCESS) |
 | `mcme:player-location` | `RequestLocationMessage` (CREATE_PUBLIC / CREATE_PRIVATE / MOVE) | `PlayerLocationMessage` (the requested location) |
 | `mcme:misc` | `MiscMessage` (UPDATE_COMMANDS) | — |
-| `mcme:warp-list` | `WarpListMessage` (LIST: the player's own private warps, with their server) | `WarpListMessage` (REQUEST, no body: for the player it comes through) |
+| `mcme:warp-list` | `WarpListMessage` (LIST: the player's own private warps, with their server) | `WarpListMessage` (REQUEST, no body: for the player it comes through; WARP, a warp's name: the proxy runs `/warp <name>` as that player) |
 
 On the backend, `PersonalWarps` sends the request and is offered to other plugins (a map, a warp book) as
 the `paper.api.WarpListService` Bukkit service: `privateWarps(player)` completes on the main thread with the
-list, or times out after 5 s if the proxy runs an older jar.
+list, or times out after 5 s if the proxy doesn't answer. `warp(player, name)` warps the player as `/warp <name>`
+would: a backend can't run proxy commands itself. `available(player)` says whether the proxy takes these at all
+(it registers the channel only from this version on).
 
 Example: creating a warp is a round trip — the proxy asks the backend "where is this player?"
 (`RequestLocationMessage`), the backend replies with the coordinates (`PlayerLocationMessage`), and the

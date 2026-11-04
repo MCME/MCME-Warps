@@ -9,13 +9,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A player's own private warps, for a map on the backend (channel {@code mcme:warp-list}). The backend can't
- * read private warps itself: only each server's public warps are shared with it, by symlink.
+ * A player's own private warps, for a map on the backend (channel {@code mcme:warp-list}), and warping the player
+ * from there. The backend can't read private warps itself: only each server's public warps are shared with it, by
+ * symlink. Nor can it run {@code /warp}, a proxy command: a backend's commands never reach the proxy.
  * <ul>
  * <li>{@link Subchannel#REQUEST}, backend to proxy: no body. It is about the player whose connection it comes
  * through, so a backend can only ask for the warps of a player it hosts.</li>
  * <li>{@link Subchannel#LIST}, proxy to backend: the warps, each with the server it is on. At most
  * {@link #MAX_BYTES} in all (and so never more than {@link #MAX_WARPS}).</li>
+ * <li>{@link Subchannel#WARP}, backend to proxy: a warp's name. The proxy runs {@code /warp <name>} as the player
+ * whose connection it comes through, with that command's checks, as if they had typed it.</li>
  * </ul>
  * A new channel and opcodes: no existing message's layout changes, and a backend without this channel never
  * sends a request, so {@link MessageFrame#PROTOCOL_VERSION} stays as it is.
@@ -40,7 +43,8 @@ public final class WarpListMessage {
 
     public enum Subchannel {
         REQUEST(1),
-        LIST(2);
+        LIST(2),
+        WARP(3);
 
         private final int code;
 
@@ -66,11 +70,28 @@ public final class WarpListMessage {
     /** One warp in a list: its name, the server it is on and where. */
     public record Entry(String name, String server, SimpleLocation location) {}
 
-    /** A read message: a request (no entries) or a list. */
-    public record Result(Subchannel subchannel, List<Entry> warps) {}
+    /** The longest warp name a WARP message may carry. */
+    public static final int MAX_NAME = 256;
+
+    /** A read message: a request (no entries, no name), a list (no name) or a warp (its name, no entries). */
+    public record Result(Subchannel subchannel, List<Entry> warps, String name) {}
 
     public static byte[] request() {
         return MessageFrame.write(Subchannel.REQUEST.code(), out -> {});
+    }
+
+    /** Asks the proxy to run {@code /warp <name>} as the player. */
+    public static byte[] warp(String name) {
+        if (!validName(name)) {
+            throw new IllegalArgumentException("not a warp name: " + name);
+        }
+        return MessageFrame.write(Subchannel.WARP.code(), out -> out.writeUTF(name));
+    }
+
+    /** One line of 1 to MAX_NAME characters, none of them control characters, not starting with a space. */
+    public static boolean validName(String name) {
+        return name != null && !name.isEmpty() && name.length() <= MAX_NAME && !name.startsWith(" ")
+            && name.chars().noneMatch(Character::isISOControl);
     }
 
     /**
@@ -125,7 +146,14 @@ public final class WarpListMessage {
         return MessageFrame.read(bytes, (opcode, in) -> {
             Subchannel subchannel = Subchannel.fromCode(opcode);
             if (subchannel == Subchannel.REQUEST) {
-                return new Result(subchannel, List.of());
+                return new Result(subchannel, List.of(), null);
+            }
+            if (subchannel == Subchannel.WARP) {
+                String name = in.readUTF();
+                if (!validName(name)) {
+                    throw new MalformedMessageException("not a warp name (" + name.length() + " characters)");
+                }
+                return new Result(subchannel, List.of(), name);
             }
             int count = in.readUnsignedShort();
             if (count > MAX_WARPS) {
@@ -139,7 +167,7 @@ public final class WarpListMessage {
                     in.readDouble(), in.readFloat(), in.readFloat());
                 warps.add(new Entry(name, server, location));
             }
-            return new Result(subchannel, List.copyOf(warps));
+            return new Result(subchannel, List.copyOf(warps), null);
         });
     }
 }

@@ -48,6 +48,29 @@ class MessageProtocolTest {
     void warpListOpcodesAreStable() {
         assertEquals(1, WarpListMessage.Subchannel.REQUEST.code());
         assertEquals(2, WarpListMessage.Subchannel.LIST.code());
+        assertEquals(3, WarpListMessage.Subchannel.WARP.code());
+    }
+
+    @Test
+    void roundTripsAWarpRequest() throws MalformedMessageException {
+        WarpListMessage.Result result = WarpListMessage.read(WarpListMessage.warp("Bag End"));
+
+        assertEquals(WarpListMessage.Subchannel.WARP, result.subchannel());
+        assertEquals("Bag End", result.name());
+        assertTrue(result.warps().isEmpty());
+    }
+
+    @Test
+    void refusesToWriteABadWarpName() {
+        for (String bad : new String[] {"", " home", "a\nb", "x".repeat(WarpListMessage.MAX_NAME + 1)}) {
+            assertThrows(IllegalArgumentException.class, () -> WarpListMessage.warp(bad), bad);
+        }
+    }
+
+    @Test
+    void rejectsAWarpRequestWithABadName() {
+        byte[] bytes = MessageFrame.write(WarpListMessage.Subchannel.WARP.code(), out -> out.writeUTF("home\nop me"));
+        assertThrows(MalformedMessageException.class, () -> WarpListMessage.read(bytes));
     }
 
     // --- round trips: serialise then read returns an equal value for every message type.

@@ -101,16 +101,13 @@ public class MessageListener {
             }
         }
         else if (eventChannel.equals(ChannelIdentifiers.WARP_LIST_ID)) {
-            sendPrivateWarps(backend, event.getData());
+            handleWarpList(backend, event.getData());
         }
         // MISC_ID: consumed above so a client cannot forward it on; the proxy has no incoming MISC handler.
     }
 
-    /**
-     * Answers a backend's request for its player's own private warps (for a map plugin there). Only the
-     * player's own: they're what a bare {@code /warp <name>} from them resolves to first.
-     */
-    private void sendPrivateWarps(ServerConnection backend, byte[] data) {
+    /** A backend's request for its player's own warps, or to warp its player (for a map plugin there). */
+    private void handleWarpList(ServerConnection backend, byte[] data) {
         final WarpListMessage.Result request;
         try {
             request = WarpListMessage.read(data);
@@ -119,9 +116,20 @@ public class MessageListener {
                 backend.getServerInfo().getName(), e.getMessage());
             return;
         }
-        if (request.subchannel() != WarpListMessage.Subchannel.REQUEST) {
-            return;
+        switch (request.subchannel()) {
+            case REQUEST -> sendPrivateWarps(backend);
+            // As if the player had typed it: /warp's own permission checks and messages apply.
+            case WARP -> WarpVelocity.getProxy().getCommandManager()
+                .executeAsync(backend.getPlayer(), "warp " + request.name());
+            case LIST -> { }
         }
+    }
+
+    /**
+     * Answers a backend's request for its player's own private warps. Only the player's own: they're what a
+     * bare {@code /warp <name>} from them resolves to first.
+     */
+    private void sendPrivateWarps(ServerConnection backend) {
         Player player = backend.getPlayer();
         List<WarpListMessage.Entry> warps = WarpManager.getWarps(
                 w -> w.isOfType(Warp.Type.PRIVATE) && w.isCreator(player) && w.isUsable(player))
