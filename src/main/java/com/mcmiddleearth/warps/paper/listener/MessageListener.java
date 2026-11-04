@@ -3,6 +3,7 @@ package com.mcmiddleearth.warps.paper.listener;
 import com.mcmiddleearth.warps.core.Channels;
 import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.core.messageprotocols.*;
+import com.mcmiddleearth.warps.paper.PersonalWarps;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -22,9 +23,11 @@ public class MessageListener implements PluginMessageListener {
     );
 
     private final Plugin plugin;
+    private final PersonalWarps personalWarps;
 
-    public MessageListener(Plugin plugin) {
+    public MessageListener(Plugin plugin, PersonalWarps personalWarps) {
         this.plugin = plugin;
+        this.personalWarps = personalWarps;
     }
 
     @Override
@@ -33,6 +36,7 @@ public class MessageListener implements PluginMessageListener {
             case Channels.WARP -> handleWarpRequest(player, bytes);
             case Channels.PLAYER_LOCATION -> handleLocationRequest(player, bytes);
             case Channels.MISC -> handleMisc(player, bytes);
+            case Channels.WARP_LIST -> handleWarpList(player, bytes);
             default -> plugin.getComponentLogger().warn(Component.text("Channel '" + channel + "' has no handler!"));
         }
     }
@@ -118,6 +122,20 @@ public class MessageListener implements PluginMessageListener {
 
         if (data.subchannel().equals(MiscMessage.Subchannel.UPDATE_COMMANDS)) {
             player.updateCommands();
+        }
+    }
+
+    private void handleWarpList(Player player, byte[] bytes) {
+        final WarpListMessage.Result data;
+        try {
+            data = WarpListMessage.read(bytes);
+        } catch (MalformedMessageException e) {
+            plugin.getComponentLogger().warn(Component.text(
+                "Dropped a malformed warp-list message from the proxy: " + e.getMessage()));
+            return;
+        }
+        if (data.subchannel() == WarpListMessage.Subchannel.LIST) {
+            personalWarps.received(player, data.warps());
         }
     }
 

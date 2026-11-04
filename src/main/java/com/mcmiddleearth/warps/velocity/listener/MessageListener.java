@@ -19,6 +19,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.time.Instant;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
 
 public class MessageListener {
     @Subscribe
@@ -28,7 +31,8 @@ public class MessageListener {
         // Only concern ourselves with the warp plugin channels.
         boolean isWarpChannel = eventChannel.equals(ChannelIdentifiers.MAIN_ID)
             || eventChannel.equals(ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID)
-            || eventChannel.equals(ChannelIdentifiers.MISC_ID);
+            || eventChannel.equals(ChannelIdentifiers.MISC_ID)
+            || eventChannel.equals(ChannelIdentifiers.WARP_LIST_ID);
         if (!isWarpChannel) {
             return;
         }
@@ -96,7 +100,36 @@ public class MessageListener {
                 default -> player.sendMessage(Component.text("Unknown subchannel: " + subchannel, NamedTextColor.RED));
             }
         }
+        else if (eventChannel.equals(ChannelIdentifiers.WARP_LIST_ID)) {
+            sendPrivateWarps(backend, event.getData());
+        }
         // MISC_ID: consumed above so a client cannot forward it on; the proxy has no incoming MISC handler.
+    }
+
+    /**
+     * Answers a backend's request for its player's own private warps (for a map plugin there). Only the
+     * player's own: they're what a bare {@code /warp <name>} from them resolves to first.
+     */
+    private void sendPrivateWarps(ServerConnection backend, byte[] data) {
+        final WarpListMessage.Result request;
+        try {
+            request = WarpListMessage.read(data);
+        } catch (MalformedMessageException e) {
+            WarpVelocity.getLogger().warn("Dropped a malformed warp-list message from backend {}: {}",
+                backend.getServerInfo().getName(), e.getMessage());
+            return;
+        }
+        if (request.subchannel() != WarpListMessage.Subchannel.REQUEST) {
+            return;
+        }
+        Player player = backend.getPlayer();
+        List<WarpListMessage.Entry> warps = WarpManager.getWarps(
+                w -> w.isOfType(Warp.Type.PRIVATE) && w.isCreator(player) && w.isUsable(player))
+            .values().stream()
+            .sorted(Comparator.comparing(w -> w.getName().toLowerCase(Locale.ROOT)))
+            .map(w -> new WarpListMessage.Entry(w.getName(), w.getServer(), w.getLocation()))
+            .toList();
+        backend.sendPluginMessage(ChannelIdentifiers.WARP_LIST_ID, WarpListMessage.list(warps));
     }
 
     private void createWarp(PlayerLocationMessage.Result result, String serverName, Player creator) {

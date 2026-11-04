@@ -3,6 +3,8 @@ package com.mcmiddleearth.warps.paper;
 import com.mcmiddleearth.warps.core.*;
 import com.mcmiddleearth.warps.paper.listener.MessageListener;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.ServicePriority;
+import com.mcmiddleearth.warps.paper.api.WarpListService;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapCommonAPI;
 import org.slf4j.event.Level;
@@ -19,6 +21,7 @@ public final class WarpPaper extends JavaPlugin {
 
     private final Path WARPS_DIRECTORY = this.getDataPath().resolve("warps");
     private WarpWatcher watcher;
+    private PersonalWarps personalWarps;
     private Boolean isDebugEnabled;
 
     public static WarpPaper getInstance() {
@@ -29,13 +32,19 @@ public final class WarpPaper extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
-        var listener = new MessageListener(this);
+        personalWarps = new PersonalWarps(this);
+        getServer().getServicesManager().register(WarpListService.class, personalWarps, this, ServicePriority.Normal);
+        getServer().getPluginManager().registerEvents(personalWarps, this);
+
+        var listener = new MessageListener(this, personalWarps);
         getServer().getMessenger().registerIncomingPluginChannel(this, Channels.WARP, listener);
         getServer().getMessenger().registerIncomingPluginChannel(this, Channels.PLAYER_LOCATION, listener);
         getServer().getMessenger().registerIncomingPluginChannel(this, Channels.MISC, listener);
+        getServer().getMessenger().registerIncomingPluginChannel(this, Channels.WARP_LIST, listener);
 
         getServer().getMessenger().registerOutgoingPluginChannel(this, Channels.WARP);
         getServer().getMessenger().registerOutgoingPluginChannel(this, Channels.PLAYER_LOCATION);
+        getServer().getMessenger().registerOutgoingPluginChannel(this, Channels.WARP_LIST);
 
         final Path dataPath = this.getDataPath();
         if (!Files.exists(dataPath)) {

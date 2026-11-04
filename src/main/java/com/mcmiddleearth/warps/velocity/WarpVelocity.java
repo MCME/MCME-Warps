@@ -69,6 +69,7 @@ public class WarpVelocity {
         proxy.getChannelRegistrar().register(ChannelIdentifiers.MAIN_ID);
         proxy.getChannelRegistrar().register(ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID);
         proxy.getChannelRegistrar().register(ChannelIdentifiers.MISC_ID);
+        proxy.getChannelRegistrar().register(ChannelIdentifiers.WARP_LIST_ID);
 
         ConfigManager.loadConfig();
         WarpManager.loadAllWarps();

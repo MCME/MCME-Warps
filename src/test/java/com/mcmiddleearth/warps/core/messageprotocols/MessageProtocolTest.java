@@ -44,7 +44,51 @@ class MessageProtocolTest {
         assertEquals(1, MiscMessage.Subchannel.UPDATE_COMMANDS.code());
     }
 
+    @Test
+    void warpListOpcodesAreStable() {
+        assertEquals(1, WarpListMessage.Subchannel.REQUEST.code());
+        assertEquals(2, WarpListMessage.Subchannel.LIST.code());
+    }
+
     // --- round trips: serialise then read returns an equal value for every message type.
+
+    @Test
+    void roundTripsAWarpListRequest() throws MalformedMessageException {
+        WarpListMessage.Result result = WarpListMessage.read(WarpListMessage.request());
+
+        assertEquals(WarpListMessage.Subchannel.REQUEST, result.subchannel());
+        assertTrue(result.warps().isEmpty());
+    }
+
+    @Test
+    void roundTripsAWarpList() throws MalformedMessageException {
+        java.util.List<WarpListMessage.Entry> warps = java.util.List.of(
+            new WarpListMessage.Entry("home", "main", LOC),
+            new WarpListMessage.Entry("Bag End's garden", "plotworld", new SimpleLocation("plots", 0, 70, 0, 0, 0)));
+        WarpListMessage.Result result = WarpListMessage.read(WarpListMessage.list(warps));
+
+        assertEquals(WarpListMessage.Subchannel.LIST, result.subchannel());
+        assertEquals(warps, result.warps());
+    }
+
+    @Test
+    void anEmptyWarpListRoundTrips() throws MalformedMessageException {
+        assertEquals(java.util.List.of(), WarpListMessage.read(WarpListMessage.list(java.util.List.of())).warps());
+    }
+
+    @Test
+    void aWarpListIsCappedAtTheMaximum() throws MalformedMessageException {
+        java.util.List<WarpListMessage.Entry> many = java.util.stream.IntStream.range(0, WarpListMessage.MAX_WARPS + 5)
+            .mapToObj(i -> new WarpListMessage.Entry("w" + i, "main", LOC)).toList();
+        assertEquals(WarpListMessage.MAX_WARPS, WarpListMessage.read(WarpListMessage.list(many)).warps().size());
+    }
+
+    @Test
+    void rejectsATruncatedWarpList() {
+        byte[] bytes = WarpListMessage.list(java.util.List.of(new WarpListMessage.Entry("home", "main", LOC)));
+        assertThrows(MalformedMessageException.class,
+            () -> WarpListMessage.read(Arrays.copyOf(bytes, bytes.length - 3)));
+    }
 
     @Test
     void roundTripsARequestLocationMessage() throws MalformedMessageException {

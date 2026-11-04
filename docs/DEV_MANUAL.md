@@ -187,8 +187,8 @@ delegating method on `WarpManager` if commands need it, and add a `WarpStoreTest
 
 ## The plugin-message protocol
 
-The proxy and backend communicate over three channels (`core/Channels.java`): `mcme:warp`,
-`mcme:player-location`, `mcme:misc`. Because the two halves ship in one jar but deploy to separate
+The proxy and backend communicate over four channels (`core/Channels.java`): `mcme:warp`,
+`mcme:player-location`, `mcme:misc`, `mcme:warp-list`. Because the two halves ship in one jar but deploy to separate
 processes, **a version skew between them is a normal operational state**, so the protocol is explicit and
 fail-loud rather than best-effort.
 
@@ -218,6 +218,11 @@ byte 2..n   the message body
 | `mcme:warp` | `TeleportMessage` (SAME_SERVER / DIFF_SERVER / LOCAL_WARP) | `TeleportResult` (SUCCESS) |
 | `mcme:player-location` | `RequestLocationMessage` (CREATE_PUBLIC / CREATE_PRIVATE / MOVE) | `PlayerLocationMessage` (the requested location) |
 | `mcme:misc` | `MiscMessage` (UPDATE_COMMANDS) | — |
+| `mcme:warp-list` | `WarpListMessage` (LIST: the player's own private warps, with their server) | `WarpListMessage` (REQUEST, no body: for the player it comes through) |
+
+On the backend, `PersonalWarps` sends the request and is offered to other plugins (a map, a warp book) as
+the `paper.api.WarpListService` Bukkit service: `privateWarps(player)` completes on the main thread with the
+list, or times out after 5 s if the proxy runs an older jar.
 
 Example: creating a warp is a round trip — the proxy asks the backend "where is this player?"
 (`RequestLocationMessage`), the backend replies with the coordinates (`PlayerLocationMessage`), and the
@@ -273,7 +278,7 @@ modified client can forge plugin messages to the backend. The invariants:
   warps directory, so a crafted warp name can't write outside the store.
 - **SEC-2 — no message forwarding.** The proxy's `MessageListener` consumes every warp-channel message
   *unconditionally* before checking the source, so Velocity never forwards a client-sent message on to a
-  backend (which would let a client impersonate the proxy). All three channels are registered on the proxy
+  backend (which would let a client impersonate the proxy). All four channels are registered on the proxy
   for this reason.
 - **SEC-3 — re-auth at the message boundary.** The create/move handlers re-check permission and ownership
   when a `PlayerLocationMessage` arrives; they don't trust that the originating command was authorised.
