@@ -62,7 +62,7 @@ So a player with a private `home` always warps to their own; a player without on
 if there is one.
 
 To say whose private warp you mean, put the owner's name in front: **`owner:name`**, for example
-`/warp Alfonios:castle`. You need this when a warp of your own or a public warp has the same name, or when
+`/warp Gandalf:castle`. You need this when a warp of your own or a public warp has the same name, or when
 several players have a private warp of that name (the plugin then names the owners). The owner's name is
 not case-sensitive, and a warp name cannot contain a colon, so the two never clash.
 
@@ -71,7 +71,7 @@ somebody's private `Minas Tirith` does not change where your `/warp Minas Tirith
 
 Commands that take something after the warp (`rename`, `setWelcome`, `setIcon`, `setLayer`, `members`)
 need quotes around an `owner:name` address, as they do around a name with spaces:
-`/wmanage rename "Alfonios:castle" keep`. Tab-completion adds the quotes for you.
+`/wmanage rename "Gandalf:castle" keep`. Tab-completion adds the quotes for you.
 
 ### Tab-completion
 
@@ -81,7 +81,7 @@ kept; typing another letter brings up the rest.
 
 Other players' private warps are **not** offered for a plain name, also not to staff who may use all of
 them: there are several times more of them than public warps, and they would bury the list. Type the
-owner's name and a colon (`/warp Alfonios:`) to see that player's private warps.
+owner's name and a colon (`/warp Gandalf:`) to see that player's private warps.
 
 ## Command reference
 
@@ -376,14 +376,14 @@ world, or the command needs more than they may do with that warp (a member can u
 edit it).
 
 **"No warp found" for another player's private warp.** Private warps no longer carry the old
-`zzz-player-` prefix. Write `player:name` instead, for example `/warp Alfonios:castle`. A private warp
+`zzz-player-` prefix. Write `player:name` instead, for example `/warp Gandalf:castle`. A private warp
 you may not use (you are not a member and have no `override.use`) is reported as not found too.
 
 **"3 players have a private warp called …"** — the name alone does not say whose warp you mean. Put the
 owner's name in front, as the message shows.
 
 **Another player's private warps do not show up while typing.** Intended, also for staff: type the owner's
-name and a colon (`/warp Alfonios:`) to list them. See [Tab-completion](#tab-completion).
+name and a colon (`/warp Gandalf:`) to list them. See [Tab-completion](#tab-completion).
 
 **A player can't edit a public warp they made.** Expected: editing existing public warps requires
 `mcmewarps.override.modify`. Public warps are staff-managed after creation.

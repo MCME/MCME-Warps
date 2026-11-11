@@ -25,7 +25,7 @@ Notable changes to MCME-Warps. The release workflow uses a version's section as 
 
 ### Added
 
-- **`owner:name`** addresses another player's private warp, for example `/warp Alfonios:castle`. It is
+- **`owner:name`** addresses another player's private warp, for example `/warp Gandalf:castle`. It is
   needed when a warp of your own or a public warp has the same name, or when several players have a
   private warp of that name; the plugin then names the owners. Lists show such warps as `owner:name`.
 
