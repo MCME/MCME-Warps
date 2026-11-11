@@ -73,7 +73,7 @@ public class Delete {
             return Suggestions.empty();
         }
 
-        WarpSuggester.suggest(builder, WarpPredicates.modifiableBy(sender));
+        WarpSuggester.suggest(builder, sender, WarpPredicates.modifiableBy(sender));
         return builder.buildFuture();
     }
 }

@@ -2,6 +2,7 @@ package com.mcmiddleearth.warps.velocity.commands;
 
 import com.google.common.collect.ImmutableMap;
 import com.mcmiddleearth.warps.core.Utils;
+import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
@@ -93,7 +94,9 @@ public class ListCommand {
             case "createdat" -> Comparator.comparing(Warp::getCreatedAt);
             case "visits" -> Comparator.comparing(Warp::getVisits).reversed();
             // Public warps first, private last (replaces the retired zzz- name-sort hack), then by name.
-            default -> Comparator.comparing((Warp w) -> w.isOfType(Warp.Type.PRIVATE)).thenComparing(Warp::getName);
+            default -> Comparator.comparing((Warp w) -> w.isOfType(Warp.Type.PRIVATE))
+                .thenComparing(Warp::getName)
+                .thenComparing(Warp::getCreatorName, String.CASE_INSENSITIVE_ORDER);
         };
     }
 
@@ -191,8 +194,7 @@ public class ListCommand {
             return true;
         };
 
-        Map<String, Warp> matchingWarps = WarpManager.getWarps(predicate);
-        List<Warp> warps = matchingWarps.values().stream()
+        List<Warp> warps = WarpManager.listWarps(predicate).stream()
             .sorted(comparator)
             .toList();
 
@@ -223,9 +225,13 @@ public class ListCommand {
             Component.text("Warps - page %s/%s (%s)".formatted(pageNumber, totalPages, total), NamedTextColor.GOLD)
         ).appendNewline();
 
+        // Shown, and clicked, as the address this viewer reaches the warp by: several players can
+        // have a private warp of the same name, and a bare name would not say whose this one is.
+        Player viewer = source instanceof Player player ? player : null;
+
         List<Warp> pageWarps = warps.subList(start, end);
         for (Warp warp : pageWarps) {
-            String warpName = warp.getName();
+            String warpName = CommandUtils.addressOf(warp, viewer);
 
             Component warpComponent = Component.text(" -", NamedTextColor.GRAY)
                 .append(
@@ -328,34 +334,35 @@ public class ListCommand {
             // suggest value for lastFlag
             switch (lastFlag) {
                 case "-s" -> {
-                    WarpManager.getWarps(usable).values().stream()
+                    WarpManager.listWarps(usable).stream()
                         .map(Warp::getServer)
                         .filter(s -> s.toLowerCase().startsWith(currentArg))
+                        .distinct()
                         .limit(MAX_SUGGESTIONS)
-                        .collect(Collectors.toSet())
                         .forEach(builder::suggest);
                 }
                 case "-w" -> {
-                    WarpManager.getWarps(usable).values().stream()
+                    WarpManager.listWarps(usable).stream()
                         .map(warp -> warp.getLocation().world() + "/" + warp.getServer())
                         .filter(pair -> pair.toLowerCase().startsWith(currentArg))
+                        .distinct()
                         .limit(MAX_SUGGESTIONS)
-                        .collect(Collectors.toSet())
                         .forEach(builder::suggest);
                 }
                 case "-c" -> {
-                    WarpManager.getWarps(usable).values().stream()
+                    WarpManager.listWarps(usable).stream()
                         .map(Warp::getCreatorName)
                         .filter(c -> c.toLowerCase().startsWith(currentArg))
+                        .distinct()
                         .limit(MAX_SUGGESTIONS)
-                        .collect(Collectors.toSet())
                         .forEach(builder::suggest);
                 }
                 case "-n" -> {
-                    WarpManager.getWarpNames(usable).values().stream()
+                    WarpManager.listWarps(usable).stream()
+                        .map(Warp::getName)
                         .filter(n -> n.toLowerCase().contains(currentArg))
+                        .distinct()
                         .limit(MAX_SUGGESTIONS)
-                        .toList()
                         .forEach(builder::suggest);
                 }
                 case "-v" -> {

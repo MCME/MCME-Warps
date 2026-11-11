@@ -5,10 +5,12 @@ import com.mcmiddleearth.warps.core.SimpleLocation;
 import com.mcmiddleearth.warps.velocity.ChannelIdentifiers;
 import com.mcmiddleearth.warps.velocity.Permission;
 import com.mcmiddleearth.warps.velocity.WarpVelocity;
+import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.config.Config;
 import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
+import com.mcmiddleearth.warps.velocity.warps.WarpLookup;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;
@@ -61,8 +63,11 @@ public class MessageListener {
                 return;
             }
 
-            Warp warp = WarpManager.resolveWarp(response.warpName(), player.getUniqueId());
-            if (warp != null) {
+            // The backend echoes the address the teleport was sent with (owner:name for a private
+            // warp of another player), so this finds the warp the player was actually sent to.
+            if (CommandUtils.findWarp(player, response.warpName(), WarpPredicates.usableBy(player))
+                    instanceof WarpLookup.Found found) {
+                Warp warp = found.warp();
                 // Route the visit through the store so it is batched and flushed via the crash-safe
                 // seam (root cause #3), not persisted on every single teleport.
                 WarpManager.recordVisit(warp);
@@ -152,15 +157,17 @@ public class MessageListener {
         // SEC-3: re-check modifiability at the message boundary. Without this a forged MOVE message
         // lets any player relocate ANY warp (drag a public landmark to the void), because updateWarp
         // performs no ownership check of its own and the command-layer check is bypassed.
-        Warp warp = WarpManager.resolveWarp(result.warpName(), creator.getUniqueId());
-        if (warp == null) {
-            creator.sendRichMessage("<red>Warp '%s' does not exist".formatted(result.warpName()));
-            return;
-        }
-        if (!warp.isModifiable(creator)) {
+        WarpLookup.Result lookup =
+            CommandUtils.findWarp(creator, result.warpName(), WarpPredicates.modifiableBy(creator));
+        if (lookup instanceof WarpLookup.NotAllowed) {
             creator.sendRichMessage("<red>You do not have access to modify that warp");
             return;
         }
+        if (!(lookup instanceof WarpLookup.Found found)) {
+            creator.sendRichMessage("<red>Warp '%s' does not exist".formatted(result.warpName()));
+            return;
+        }
+        Warp warp = found.warp();
 
         SimpleLocation newLocation = result.warpLocation();
         WarpManager.updateWarp(warp, w -> {

@@ -64,7 +64,7 @@ public class SetWelcome {
             return Suggestions.empty();
         }
 
-        WarpSuggester.suggest(builder, WarpPredicates.modifiableBy(sender), true);
+        WarpSuggester.suggest(builder, sender, WarpPredicates.modifiableBy(sender), true);
         return builder.buildFuture();
     }
 

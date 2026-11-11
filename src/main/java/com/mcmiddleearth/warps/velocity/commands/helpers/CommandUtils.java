@@ -2,6 +2,7 @@ package com.mcmiddleearth.warps.velocity.commands.helpers;
 
 import com.mcmiddleearth.warps.velocity.config.ConfigManager;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
+import com.mcmiddleearth.warps.velocity.warps.WarpLookup;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.context.CommandContext;
@@ -10,12 +11,13 @@ import com.mojang.brigadier.exceptions.Dynamic2CommandExceptionType;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class CommandUtils {
 
@@ -24,6 +26,9 @@ public class CommandUtils {
 
     private static final DynamicCommandExceptionType NOT_ALLOWED =
         new DynamicCommandExceptionType((warpName) -> new LiteralMessage("You do not have access to warp " + warpName));
+
+    private static final DynamicCommandExceptionType AMBIGUOUS =
+        new DynamicCommandExceptionType(message -> () -> (String) message);
 
     private CommandUtils() { }
 
@@ -37,19 +42,52 @@ public class CommandUtils {
         Predicate<Warp> accessPredicate
     ) throws CommandSyntaxException {
         final String warpName = context.getArgument(argumentName, String.class);
+        Player sender = context.getSource() instanceof Player p ? p : null;
 
-        // Resolve for the sender: their own private warp shadows a public one (root-fix #1).
-        UUID sender = context.getSource() instanceof Player p ? p.getUniqueId() : null;
-        Warp warp = WarpManager.resolveWarp(warpName, sender);
-        if (warp == null) {
-            throw WARP_NOT_FOUND.create(warpName);
+        return switch (findWarp(sender, warpName, accessPredicate)) {
+            case WarpLookup.Found found -> new ArgResult<>(warpName, found.warp());
+            case WarpLookup.NotAllowed refused -> throw NOT_ALLOWED.create(refused.warp().getName());
+            case WarpLookup.Ambiguous ambiguous -> throw AMBIGUOUS.create(whoseDoYouMean(ambiguous.candidates()));
+            case WarpLookup.NotFound notFound -> throw WARP_NOT_FOUND.create(warpName);
+        };
+    }
+
+    /**
+     * What {@code input} typed by {@code sender} reaches, for a command that needs {@code allowed} of
+     * the warp. A private warp of somebody else only counts when the sender may use or modify it (a
+     * member, or staff with an override permission); to everyone else it does not exist.
+     *
+     * @param sender the player, or null for the console, which may see every warp
+     */
+    public static WarpLookup.Result findWarp(@Nullable Player sender, String input, Predicate<Warp> allowed) {
+        if (sender == null) {
+            return WarpManager.findWarp(input, null, warp -> true, allowed);
         }
+        return WarpManager.findWarp(
+            input,
+            sender.getUniqueId(),
+            warp -> warp.isUsable(sender) || warp.isModifiable(sender),
+            allowed
+        );
+    }
 
-        if (!accessPredicate.test(warp)) {
-            throw NOT_ALLOWED.create(warp.getName());
-        }
+    /** What {@code viewer} types to reach {@code warp}: its name, or owner:name for somebody else's private warp. */
+    public static String addressOf(Warp warp, @Nullable Player viewer) {
+        return WarpLookup.address(warp, viewer == null ? null : viewer.getUniqueId());
+    }
 
-        return new ArgResult<>(warpName, warp);
+    private static final int MAX_OWNERS_NAMED = 8;
+
+    private static String whoseDoYouMean(List<Warp> sameNamedWarps) {
+        String name = sameNamedWarps.get(0).getName();
+        String owners = sameNamedWarps.stream()
+            .limit(MAX_OWNERS_NAMED)
+            .map(Warp::getCreatorName)
+            .collect(Collectors.joining(", "));
+        if (sameNamedWarps.size() > MAX_OWNERS_NAMED) owners += ", ...";
+
+        return "%d players have a private warp called '%s' (%s). Put the owner's name in front, for example %s"
+            .formatted(sameNamedWarps.size(), name, owners, WarpLookup.address(sameNamedWarps.get(0), null));
     }
 
     private static final Dynamic2CommandExceptionType TOO_LONG =

@@ -4,10 +4,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -23,8 +25,8 @@ import java.util.stream.Stream;
  * <p>
  * <b>Namespacing (root-fix #1):</b> public warps are keyed by normalised name in one global map
  * (they are curated, network-unique landmarks); private warps are keyed by {@code (creatorId, name)}
- * so two players may each own a {@code home}. A bare-name lookup ({@code /warp <name>}) resolves the
- * sender's own private warp first, then falls through to public.
+ * so two players may each own a {@code home}. What a name typed by a player reaches (their own
+ * private warp, then a public one, then somebody else's they may use) is decided by {@link WarpLookup}.
  * <p>
  * <b>Thread safety (CONC-1):</b> every map is a {@link ConcurrentHashMap} and compound operations use
  * atomic primitives. <b>Crash safety (CORR-A / CORR-B):</b> a warp is only added/updated in memory
@@ -90,13 +92,18 @@ public class WarpStore {
         return m == null ? null : m.get(key(name));
     }
 
-    /** Resolve a bare name for {@code sender}: their own private warp shadows a public one. */
-    public @Nullable Warp resolve(String name, @Nullable UUID sender) {
-        if (sender != null) {
-            Warp priv = getPrivate(sender, name);
-            if (priv != null) return priv;
+    /**
+     * Every private warp with this name, whoever owns it. What a typed name reaches for a given player
+     * is decided by {@link WarpLookup}, which also applies who may see and use each of them.
+     */
+    public List<Warp> getPrivateByName(String name) {
+        String k = key(name);
+        List<Warp> found = new ArrayList<>();
+        for (Map<String, Warp> ownersWarps : snapshot.privateWarps().values()) {
+            Warp warp = ownersWarps.get(k);
+            if (warp != null) found.add(warp);
         }
-        return getPublic(name);
+        return found;
     }
 
     public boolean publicExists(String name) {
@@ -108,15 +115,20 @@ public class WarpStore {
         return m != null && m.containsKey(key(name));
     }
 
-    public Map<String, Warp> getWarps(Predicate<Warp> filter) {
-        // Keyed by normalised name; a rare same-name clash in the filtered view keeps the first.
-        return allStream(snapshot).filter(filter)
-            .collect(Collectors.toMap(w -> key(w.getName()), w -> w, (a, b) -> a));
+    /** Every warp that passes {@code filter}, including same-named private warps of different players. */
+    public List<Warp> listWarps(Predicate<Warp> filter) {
+        return allStream(snapshot).filter(filter).collect(Collectors.toList());
     }
 
-    public Map<String, String> getWarpNames(Predicate<Warp> filter) {
+    /**
+     * The matching warps keyed by normalised name, ONE per name: of several warps that share a name
+     * (a public warp and private ones, or private warps of different players) only the first is kept.
+     * Fine for counting one player's own warps or for public warps, whose names are unique; anything
+     * shown to a player has to use {@link #listWarps} instead, or warps go missing from it.
+     */
+    public Map<String, Warp> getWarps(Predicate<Warp> filter) {
         return allStream(snapshot).filter(filter)
-            .collect(Collectors.toMap(w -> key(w.getName()), Warp::getName, (a, b) -> a));
+            .collect(Collectors.toMap(w -> key(w.getName()), w -> w, (a, b) -> a));
     }
 
     public Collection<Warp> all() {
@@ -273,6 +285,29 @@ public class WarpStore {
                 // leftover old file; not fatal
             }
         }
+    }
+
+    /**
+     * Records a player's current name on every warp of theirs that still carries an older one, and
+     * writes it to disk. Other players reach a private warp as {@code owner:name}, so the recorded
+     * name has to follow a rename - also across a restart, which is why this goes through
+     * {@link #update} and not a setter on the live warp.
+     *
+     * @return the number of warps renamed; a warp that could not be saved keeps its old name and is
+     *         reported to {@code onError}
+     */
+    public int renameCreator(UUID creator, String currentName, BiConsumer<Warp, Exception> onError) {
+        List<Warp> outdated = listWarps(w -> creator.equals(w.getCreatorId()) && !currentName.equals(w.getCreatorName()));
+        int renamed = 0;
+        for (Warp warp : outdated) {
+            try {
+                update(warp, w -> w.setCreatorName(currentName));
+                renamed++;
+            } catch (WarpStoreException e) {
+                onError.accept(warp, e);
+            }
+        }
+        return renamed;
     }
 
     /**

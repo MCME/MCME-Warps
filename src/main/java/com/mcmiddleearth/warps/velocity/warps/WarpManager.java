@@ -39,9 +39,17 @@ public class WarpManager {
         return store.privateExists(creator, warpName);
     }
 
-    /** Resolve a bare name for {@code sender}: their own private warp shadows a public one (root-fix #1). */
-    public static @Nullable Warp resolveWarp(String warpName, @Nullable java.util.UUID sender) {
-        return store.resolve(warpName, sender);
+    /**
+     * What a name typed by {@code sender} reaches: their own private warp, then a public one, then
+     * somebody else's private warp they may see (also written {@code owner:name}). See {@link WarpLookup}.
+     */
+    public static WarpLookup.Result findWarp(
+        String input,
+        @Nullable java.util.UUID sender,
+        Predicate<Warp> visible,
+        Predicate<Warp> allowed
+    ) {
+        return WarpLookup.find(store, input, sender, visible, allowed);
     }
 
     public static @Nullable Warp getPublicWarp(String warpName) {
@@ -52,10 +60,12 @@ public class WarpManager {
         return store.getPrivate(creator, warpName);
     }
 
-    public static Map<String, String> getWarpNames(Predicate<Warp> filter) {
-        return store.getWarpNames(filter);
+    /** Every warp that passes the filter. Use this for anything shown to a player. */
+    public static List<Warp> listWarps(Predicate<Warp> filter) {
+        return store.listWarps(filter);
     }
 
+    /** One warp per name - see {@link WarpStore#getWarps}; same-named warps of other players are dropped. */
     public static Map<String, Warp> getWarps(Predicate<Warp> filter) {
         return store.getWarps(filter);
     }
@@ -104,6 +114,15 @@ public class WarpManager {
             WarpVelocity.getLogger()
                 .error("An error occurred whilst deleting the warp file for {} - {}", warp.getName(), e.getMessage());
             throw new Exception(e.getMessage());
+        }
+    }
+
+    /** Records a player's current name on their warps, in memory and on disk, so {@code owner:name} follows a rename. */
+    public static void renameCreator(java.util.UUID creator, String currentName) {
+        int renamed = store.renameCreator(creator, currentName, (warp, error) -> WarpVelocity.getLogger()
+            .error("Failed to record the owner's new name on warp {} - {}", warp.getName(), error.getMessage()));
+        if (renamed > 0) {
+            WarpVelocity.getLogger().info("Recorded the name {} on {} warp(s) of that player", currentName, renamed);
         }
     }
 
