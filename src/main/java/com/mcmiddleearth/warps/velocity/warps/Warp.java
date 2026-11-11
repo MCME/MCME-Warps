@@ -49,13 +49,19 @@ public class Warp extends BaseWarp {
         this.createdAt = createdAt.toString();
     }
 
-    // Copy Constructor
+    /**
+     * Copy constructor. Every change to a warp is made on a copy that then replaces the original
+     * ({@link WarpStore#update}), so a field missing here is a field every edit resets - as happened
+     * to icon and layer in 1.0.7. WarpCopyTest fails when a field is not carried over.
+     */
     public Warp(Warp otherWarp) {
         this.creatorId = otherWarp.creatorId;
         this.creatorName = otherWarp.creatorName;
         this.name = otherWarp.name;
         this.server = otherWarp.server;
         this.location = otherWarp.location;
+        this.icon = otherWarp.icon;
+        this.layer = otherWarp.layer;
         this.type = otherWarp.type;
         this.members = new HashSet<>(otherWarp.members); // deep-copy so the copy is isolated (CORR-A)
         this.visits = otherWarp.visits;

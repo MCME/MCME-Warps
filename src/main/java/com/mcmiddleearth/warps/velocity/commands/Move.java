@@ -52,7 +52,8 @@ public class Move {
 
             boolean status = serverConnection.sendPluginMessage(
                 ChannelIdentifiers.PLAYER_LOCATION_CHANNEL_ID,
-                RequestLocationMessage.serialise(LocationActionSubchannel.MOVE, warp.getName())
+                // the backend sends this back with the location; the proxy then looks the warp up again
+                RequestLocationMessage.serialise(LocationActionSubchannel.MOVE, CommandUtils.addressOf(warp, sender))
             );
 
             if (!status) {
@@ -70,7 +71,7 @@ public class Move {
             return Suggestions.empty();
         }
 
-        WarpSuggester.suggest(builder, WarpPredicates.modifiableBy(sender));
+        WarpSuggester.suggest(builder, sender, WarpPredicates.modifiableBy(sender));
         return builder.buildFuture();
     }
 }

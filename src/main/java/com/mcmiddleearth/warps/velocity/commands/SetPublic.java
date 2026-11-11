@@ -60,7 +60,7 @@ public class SetPublic {
 
         // Only suggest private warps the sender may actually modify - otherwise this discloses
         // every player's private warp names to anyone holding the set-public permission.
-        WarpSuggester.suggest(builder, warp -> warp.isOfType(Warp.Type.PRIVATE) && warp.isModifiable(sender));
+        WarpSuggester.suggest(builder, sender, warp -> warp.isOfType(Warp.Type.PRIVATE) && warp.isModifiable(sender));
         return builder.buildFuture();
     }
 }

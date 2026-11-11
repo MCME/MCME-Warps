@@ -59,7 +59,7 @@ public class SetPrivate {
             return Suggestions.empty();
         }
 
-        WarpSuggester.suggest(builder, warp -> warp.isOfType(Warp.Type.PUBLIC));
+        WarpSuggester.suggest(builder, sender, warp -> warp.isOfType(Warp.Type.PUBLIC));
         return builder.buildFuture();
     }
 }

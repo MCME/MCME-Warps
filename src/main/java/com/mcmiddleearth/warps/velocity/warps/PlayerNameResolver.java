@@ -51,11 +51,11 @@ public class PlayerNameResolver {
 
             if (profile == null || !profile.getName().equals(username)) {
                 cache.put(new Profile(uuid, username));
-                // Update any warps owned by this player
-                WarpManager
-                    .getWarps(w -> w.getCreatorId().equals(uuid))
-                    .forEach((s, warp) -> warp.setCreatorName(username));
             }
+            // Other players reach this player's private warps as "owner:name", so their warps have to
+            // carry the current name. Checked on every login, not only when the cache above changes:
+            // a rename used to be applied in memory only, so warp files can still hold an older name.
+            WarpManager.renameCreator(uuid, username);
         });
     }
 }

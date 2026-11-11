@@ -111,27 +111,73 @@ class WarpStoreTest {
     }
 
     @Test
-    void resolvePrefersTheSendersPrivateWarpOverAPublicOne() throws Exception {
-        store.add(pub("home"));
-        store.add(priv(ALICE, "home"));
-        assertSame(store.getPrivate(ALICE, "home"), store.resolve("home", ALICE),
-            "your own private warp shadows a public one of the same name");
-    }
-
-    @Test
-    void resolveFallsThroughToPublicWhenTheSenderHasNoPrivateWarp() throws Exception {
-        store.add(pub("home"));
-        assertSame(store.getPublic("home"), store.resolve("home", BOB),
-            "a player without a private 'home' gets the public one");
-        assertSame(store.getPublic("home"), store.resolve("home", null),
-            "a null sender (console) resolves to public");
-    }
-
-    @Test
     void aPrivateWarpAndAPublicWarpOfTheSameNameCoexist() throws Exception {
         store.add(pub("home"));
         store.add(priv(ALICE, "home"));           // must NOT collide - different namespaces
         assertEquals(2, store.size());
+    }
+
+    // What a typed name reaches (own private, public, somebody else's) is covered by WarpLookupTest.
+
+    @Test
+    void listWarpsKeepsEveryPlayersWarpOfTheSameName() throws Exception {
+        store.add(pub("home"));
+        store.add(priv(ALICE, "home"));
+        store.add(priv(BOB, "home"));
+        assertEquals(3, store.listWarps(w -> true).size(), "a list of all warps shows all three 'home's");
+        assertEquals(2, store.listWarps(w -> w.isOfType(Warp.Type.PRIVATE)).size());
+    }
+
+    @Test
+    void getPrivateByNameFindsEveryOwnersWarpOfThatName() throws Exception {
+        store.add(pub("home"));
+        store.add(priv(ALICE, "Home"));
+        store.add(priv(BOB, "home"));
+        store.add(priv(BOB, "tower"));
+        assertEquals(2, store.getPrivateByName("HOME").size(),
+            "both private 'home's, whatever the case - and not the public one");
+        assertTrue(store.getPrivateByName("nothing").isEmpty());
+    }
+
+    // --- a player's new name: "owner:name" has to keep working after a rename ----------------
+
+    @Test
+    void renameCreatorWritesTheNewNameToEveryWarpOfThatPlayer() throws Exception {
+        store.add(priv(ALICE, "home"));
+        store.add(pub("Rivendell"));              // pub() warps are Alice's too
+        store.add(priv(BOB, "home"));
+        io.writeLog.clear();
+
+        int renamed = store.renameCreator(ALICE, "Alicia", (w, e) -> { throw new AssertionError(e); });
+
+        assertEquals(2, renamed);
+        assertEquals("Alicia", store.getPrivate(ALICE, "home").getCreatorName());
+        assertEquals("Alicia", store.getPublic("Rivendell").getCreatorName());
+        assertEquals("someone", store.getPrivate(BOB, "home").getCreatorName(), "other players' warps are untouched");
+        assertEquals(2, io.writeLog.size(), "the new name is written to disk, so it survives a restart");
+    }
+
+    @Test
+    void renameCreatorWritesNothingWhenTheNameIsAlreadyRight() throws Exception {
+        store.add(pub("Rivendell"));              // already recorded as "Alice"
+        io.writeLog.clear();
+
+        assertEquals(0, store.renameCreator(ALICE, "Alice", (w, e) -> { throw new AssertionError(e); }));
+        assertTrue(io.writeLog.isEmpty());
+    }
+
+    @Test
+    void renameCreatorReportsAWarpItCouldNotSaveAndKeepsItsOldName() throws Exception {
+        store.add(priv(ALICE, "home"));
+        io.failWrite = true;
+        List<String> failed = new ArrayList<>();
+
+        int renamed = store.renameCreator(ALICE, "Alicia", (w, e) -> failed.add(w.getName()));
+
+        assertEquals(0, renamed);
+        assertEquals(List.of("home"), failed);
+        assertEquals("someone", store.getPrivate(ALICE, "home").getCreatorName(),
+            "memory and disk still agree on the old name");
     }
 
     // --- update: rename, move, type change ---------------------------------

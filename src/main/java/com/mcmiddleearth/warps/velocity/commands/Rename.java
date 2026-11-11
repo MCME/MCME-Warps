@@ -4,6 +4,7 @@ import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpPredicates;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
+import com.mcmiddleearth.warps.velocity.warps.WarpLookup;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -66,7 +67,7 @@ public class Rename {
             return Suggestions.empty();
         }
 
-        WarpSuggester.suggest(builder, WarpPredicates.modifiableBy(sender), true);
+        WarpSuggester.suggest(builder, sender, WarpPredicates.modifiableBy(sender), true);
         return builder.buildFuture();
     }
 
@@ -80,9 +81,11 @@ public class Rename {
             return Suggestions.empty();
         }
 
+        // Start from the warp's own name: current_name may be an owner:name address, which is not a name.
         final String currName = context.getArgument("current_name", String.class);
-        builder.suggest(currName);
-        // (The old zzz- prefix crutch is gone - private warps are keyed per-creator now.)
+        if (CommandUtils.findWarp(sender, currName, WarpPredicates.modifiableBy(sender)) instanceof WarpLookup.Found found) {
+            builder.suggest(found.warp().getName());
+        }
         return builder.buildFuture();
     }
 }

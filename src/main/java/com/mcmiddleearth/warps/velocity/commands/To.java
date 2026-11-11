@@ -34,7 +34,9 @@ public final class To {
         "Dol Amroth",
         "Lond Daer Enedh"
     );
-    private static final Collection<String> ValidatedSuggestedWarpNames = WarpManager.getWarpNames(w -> SuggestedWarpNames.contains(w.getName())).values();
+    private static final Collection<String> ValidatedSuggestedWarpNames = WarpManager
+        .listWarps(w -> w.isOfType(Warp.Type.PUBLIC) && SuggestedWarpNames.contains(w.getName()))
+        .stream().map(Warp::getName).toList();
 
     public static RequiredArgumentBuilder<CommandSource, String> register(Predicate<CommandSource> requirement) {
             return BrigadierCommand.requiredArgumentBuilder("destination", StringArgumentType.greedyString())
@@ -66,21 +68,26 @@ public final class To {
         final String currServerName = currServer.getServer().getServerInfo().getName();
         final String targetServerName = warp.getServer();
 
+        // The backend sends this back once the player has arrived; the proxy then looks the warp up
+        // again for the visit count and the welcome message. So it has to be the address this player
+        // reaches the warp by (owner:name for somebody else's private warp), not the bare name.
+        final String address = CommandUtils.addressOf(warp, sender);
+
         if (currServerName.equalsIgnoreCase(targetServerName)) {
-            sendTeleportMessage(currServer, warp, true);
+            sendTeleportMessage(currServer, warp, address, true);
             return Command.SINGLE_SUCCESS;
         }
 
         ServerConnectUtils.connectPlayerToServer(
             sender,
             targetServerName,
-            newConnection -> sendTeleportMessage(newConnection, warp, false)
+            newConnection -> sendTeleportMessage(newConnection, warp, address, false)
         );
 
         return Command.SINGLE_SUCCESS;
     }
 
-    private static void sendTeleportMessage(ServerConnection serverConnection, Warp warp, Boolean isSameServer) {
+    private static void sendTeleportMessage(ServerConnection serverConnection, Warp warp, String address, Boolean isSameServer) {
         SimpleLocation data = warp.getLocation();
 
         // Messaging the backend server, using the sender's connection
@@ -90,7 +97,7 @@ public final class To {
                 isSameServer
                     ? TeleportMessage.Subchannel.SAME_SERVER
                     : TeleportMessage.Subchannel.DIFF_SERVER,
-                warp.getName(),
+                address,
                 data
             ));
     }
@@ -104,11 +111,11 @@ public final class To {
         boolean isSearchEmpty = input.isEmpty();
         if (isSearchEmpty) {
             // Suggest a few recommended warps - using the WarpSuggester to get the tooltip
-            WarpSuggester.suggest(builder, w -> ValidatedSuggestedWarpNames.contains(w.getName()));
+            WarpSuggester.suggest(builder, sender, w -> ValidatedSuggestedWarpNames.contains(w.getName()));
             return builder.buildFuture();
         }
 
-        WarpSuggester.suggest(builder, WarpPredicates.usableBy(sender));
+        WarpSuggester.suggest(builder, sender, WarpPredicates.usableBy(sender));
         return builder.buildFuture();
     }
 }

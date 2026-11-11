@@ -100,6 +100,8 @@ platform so it can be unit-tested without a running server or mocks:
 | Test | Covers |
 | --- | --- |
 | `WarpStoreTest` | The whole store: crash-safe add/update/delete, namespacing, visit flush, atomic reload — using an in-memory `FakeIo` that can inject write/delete failures. |
+| `WarpLookupTest` | Which warp a typed name reaches: own private warp, public warp, another player's (`owner:name`); who may see what; ambiguity. |
+| `WarpSuggestionsTest` | Which warps tab-completion offers, the cap of 50, and that everything offered can be looked up again. |
 | `MessageProtocolTest` | The wire protocol: round-trips, stable opcodes, and rejection of bad-version / bad-opcode / truncated / trailing messages. |
 | `WarpManagerPathTest` | Path containment (`WarpPaths`) — legit paths resolve, traversal is rejected. |
 | `LayerParserTest` | Backend layer-config parsing, including the malformed-section case. |
@@ -145,8 +147,26 @@ warps/private-warps/<creatorId>/<name>.yml # a private warp
 ```
 
 - **Public** warps are keyed by normalised name in one global namespace.
-- **Private** warps are keyed by `(creatorId, normalised name)` — so two players can each own `home`, and
-  a player's private warp shadows a public one of the same name on lookup.
+- **Private** warps are keyed by `(creatorId, normalised name)` — so two players can each own `home`.
+
+One name can therefore belong to several warps. **`WarpLookup`** (pure, unit-tested) decides what a name
+typed by a player reaches: their own private warp, then a public warp, then another player's private warp
+they may see — written `owner:name`, or as the bare name when only one such warp has it. Another player's
+warp comes last on purpose: a creator adds members without asking them, so a private warp must never take
+over a name the player already uses. `WarpLookup.address(warp, viewer)` is the reverse: the text that
+viewer types to reach that warp.
+
+Two things follow for any code that shows warps to a player:
+
+- **Whatever you offer must be reachable.** Suggestions and list entries use `WarpLookup.address`, and
+  `WarpSuggestionsTest` checks that every suggestion leads back to its warp. (1.0.7 offered other players'
+  private warps that its lookup could never find.)
+- **Use `listWarps`, not `getWarps`.** `getWarps` returns one warp per name and silently drops the other
+  same-named ones; it is only right for counting one player's own warps or for public warps.
+
+The owner part of `owner:name` is the warp's recorded `creator-name`. `PlayerNameResolver` writes a
+player's current name to their warps on every login (`WarpStore.renameCreator`), so the address follows a
+rename.
 
 `WarpPaths` (pure, unit-tested) turns a `Warp` into its path and its normalised key, and **guarantees path
 containment**: it `.normalize()`s the result and throws if it escapes the warps directory. `Utils.normaliseString`
@@ -224,6 +244,11 @@ Example: creating a warp is a round trip — the proxy asks the backend "where i
 proxy writes the warp. Teleporting is the reverse: the proxy sends a `TeleportMessage`, the backend
 teleports and replies `TeleportResult`.
 
+The warp field of a `TeleportMessage`, a `TeleportResult` and a `MOVE` request carries the **address**
+the player reaches the warp by (`owner:name` for another player's private warp), not the bare name: the
+backend echoes it, and the proxy looks the warp up again with it for the visit count, the welcome message
+or the move. It is the same string field as before, so this needed no protocol version bump.
+
 ### Adding a message or field
 
 1. Add/extend the message class in `core/messageprotocols/`, serialising via `MessageFrame.write(opcode, …)`
@@ -244,8 +269,11 @@ Commands are Brigadier, one class per command under `velocity/commands/`, regist
 
 Shared helpers:
 
-- **`CommandUtils.getWarp(context, arg[, predicate])`** resolves a warp argument for the sender
-  (private-first), enforces an access predicate, and throws a friendly `CommandSyntaxException` otherwise.
+- **`CommandUtils.getWarp(context, arg[, predicate])`** looks a warp argument up for the sender through
+  `WarpLookup`, enforces an access predicate, and throws a friendly `CommandSyntaxException` otherwise.
+  `CommandUtils.findWarp` is the non-throwing form (used by the listener), `addressOf` the reverse.
+- **`WarpSuggester.suggest(builder, viewer, filter)`** offers warps for an argument. Which ones, and under
+  what text, is decided by the pure `WarpSuggestions`: other players' private warps only after `owner:`.
 - **`WarpPredicates.usableBy` / `modifiableBy`** wrap `Warp.isUsable` / `isModifiable`.
 - **`Permission`** enum holds every node; requirements are built from it in `WarpVelocity`.
 
