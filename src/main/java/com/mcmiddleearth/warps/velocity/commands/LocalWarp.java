@@ -54,11 +54,12 @@ public final class LocalWarp {
         }
 
         ServerConnection currServer = optCurrServer.get();
-        sendTeleportMessage(currServer, warp);
+        // The address this player reaches the warp by: the proxy looks it up again on arrival (see To).
+        sendTeleportMessage(currServer, warp, CommandUtils.addressOf(warp, sender));
         return Command.SINGLE_SUCCESS;
     }
 
-    private static void sendTeleportMessage(ChannelMessageSink serverConnection, Warp warp) {
+    private static void sendTeleportMessage(ChannelMessageSink serverConnection, Warp warp, String address) {
         SimpleLocation data = warp.getLocation();
 
         // Messaging the backend server, using the sender's connection
@@ -66,7 +67,7 @@ public final class LocalWarp {
             ChannelIdentifiers.MAIN_ID,
             TeleportMessage.serialise(
                 TeleportMessage.Subchannel.LOCAL_WARP,
-                warp.getName(),
+                address,
                 data
             ));
     }
@@ -76,7 +77,7 @@ public final class LocalWarp {
             return Suggestions.empty();
         }
 
-        WarpSuggester.suggest(builder, WarpPredicates.usableBy(sender));
+        WarpSuggester.suggest(builder, sender, WarpPredicates.usableBy(sender));
         return builder.buildFuture();
     }
 }

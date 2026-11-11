@@ -29,7 +29,8 @@ Player ──/warp rivendell──▶ Velocity proxy ──(look up warp, switch
 ## Features
 
 - **Public and private warps.** Public warps are curated, network-unique landmarks; private warps are
-  per-player (two players can each have a `home`), with an optional member list.
+  per-player (two players can each have a `home`), with an optional member list. Members and staff reach
+  another player's private warp as `owner:name`.
 - **Cross-server teleports.** A warp knows which server and world it lives on; the proxy moves the player
   there transparently.
 - **Dynmap integration.** Warps appear as configurable markers grouped into layers, with per-warp icons.

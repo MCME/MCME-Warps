@@ -4,6 +4,7 @@ import com.mcmiddleearth.warps.velocity.WarpVelocity;
 import com.mcmiddleearth.warps.velocity.commands.helpers.CommandUtils;
 import com.mcmiddleearth.warps.velocity.commands.helpers.WarpSuggester;
 import com.mcmiddleearth.warps.velocity.warps.Warp;
+import com.mcmiddleearth.warps.velocity.warps.WarpLookup;
 import com.mcmiddleearth.warps.velocity.warps.WarpManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.LiteralMessage;
@@ -111,7 +112,7 @@ public class Members {
             return Suggestions.empty();
         }
 
-        WarpSuggester.suggest(builder, warp -> warp.isOfType(Warp.Type.PRIVATE) && warp.isCreator(sender), true);
+        WarpSuggester.suggest(builder, sender, warp -> warp.isOfType(Warp.Type.PRIVATE) && warp.isCreator(sender), true);
         return builder.buildFuture();
     }
 
@@ -137,8 +138,10 @@ public class Members {
         }
 
         String warpName = context.getArgument("private-warp", String.class);
-        Warp warp = WarpManager.resolveWarp(warpName, sender.getUniqueId());
-        if (warp == null) return Suggestions.empty();
+        if (!(CommandUtils.findWarp(sender, warpName, w -> true) instanceof WarpLookup.Found found)) {
+            return Suggestions.empty();
+        }
+        Warp warp = found.warp();
 
         String input = builder.getRemainingLowerCase();
 

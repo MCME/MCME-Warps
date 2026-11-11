@@ -49,9 +49,39 @@ Two rules are worth committing to memory:
    existing public warp requires `override.modify`, so public warps are effectively staff-managed once
    created. Private warps are always editable by their creator.
 
-When a player runs `/warp <name>`, their **own private warp of that name takes priority** over a public
-one. So a player with a private `home` always warps to their own; a player without one falls through to a
-public `home` if it exists.
+### Which warp a name reaches
+
+Private warps are per player, so several warps can carry the same name. A name is tried in this order:
+
+1. **your own private warp** of that name;
+2. a **public warp** of that name;
+3. **another player's private warp** that you may use, because you are a member of it or have
+   `override.use`.
+
+So a player with a private `home` always warps to their own; a player without one reaches a public `home`
+if there is one.
+
+To say whose private warp you mean, put the owner's name in front: **`owner:name`**, for example
+`/warp Gandalf:castle`. You need this when a warp of your own or a public warp has the same name, or when
+several players have a private warp of that name (the plugin then names the owners). The owner's name is
+not case-sensitive, and a warp name cannot contain a colon, so the two never clash.
+
+Another player's private warp never takes over a name you already use: being added as a member of
+somebody's private `Minas Tirith` does not change where your `/warp Minas Tirith` goes.
+
+Commands that take something after the warp (`rename`, `setWelcome`, `setIcon`, `setLayer`, `members`)
+need quotes around an `owner:name` address, as they do around a name with spaces:
+`/wmanage rename "Gandalf:castle" keep`. Tab-completion adds the quotes for you.
+
+### Tab-completion
+
+While you type a name, the plugin offers public warps, your own private warps, and private warps shared
+with you (shown as `owner:name`). When more than 50 match, your own warps and the most visited ones are
+kept; typing another letter brings up the rest.
+
+Other players' private warps are **not** offered for a plain name, also not to staff who may use all of
+them: there are several times more of them than public warps, and they would bury the list. Type the
+owner's name and a colon (`/warp Gandalf:`) to see that player's private warps.
 
 ## Command reference
 
@@ -63,7 +93,7 @@ not `setpublic`).
 
 | Command | Alias | Permission | What it does |
 | --- | --- | --- | --- |
-| `/warp <name>` | `/to <name>` | `mcmewarps.cmd.warp` | Teleport to a warp (your private one shadows a public of the same name). |
+| `/warp <name>` | `/to <name>` | `mcmewarps.cmd.warp` | Teleport to a warp. `<name>` is a warp name, or `owner:name` for another player's private warp (see [Which warp a name reaches](#which-warp-a-name-reaches)). |
 | `/warp random` | | `mcmewarps.cmd.random` | Teleport to a random public warp on the main build servers. |
 | `/localwarp <name>` | `/lwarp <name>` | `mcmewarps.cmd.local-warp` | Teleport to a warp's coordinates **in your current world**, without switching server or world. Handy for jumping to the same spot across parallel copies of a world. |
 
@@ -77,7 +107,7 @@ not `setpublic`).
 ### Editing warps
 
 You can only target warps you're allowed to modify (your own private warps, or any warp with
-`override.modify`).
+`override.modify`). Staff reach another player's private warp as `owner:name`.
 
 | Command | Permission | What it does |
 | --- | --- | --- |
@@ -92,7 +122,8 @@ You can only target warps you're allowed to modify (your own private warps, or a
 
 ### Private-warp members
 
-Members can *teleport to* a private warp but cannot edit it. Only the warp's creator can manage its
+Members can *teleport to* a private warp but cannot edit it: `/warp <name>`, or `/warp owner:name` when
+they have a warp of that name themselves or a public one exists. Only the warp's creator can manage its
 members, and the target player must be **online** at the time.
 
 | Command | Permission | What it does |
@@ -133,8 +164,12 @@ Examples:
 /wmanage list -w moria 2             # warps in the "moria" world, page 2
 ```
 
-`plist` always filters to your own private warps, so it rejects the `-v` and `-c` flags. `assets` behaves
-like `plist` but also pins the server to the one you're on; it accepts only `-n` and `-o`.
+`plist` always filters to the private warps you created or are a member of, so it rejects the `-v` and
+`-c` flags. `assets` behaves like `plist` but also pins the server to the one you're on; it accepts only
+`-n` and `-o`.
+
+A list shows another player's private warp as `owner:name`, which is also what its `[w]` button warps to.
+Two players' warps of the same name are listed separately.
 
 ## Permissions
 
@@ -337,7 +372,18 @@ plugins/MCME-Warps-Paper/warps/   ->   plugins/mcme-warps-velocity/warps/<server
 ## Troubleshooting
 
 **"You do not have access to warp …"** — the player lacks `mcmewarps.world-access.<world>` for the warp's
-world, or it's a private warp they don't own / aren't a member of.
+world, or the command needs more than they may do with that warp (a member can use a private warp, not
+edit it).
+
+**"No warp found" for another player's private warp.** Private warps no longer carry the old
+`zzz-player-` prefix. Write `player:name` instead, for example `/warp Gandalf:castle`. A private warp
+you may not use (you are not a member and have no `override.use`) is reported as not found too.
+
+**"3 players have a private warp called …"** — the name alone does not say whose warp you mean. Put the
+owner's name in front, as the message shows.
+
+**Another player's private warps do not show up while typing.** Intended, also for staff: type the owner's
+name and a colon (`/warp Gandalf:`) to list them. See [Tab-completion](#tab-completion).
 
 **A player can't edit a public warp they made.** Expected: editing existing public warps requires
 `mcmewarps.override.modify`. Public warps are staff-managed after creation.
@@ -349,6 +395,7 @@ world, or it's a private warp they don't own / aren't a member of.
 `config.yml`. Private warps never appear on the map by design.
 
 **Two players both have `home` and it "works differently" for each.** Correct — private warps are
-per-player. `/warp home` resolves to the caller's own private `home` first, then a public one.
+per-player. `/warp home` reaches the caller's own private `home` first, then a public one. See
+[Which warp a name reaches](#which-warp-a-name-reaches).
 
 **Changed the config and nothing happened.** Run `/wmanage reload` (or restart the proxy) to re-read it.

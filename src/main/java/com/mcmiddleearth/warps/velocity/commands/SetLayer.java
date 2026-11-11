@@ -84,7 +84,7 @@ public class SetLayer {
             return Suggestions.empty();
         }
 
-        WarpSuggester.suggest(builder, warp -> warp.isOfType(Warp.Type.PUBLIC), true);
+        WarpSuggester.suggest(builder, sender, warp -> warp.isOfType(Warp.Type.PUBLIC), true);
         return builder.buildFuture();
     }
 
