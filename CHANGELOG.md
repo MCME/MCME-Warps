@@ -6,6 +6,10 @@ Notable changes to MCME-Warps. The release workflow uses a version's section as 
 
 ### Fixed
 
+- **Editing a warp no longer resets its map icon and layer.** Since 1.0.7 every edit of a warp (move,
+  rename, welcome message, public/private, members) reset its icon and its layer to the defaults, and
+  setting the icon reset the layer and the other way round. Warps that lost their layer this way have to
+  be put back with `/warpmanager setLayer`.
 - **Other players' private warps can be used again.** Since 1.0.7 a private warp could only be looked up
   by its owner. Members of a private warp, and staff with `mcmewarps.override.use`, were offered it in
   tab-completion but got "No warp found". Staff with `mcmewarps.override.modify` could not delete, move
